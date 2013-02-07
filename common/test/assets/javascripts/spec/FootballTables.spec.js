@@ -4,7 +4,8 @@ define(['common', 'ajax',  'qwery', 'modules/footballtables'], function(common, 
        
         beforeEach(function() {
             ajax.init("");
-            mockAjax = jasmine.createSpy('ajax');
+            spyOn(ajax, 'apiEndpoint');
+            mockAjax = ajax.apiEndpoint;
             prependTo = qwery('ul > li', '#football-tables')[0];
             competition = 100;
             
@@ -17,7 +18,7 @@ define(['common', 'ajax',  'qwery', 'modules/footballtables'], function(common, 
                 new FootballTable({
                     prependTo: prependTo,
                     competition: competition
-                }).init({ajax: mockAjax});
+                }).init({ajax: ajax});
             });
         });
 

@@ -33,7 +33,7 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
             var path = query,
                 that = this;
 
-            return ajax({
+            return ajax.apiEndpoint({
                 url: path,
                 type: 'jsonp',
                 jsonpCallback: 'callback',

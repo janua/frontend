@@ -23,7 +23,7 @@ define(['common', 'ajax', 'bonzo', 'bean'], function (common, ajax, bonzo, bean)
 
             common.mediator.on('ui:more-matches:clicked', function (_link) {
                 var link = bonzo(_link);
-                ajax({
+                ajax.apiEndpoint({
                     url: link.attr('href'),
                     type: 'jsonp',
                     jsonpCallback: 'callback',

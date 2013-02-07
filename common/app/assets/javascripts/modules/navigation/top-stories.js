@@ -43,7 +43,7 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
 
         this.load = function (config) {
             var url = config.page.coreNavigationUrl + '/top-stories.json?page-size=10&view=link';
-            return ajax({
+            return ajax.apiEndpoint({
                     url: url,
                     type: 'jsonp',
                     jsonpCallback: 'callback',

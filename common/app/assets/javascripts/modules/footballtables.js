@@ -17,7 +17,7 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
         this.load = function (query) {
             var that = this;
 
-            return ajax({
+            return ajax.apiEndpoint({
                 url: query,
                 type: 'jsonp',
                 jsonpCallback: 'callback',

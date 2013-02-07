@@ -1,23 +1,27 @@
 define(["reqwest"], function (reqwest) {
 
-    var makeAbsolute = function () {
+    function makeAbsolute () {
         throw new Error("AJAX has not been initialised yet");
     };
 
-    function ajax(params) {
-        params.url = makeAbsolute(params.url);
-        return ajax.reqwest(params);
+    return {
+        reqwest: reqwest,
+
+        init: function (absoluteUrl) {
+            absoluteUrl = absoluteUrl || "";
+            makeAbsolute = function (url) {
+                return absoluteUrl + url;
+            };
+        },
+
+        relative: function(params) {
+            this.reqwest(params);
+        },
+
+        apiEndpoint: function(params) {
+            params.url = makeAbsolute(params.url);
+            return this.reqwest(params);
+        }
     }
-
-    ajax.reqwest = reqwest; // expose publicly so we can inspect it in unit tests
-
-    ajax.init = function (absoluteUrl) {
-        absoluteUrl = absoluteUrl || "";
-        makeAbsolute = function (url) {
-            return absoluteUrl + url;
-        };
-    };
-
-    return ajax;
 
 });

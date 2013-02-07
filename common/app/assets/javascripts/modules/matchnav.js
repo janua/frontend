@@ -19,7 +19,7 @@ define(['common', 'ajax', 'modules/pad'], function (common, ajax, Pad) {
         common.mediator.on('modules:matchnav:loaded', this.view.render);
         
         this.load = function (url) {
-            ajax({
+            ajax.apiEndpoint({
                 url: url,
                 type: 'jsonp',
                 jsonpCallback: 'callback',

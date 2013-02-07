@@ -26,7 +26,7 @@ define(['ajax', 'common'], function (ajax, common) {
                 var style = styleNodes[i];
                 if (fontIsRequired(style)) {
                     var that = this;
-                    this.ajax({
+                    this.ajax.apiEndpoint({
                         url: url + style.getAttribute('data-cache-file-' + fileFormat),
                         type: 'jsonp',
                         jsonpCallbackName: 'guFont',

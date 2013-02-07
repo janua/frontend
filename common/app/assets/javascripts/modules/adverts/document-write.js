@@ -79,7 +79,7 @@ define([
 
         var oasUrl = options.url || generateUrl(options.config.page, options.slots);
 
-        ajax({
+        ajax.apiEndpoint({
             url: oasUrl,
             type: 'jsonp',
             success: function (js) {

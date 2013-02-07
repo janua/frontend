@@ -22,7 +22,7 @@ define(['common', 'ajax'], function (common, ajax) {
         // Model
         
         this.load = function (url) {
-            return ajax({
+            return ajax.apiEndpoint({
                     url: url,
                     type: 'jsonp',
                     jsonpCallback: 'callback',

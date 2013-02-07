@@ -18,7 +18,7 @@ define(['common', 'ajax'], function (common, ajax) {
         this.load = function (url) {
 
             if (switches.relatedContent) {
-                return ajax({
+                return ajax.apiEndpoint({
                     url: url,
                     type: 'jsonp',
                     jsonpCallback: 'callback',

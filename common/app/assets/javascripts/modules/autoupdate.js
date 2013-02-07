@@ -91,7 +91,7 @@ define([
             var path = options.path,
                 that = this;
 
-            return ajax({
+            return ajax.apiEndpoint({
                 url: path,
                 type: 'jsonp',
                 jsonpCallback: 'callback',

@@ -9,7 +9,7 @@ define(['common', 'ajax'], function (common, ajax) {
         it("should proxy calls to reqwest", function () {
             ajax.init("http://m.guardian.co.uk");
             expect(ajax.reqwest.callCount).toBe(0);
-            ajax({
+            ajax.apiEndpoint({
                 url: "/foo"
             });
             expect(ajax.reqwest.callCount).toBe(1);
@@ -18,10 +18,20 @@ define(['common', 'ajax'], function (common, ajax) {
 
         it("should tolerate being initialised with undefined", function () {
             ajax.init(undefined);
-            ajax({
+            ajax.apiEndpoint({
                 url: "/foo"
             });
             expect(ajax.reqwest.getCall(0).args[0]["url"]).toBe("/foo");
+        });
+
+        it("should directly call reqwest", function () {
+            ajax.init("http://m.guardian.co.uk");
+            expect(ajax.reqwest.callCount).toBe(0);
+            ajax.relative({
+                url: "/bar"
+            });
+            expect(ajax.reqwest.callCount).toBe(1);
+            expect(ajax.reqwest.getCall(0).args[0]["url"]).toBe("/bar");
         });
 
     });

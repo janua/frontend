@@ -4,7 +4,8 @@ define(['common', 'ajax', 'qwery', 'modules/footballfixtures'], function(common,
 
         beforeEach(function() {
             ajax.init("");
-            mockAjax = jasmine.createSpy('ajax');
+            spyOn(ajax, 'apiEndpoint');
+            mockAjax = ajax.apiEndpoint;
             prependTo = qwery('ul > li', '#football-fixtures')[0];
             competitions = [500, 510, 100];
             
@@ -19,7 +20,7 @@ define(['common', 'ajax', 'qwery', 'modules/footballfixtures'], function(common,
                     prependTo: prependTo,
                     expandable: true,
                     competitions: competitions
-                }).init({ajax: mockAjax});
+                }).init({ajax: ajax});
             });
         });
 

@@ -43,7 +43,7 @@ define(['common', 'ajax', 'bonzo', 'bean', 'qwery'], function (common, ajax, bon
                 var section = bonzo(cta.parent()).attr('data-section-id') || 'top-stories';
                 // what's the offset?
                 var offset = qwery('.trail', cta.parent()[0]).length;
-                ajax({
+                ajax.apiEndpoint({
                     url: '/' + section + '.json?view=section&offset=' + offset,
                     type: 'json',
                     // 5 sec timeout

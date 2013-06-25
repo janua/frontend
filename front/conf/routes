@@ -13,3 +13,7 @@ GET     /$path<(culture|sport|australia)(/\w\w-edition)?>                     co
 GET     /$path<(culture|sport|australia)(/\w\w-edition)?>.json                controllers.FrontController.render(path)
 GET     /$path<(culture|sport|australia)(/\w\w-edition)?>/trails              controllers.FrontController.renderTrails(path)
 GET     /$path<(culture|sport|australia)(/\w\w-edition)?>/trails.json         controllers.FrontController.renderTrails(path)
+
+GET     /changes    controllers.changes.ChangesEndpoint.index
+GET     /refresh    controllers.changes.ChangesEndpoint.refresh
+GET     /articleids    controllers.changes.ChangesEndpoint.articleids

@@ -1,0 +1,13 @@
+@(changes: scala.collection.SortedMap[org.joda.time.DateTime, com.gu.openplatform.contentapi.model.Content])(implicit request: RequestHeader)
+
+<h2>Changes</h2>
+<h3>List</h3>
+<ul>
+    @changes.map { k =>
+        <li>@k._1</li>
+        <li>@k._2.webTitle</li>
+    }
+</ul>
+<hr/>
+<h3>Raw</h3>
+<p>@changes</p>

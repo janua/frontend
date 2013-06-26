@@ -74,3 +74,6 @@ GET     /fronts                          controllers.FrontsController.index()
 GET     /fronts/top-stories              controllers.fronts.TopStoriesController.read()
 POST    /fronts/top-stories              controllers.fronts.TopStoriesController.update()
 
+GET     /frontsapi/list/:listName        controllers.FrontsApiController.getList(listName)
+POST    /frontsapi/listitem/:listName    controllers.FrontsApiController.updateList(listName)
+GET     /frontsapi/bootstrap             controllers.FrontsApiController.bootStrap

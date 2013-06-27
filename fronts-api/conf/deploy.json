@@ -1,6 +1,6 @@
 {
     "packages":{
-        "frontend-admin":{
+        "fronts-api":{
             "type":"asg-elb",
             "apps":[ "frontend::fronts-api" ],
             "data":{

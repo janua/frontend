@@ -67,7 +67,12 @@ object Frontend extends Build with Prototypes {
 
   val admin = application("admin").dependsOn(commonWithTests).settings(
     libraryDependencies ++= Seq(
-      "com.novus" %% "salat" % "1.9.2-SNAPSHOT",
+      "com.novus" %% "salat" % "1.9.2-SNAPSHOT"
+    )
+  )
+
+  val frontsapi = application("fronts-api").dependsOn(commonWithTests).settings(
+    libraryDependencies ++= Seq(
       "net.debasishg" %% "redisclient" % "2.9"
     )
   )

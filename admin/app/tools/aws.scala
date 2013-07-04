@@ -54,3 +54,7 @@ trait S3 extends Logging {
 }
 
 object S3 extends S3
+
+object FrontsS3 extends S3 {
+  override lazy val bucket = "fronts-api"
+}

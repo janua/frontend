@@ -7,6 +7,7 @@ import play.api.libs.json._
 import play.api.libs.json.Json._
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+import model.FrontApiError
 
 object FrontsApiController extends Controller with ExecutionContexts {
   implicit val updateListReads = Json.reads[UpdateList]
@@ -41,9 +42,8 @@ object FrontsApiController extends Controller with ExecutionContexts {
               Async {
                 promiseOfOption map {
                   o => o match {
-                    case Some(v) if v >= 0 => Ok
-                    case Some(v) => BadRequest(toJson(positionNotFound))
-                    case None => BadRequest(toJson(databaseError))
+                    case Right(x) => Ok
+                    case Left(error: FrontApiError) => BadRequest(toJson(JsonResponse(error.getMessage)))
                   }
                 }
               }

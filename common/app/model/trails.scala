@@ -173,7 +173,8 @@ class RunningOrderTrailblockDescription(
     // get the running order from the apiwith
     val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/$blockId/collection.json"
     log.info(s"loading running order configuration from: $configUrl")
-    parseResponse(WS.url(s"$configUrl").withTimeout(2000).get(), this, edition)
+    val response: Future[Response] = WS.url(s"$configUrl").withTimeout(2000).get()
+    parseResponse(response, this, edition)
   }
 }
 
@@ -193,10 +194,11 @@ class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition:
   val id = "sport"
   val style = None
 
-  def configuredQuery: Future[Option[TrailblockDescription]] = getDescription(cid) flatMap {x =>
-    val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/${x.blockId}/collection.json"
+  def configuredQuery: Future[Option[TrailblockDescription]] = getDescription(cid) flatMap {description =>
+    val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/${description.blockId}/collection.json"
     log.info(s"loading running order configuration from: $configUrl")
-    parseResponse(WS.url(s"$configUrl").withTimeout(2000).get(), x, edition)
+    val response: Future[Response] = WS.url(s"$configUrl").withTimeout(2000).get()
+    parseResponse(response, description, edition)
   }
 
   def getDescription(id: String): Future[RunningOrderTrailblockDescription] = getConfig(id) map {config =>
@@ -211,10 +213,8 @@ class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition:
   def getConfig(id: String): Future[Map[String, String]] = {
     val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/config/$id/config.json"
     WS.url(configUrl).withTimeout(2000).get map { r =>
-      //val values = Seq("blockid", "name")
       val json = parse(r.body)
       json.asOpt[Map[String, String]] getOrElse Map.empty
-      //values.foldLeft(Map[String, String]()){(m, v) => m + (v -> (json \ v).as[String])}
     }
   }
 }

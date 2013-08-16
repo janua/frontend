@@ -2,7 +2,7 @@ package common.editions
 
 import common._
 import org.joda.time.DateTimeZone
-import model.{RunningOrderTrailblockDescription, ItemTrailblockDescription, MetaData}
+import model.{ConfiguredRunningOrderTrailblockDescription, RunningOrderTrailblockDescription, ItemTrailblockDescription, MetaData}
 import views.support._
 
 
@@ -112,6 +112,7 @@ object Uk extends Edition(
     (Editionalise("", Uk), Seq(
       RunningOrderTrailblockDescription("", "uk/news/masthead", "", 4, style = Some(Masthead)),
       RunningOrderTrailblockDescription("", "uk/news/top-stories", "News", 5, style = Some(Featured), showMore = true),
+      ConfiguredRunningOrderTrailblockDescription("uk/sport"),
       RunningOrderTrailblockDescription("sport", "uk/sport/top-stories", "Sport", 5, style = Some(Featured), showMore = true),
       RunningOrderTrailblockDescription("commentisfree", "uk/comment-is-free/top-stories", "Comment is free", 3, style = Some(Featured), showMore = true),
       RunningOrderTrailblockDescription("culture", "uk/culture/top-stories", "Culture", 3, style = Some(Thumbnail), showMore = true),
@@ -164,6 +165,5 @@ object Uk extends Edition(
       RunningOrderTrailblockDescription("money", "uk/money/masthead", "", 4, style = Some(Masthead)),
       RunningOrderTrailblockDescription("money", "uk/money/top-stories", "Money", 20, style = Some(Featured))
     ))
-
   )
 }

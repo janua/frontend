@@ -30,6 +30,10 @@ trait Trail extends Images with Tags {
 
 case class Trailblock(description: TrailblockDescription, trails: Seq[Trail])
 
+trait ConfiguredQuery extends ExecutionContexts {
+  def configuredQuery(): Future[Option[TrailblockDescription]]
+}
+
 trait TrailblockDescription extends ExecutionContexts {
   val id: String
   val name: String
@@ -94,12 +98,10 @@ object CustomTrailblockDescription {
 }
 
 
-trait ConfiguredTrailblockDescription extends TrailblockDescription {
+trait ConfiguredTrailblockDescription extends TrailblockDescription with ConfiguredQuery {
   def query() = scala.concurrent.future {
     Nil
   }
-
-  def configuredQuery(): Future[Option[TrailblockDescription]]
 }
 
 trait ResponseParsing extends ExecutionContexts with Logging {
@@ -183,16 +185,8 @@ object RunningOrderTrailblockDescription {
     new RunningOrderTrailblockDescription(id, blockId, name, numItemsVisible, style, showMore, edition, isConfigured)
 }
 
-class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition: Edition) extends ConfiguredTrailblockDescription with ResponseParsing
+class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition: Edition) extends ConfiguredQuery with ResponseParsing
   with Logging {
-
-  lazy val numItemsVisible = 10
-  val showMore = false
-  val section = "sport"
-  val name = "sport"
-  val isConfigured = true
-  val id = "sport"
-  val style = None
 
   def configuredQuery: Future[Option[TrailblockDescription]] = getDescription(cid) flatMap {description =>
     val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/${description.blockId}/collection.json"

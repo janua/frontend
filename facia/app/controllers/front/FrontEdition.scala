@@ -1,17 +1,18 @@
 package controllers.front
 
-import model.{ConfiguredTrailblockDescription, TrailblockDescription, Trailblock}
+import model.{ConfiguredQuery, ConfiguredTrailblockDescription, TrailblockDescription, Trailblock}
 import common.Edition
 
 /*
   Responsible for handling the blocks of the front for an edition
   Responsibilites include de-duping
  */
-class FrontEdition(val edition: Edition, val descriptions: Seq[TrailblockDescription]) {
+class FrontEdition(val edition: Edition, val descriptions: Seq[ConfiguredQuery]) { //TODO: Make base trait
 
   val manualAgents: Seq[TrailblockAgent] = descriptions.map {
     case desc: ConfiguredTrailblockDescription => ConfiguredTrailblockAgent(desc)
-    case desc => QueryTrailblockAgent(desc)
+    case desc: TrailblockDescription => QueryTrailblockAgent(desc)
+    case desc: ConfiguredQuery => ConfiguredQueryAgent(desc)
   }
 
   def apply(): Seq[Trailblock] = dedupe(manualAgents.flatMap(_.trailblock))

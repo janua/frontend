@@ -30,6 +30,8 @@ trait Trail extends Images with Tags {
 
 case class Trailblock(description: TrailblockDescription, trails: Seq[Trail])
 
+trait Description
+
 trait ConfiguredQuery extends ExecutionContexts {
   def configuredQuery(): Future[Option[TrailblockDescription]]
 }
@@ -167,7 +169,7 @@ class RunningOrderTrailblockDescription(
   val showMore: Boolean,
   val edition: Edition,
   val isConfigured: Boolean
-) extends ConfiguredTrailblockDescription with ResponseParsing with Logging {
+) extends Description with ConfiguredTrailblockDescription with ResponseParsing with Logging {
 
   lazy val section = id.split("/").headOption.filterNot(_ == "").getOrElse("news")
 
@@ -185,10 +187,10 @@ object RunningOrderTrailblockDescription {
     new RunningOrderTrailblockDescription(id, blockId, name, numItemsVisible, style, showMore, edition, isConfigured)
 }
 
-class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition: Edition) extends ConfiguredQuery with ResponseParsing
+class ConfiguredRunningOrderTrailblockDescription(cid: String)(implicit edition: Edition) extends Description with ConfiguredQuery with ResponseParsing
   with Logging {
 
-  def configuredQuery: Future[Option[TrailblockDescription]] = getDescription(cid) flatMap {description =>
+  def configuredQuery(): Future[Option[TrailblockDescription]] = getDescription(cid) flatMap {description =>
     val configUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/${description.blockId}/collection.json"
     log.info(s"loading running order configuration from: $configUrl")
     val response: Future[Response] = WS.url(s"$configUrl").withTimeout(2000).get()

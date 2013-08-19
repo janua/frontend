@@ -47,9 +47,9 @@ object QueryTrailblockAgent {
   def apply(description: TrailblockDescription): QueryTrailblockAgent = new QueryTrailblockAgent(description)
 }
 
-class ConfiguredTrailblockAgent(val description: ConfiguredQuery) extends TrailblockAgent with Logging {
+class ConfiguredTrailblockAgent(val description: ConfiguredTrailblockDescription) extends TrailblockAgent with Logging {
 
-  private lazy val agent = AkkaAgent[Option[QueryTrailblockAgent]](None)
+  private lazy val agent = AkkaAgent[Option[QueryTrailblockAgent]](Some(QueryTrailblockAgent(description)))
 
   def close() = {
     agent().map(_.close())
@@ -57,17 +57,7 @@ class ConfiguredTrailblockAgent(val description: ConfiguredQuery) extends Trailb
   }
 
   def refresh() = description.configuredQuery map { query =>
-    query map { desc =>
-      agent() match {
-        case Some(a) => refreshAgent(a, desc)
-        case None => agent.send(Some(QueryTrailblockAgent(desc)))
-      }
-    }
-  }
-
-  def refreshAgent(a: QueryTrailblockAgent, description: TrailblockDescription) = {
-    a.description = description
-    a.refresh()
+    query map refreshTrailblock
   }
 
   private def refreshTrailblock(trailblockDescription: TrailblockDescription) = {
@@ -90,10 +80,17 @@ class ConfiguredQueryAgent(val description: ConfiguredQuery) extends TrailblockA
 
   private lazy val agent = AkkaAgent[Option[QueryTrailblockAgent]](None)
 
-  def refresh() = description.configuredQuery() map refreshAgent
+  def refresh() = for(trailblockDescription <- description.configuredQuery()) {
+    agent() match {
+      case Some(queryTrailblockAgent) => refreshAgent(trailblockDescription, queryTrailblockAgent)
+      case None => trailblockDescription foreach {t => agent.send(Some(QueryTrailblockAgent(t)))}
+    }
+  }
 
-  def refreshAgent(t: Option[TrailblockDescription]) = agent() map { trailblockAgent =>
-    trailblockAgent.description
+  def refreshAgent(t: Option[TrailblockDescription], trailblockAgent: QueryTrailblockAgent) = for {
+    trailblockDescription <- t
+  } {
+    trailblockAgent.description = trailblockDescription
     trailblockAgent.refresh()
   }
 
@@ -106,5 +103,5 @@ class ConfiguredQueryAgent(val description: ConfiguredQuery) extends TrailblockA
 }
 
 object ConfiguredQueryAgent {
-  def apply(configuredQuery: ConfiguredQuery): ConfiguredTrailblockAgent = new ConfiguredTrailblockAgent(configuredQuery)
+  def apply(configuredQuery: ConfiguredQuery): ConfiguredQueryAgent = new ConfiguredQueryAgent(configuredQuery)
 }

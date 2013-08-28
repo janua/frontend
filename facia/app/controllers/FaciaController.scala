@@ -5,6 +5,7 @@ import front._
 import model._
 import conf._
 import play.api.mvc._
+import common.editions.Uk
 
 // TODO, this needs a rethink, does not seem elegant
 
@@ -133,6 +134,11 @@ class FaciaController extends Controller with Logging with JsonTrails with Execu
     case _ => Editionalise(path, edition)
   }
 
+  def renderFaciaAgent(path: String) = Action {
+    val faciaTrailblock = front.faciaFronts(path)()
+    Ok(faciaTrailblock.collections.map{case (a,b) => a -> b.items.map(_.url)}.mkString("\n"))
+  }
+
   def renderFilm() = {
     if (Switches.FilmFrontFacia.isSwitchedOn)
       render("film")
@@ -147,13 +153,13 @@ class FaciaController extends Controller with Logging with JsonTrails with Execu
       FrontPage(editionalisedPath).map { frontPage =>
 
         // get the trailblocks
-        val trailblocks: Seq[Trailblock] = front(editionalisedPath)
+        val faciaTrailblock: FaciaTrailblock = front.faciaFronts(editionalisedPath)()
 
-        if (trailblocks.isEmpty) {
+        if (faciaTrailblock.collections.isEmpty) {
           InternalServerError
         } else {
-          val htmlResponse = () => views.html.front(frontPage, trailblocks)
-          val jsonResponse = () => views.html.fragments.frontBody(frontPage, trailblocks)
+          val htmlResponse = () => views.html.front(frontPage, faciaTrailblock)
+          val jsonResponse = () => views.html.fragments.frontBody(frontPage, faciaTrailblock)
           renderFormat(htmlResponse, jsonResponse, frontPage, Switches.all)
         }
       }.getOrElse(NotFound) //TODO is 404 the right thing here

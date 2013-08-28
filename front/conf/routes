@@ -6,6 +6,8 @@
 # For dev machines
 GET     /assets/*file                                                    controllers.Assets.at(path="/public", file)
 
+GET     /generate   controllers.FrontController.generateSkeleton
+
 GET     /$path<(\w\w-edition)?>                                         controllers.FrontController.render(path)
 GET     /$path<(\w\w-edition)?>.json                                    controllers.FrontController.render(path)
 

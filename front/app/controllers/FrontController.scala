@@ -9,6 +9,7 @@ import model.Trailblock
 import scala.Some
 import play.api.libs.json._
 import concurrent.Future
+import common.editions.Uk
 
 
 // TODO, this needs a rethink, does not seem elegant
@@ -135,6 +136,25 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
     request.headers.get("X-Gu-Facia")
       .filter(Switches.FaciaSwitch.isSwitchedOn && _ == "true" && path.nonEmpty)
       .map {_ => Ok.withHeaders("X-Accel-Redirect" -> s"/redirect/facia/$path")}
+
+  def generateJson(itemDescriptions: Seq[TrailblockDescription]): JsValue = {
+    val converted = itemDescriptions map {i =>
+      Map[String, String](
+        "id" -> i.id,
+        "name" -> i.name,
+        "max" -> i.numItemsVisible.toString,
+        "style" -> i.style.map(_.className.toString).getOrElse(""),
+        "section" -> i.section,
+        "isConfigured" -> i.isConfigured.toString,
+        "showmore" -> i.showMore.toString
+      )
+    }
+    Json.toJson(converted)
+  }
+
+  def generateSkeleton = Action {
+    Ok(Uk.configuredFronts.values.map(generateJson).map(Json.prettyPrint).mkString("\n\n"))
+  }
 
   def render(path: String) = Action { implicit request =>
 

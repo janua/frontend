@@ -142,7 +142,7 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
     val converted = itemDescriptions map {i =>
       Map[String, String](
         ("id", (edition.id.toLowerCase + "/" + {if (i.id.nonEmpty) i.id else "news"})),
-        "name" -> i.name,
+        "displayName" -> i.name,
         "max" -> i.numItemsVisible.toString,
         "style" -> i.style.map(_.className.toString).getOrElse(""),
         "section" -> i.section,

@@ -71,7 +71,7 @@ object S3 extends S3
 object S3FrontsApi extends S3 {
 
   override lazy val bucket = Configuration.aws.bucket
-  lazy val stage = Configuration.environment.stage.toUpperCase
+  lazy val stage = "SKELETON"//Configuration.environment.stage.toUpperCase
   val namespace = "frontsapi"
   lazy val location = s"${stage}/${namespace}"
 
@@ -83,6 +83,9 @@ object S3FrontsApi extends S3 {
   def listCollectionIds: List[String] = getCollectionIds(s"$location/collection/")
   def putBlock(id: String, json: String) =
     putPublic(s"${location}/collection/${id}/collection.json", json, "application/json")
+
+  def putConfig(id: String, json: String) =
+    putPublic(s"${location}/config/${id}/config.json", json, "application/json")
 
   def archive(id: String, json: String) = {
     val now = DateTime.now

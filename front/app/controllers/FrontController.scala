@@ -138,10 +138,10 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
       .filter(Switches.FaciaSwitch.isSwitchedOn && _ == "true" && path.nonEmpty)
       .map {_ => Ok.withHeaders("X-Accel-Redirect" -> s"/redirect/facia/$path")}
 
-  def generateConfigJson(itemDescriptions: Seq[TrailblockDescription]): JsValue = {
+  def generateConfigJson(edition: Edition, itemDescriptions: Seq[TrailblockDescription]): JsValue = {
     val converted = itemDescriptions map {i =>
       Map[String, String](
-        "id" -> i.id,
+        ("id", (edition.id.toLowerCase + "/" + {if (i.id.nonEmpty) i.id else "news"})),
         "name" -> i.name,
         "max" -> i.numItemsVisible.toString,
         "style" -> i.style.map(_.className.toString).getOrElse(""),
@@ -180,9 +180,9 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
   }
 
   def generateSkeleton = Action {
-    Uk.configuredFronts.map{case (k, v) => (k, generateConfigJson(v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
-    Us.configuredFronts.map{case (k, v) => (k, generateConfigJson(v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
-    Au.configuredFronts.map{case (k, v) => (k, generateConfigJson(v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
+    Uk.configuredFronts.map{case (k, v) => (k, generateConfigJson(Uk, v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
+    Us.configuredFronts.map{case (k, v) => (k, generateConfigJson(Us, v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
+    Au.configuredFronts.map{case (k, v) => (k, generateConfigJson(Au, v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
     //Ok(Uk.configuredFronts.values.map(generateConfigJson).map(Json.prettyPrint).mkString("\n\n"))
     Uk.configuredFronts.values.map(s => s.map(d => (d.id ,generateCollectionJson(d))).map{case (a,b) => (a, Json.prettyPrint(b))}
       .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "uk/" + a else "news", b)

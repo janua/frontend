@@ -137,7 +137,7 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
       .filter(Switches.FaciaSwitch.isSwitchedOn && _ == "true" && path.nonEmpty)
       .map {_ => Ok.withHeaders("X-Accel-Redirect" -> s"/redirect/facia/$path")}
 
-  def generateJson(itemDescriptions: Seq[TrailblockDescription]): JsValue = {
+  def generateConfigJson(itemDescriptions: Seq[TrailblockDescription]): JsValue = {
     val converted = itemDescriptions map {i =>
       Map[String, String](
         "id" -> i.id,
@@ -153,7 +153,8 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
   }
 
   def generateSkeleton = Action {
-    Ok(Uk.configuredFronts.values.map(generateJson).map(Json.prettyPrint).mkString("\n\n"))
+    Uk.configuredFronts.map{case (k, v) => (k, generateConfigJson(v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
+    Ok(Uk.configuredFronts.values.map(generateConfigJson).map(Json.prettyPrint).mkString("\n\n"))
   }
 
   def render(path: String) = Action { implicit request =>

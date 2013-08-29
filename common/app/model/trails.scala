@@ -41,6 +41,8 @@ trait TrailblockDescription extends ExecutionContexts {
   val isConfigured: Boolean
 
   def query(): Future[Seq[Trail]]
+
+  def getQueryUrl: String = "NoPath"
 }
 
 class ItemTrailblockDescription(
@@ -53,12 +55,14 @@ class ItemTrailblockDescription(
   {
     lazy val section = id.split("/").headOption.filterNot(_ == "").getOrElse("news")
 
-  def query() = EditorsPicsOrLeadContentAndLatest(
-    ContentApi.item(id, edition)
-      .showEditorsPicks(true)
-      .pageSize(20)
-      .response
-  )
+  def internalQuery = ContentApi.item(id, edition)
+    .showEditorsPicks(true)
+    .pageSize(20)
+
+  override def getQueryUrl: String = internalQuery.path.map(_ + "?" + internalQuery.parameterHolder.values.map(v => v.name + "=" + v.value.getOrElse("")).mkString("&")).getOrElse("")
+
+  def query() = EditorsPicsOrLeadContentAndLatest(internalQuery.response)
+
 }
 
 object ItemTrailblockDescription {

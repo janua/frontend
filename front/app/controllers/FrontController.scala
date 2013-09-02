@@ -184,13 +184,13 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
     Au.configuredFronts.map{case (k, v) => (k, generateConfigJson(Au, v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}
     //Ok(Uk.configuredFronts.values.map(generateConfigJson).map(Json.prettyPrint).mkString("\n\n"))
     Uk.configuredFronts.values.map(s => s.map(d => (d.id ,generateCollectionJson(d))).map{case (a,b) => (a, Json.prettyPrint(b))}
-      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "uk/" + a else "news", b)
+      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "uk/" + a else "uk/" + "news", b)
     })
     Us.configuredFronts.values.map(s => s.map(d => (d.id ,generateCollectionJson(d))).map{case (a,b) => (a, Json.prettyPrint(b))}
-      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "us/" + a else "news", b)
+      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "us/" + a else "us/" + "news", b)
     })
     Au.configuredFronts.values.map(s => s.map(d => (d.id ,generateCollectionJson(d))).map{case (a,b) => (a, Json.prettyPrint(b))}
-      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "au/" + a else "news", b)
+      .foreach{case (a,b) => S3FrontsApi.putBlock(if (a.nonEmpty) "au/" + a else "au/" + "news", b)
     })
 
     Ok(Uk.configuredFronts.values.map(s => s.map(generateCollectionJson).map(Json.prettyPrint).mkString("\n")).mkString("\n\n"))

@@ -155,6 +155,7 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
   def generateCollectionJson(trailblockDescription: TrailblockDescription): JsValue = {
     val queryUrl = trailblockDescription.getQueryUrl
     if (queryUrl.nonEmpty) {
+      val id = Json.toJson(trailblockDescription.id)
       val live: JsValue = Json.toJson(Seq.empty[String])
       val draft = live
       val areEqual: JsValue = Json.toJson(true)
@@ -165,6 +166,7 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
       val contentApiUrl: JsValue = Json.toJson(trailblockDescription.getQueryUrl)
 
       Json.toJson(Map[String, JsValue](
+        ("id", id),
         "live" -> live,
         "draft" -> draft,
         "areEqual" -> areEqual,

@@ -42,7 +42,7 @@ trait TrailblockDescription extends ExecutionContexts {
 
   def query(): Future[Seq[Trail]]
 
-  def getQueryUrl: String = "NoPath"
+  def getQueryUrl: String = ""
 }
 
 class ItemTrailblockDescription(

@@ -153,32 +153,28 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
   }
 
   def generateCollectionJson(trailblockDescription: TrailblockDescription): JsValue = {
-    val queryUrl = trailblockDescription.getQueryUrl
-    if (queryUrl.nonEmpty) {
-      val id = Json.toJson(trailblockDescription.id)
-      val live: JsValue = Json.toJson(Seq.empty[String])
-      val draft = live
-      val areEqual: JsValue = Json.toJson(true)
-      val now = "%s".format(DateTime.now)
-      val lastUpdated: JsValue = Json.toJson(now)
-      val updateBy: JsValue = Json.toJson("Skeleton")
-      val updatedEmail: JsValue = Json.toJson("skeleton.email@theguardian.com")
-      val contentApiUrl: JsValue = Json.toJson(trailblockDescription.getQueryUrl)
+    val id = Json.toJson(trailblockDescription.id)
+    val live: JsValue = Json.toJson(Seq.empty[String])
+    val draft = live
+    val areEqual: JsValue = Json.toJson(true)
+    val now = "%s".format(DateTime.now)
+    val lastUpdated: JsValue = Json.toJson(now)
+    val updateBy: JsValue = Json.toJson("Skeleton")
+    val updatedEmail: JsValue = Json.toJson("skeleton.email@theguardian.com")
+    val contentApiUrl: JsValue = Json.toJson(trailblockDescription.getQueryUrl)
 
-      Json.toJson(Map[String, JsValue](
-        ("id", id),
-        "live" -> live,
-        "draft" -> draft,
-        "areEqual" -> areEqual,
-        "lastUpdated" -> lastUpdated,
-        "updatedBy" -> updateBy,
-        "updatedEmail" -> updatedEmail,
-        ("contentApiQuery", contentApiUrl)
-      ))
-    }
-    else
-      JsNull
+    Json.toJson(Map[String, JsValue](
+      ("id", id),
+      "live" -> live,
+      "draft" -> draft,
+      "areEqual" -> areEqual,
+      "lastUpdated" -> lastUpdated,
+      "updatedBy" -> updateBy,
+      "updatedEmail" -> updatedEmail,
+      ("contentApiQuery", contentApiUrl)
+    ))
   }
+
 
   def generateSkeleton = Action {
     Uk.configuredFronts.map{case (k, v) => (k, generateConfigJson(Uk, v))}.foreach{case (d, j) => S3FrontsApi.putConfig(d, Json.prettyPrint(j))}

@@ -59,7 +59,10 @@ class ItemTrailblockDescription(
     .showEditorsPicks(true)
     .pageSize(20)
 
-  override def getQueryUrl: String = internalQuery.path.map(_ + "?" + internalQuery.parameterHolder.values.map(v => v.name + "=" + v.value.getOrElse("")).mkString("&")).getOrElse("")
+  override def getQueryUrl: String = {
+    val query = internalQuery.path.map(_ + "?" + internalQuery.parameterHolder.values.map(v => v.name + "=" + v.value.getOrElse("")).mkString("&")).getOrElse("")
+    query.split("http://prod-mq-elb.content.guardianapis.com/api/").filter(_.nonEmpty).head
+  }
 
   def query() = EditorsPicsOrLeadContentAndLatest(internalQuery.response)
 

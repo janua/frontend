@@ -11,6 +11,22 @@ import play.api.libs.json._
 import concurrent.Future
 import common.editions.{Au, Us, Uk}
 import org.joda.time.DateTime
+import views.support._
+import model.Trailblock
+import scala.Some
+import model.Trailblock
+import scala.Some
+import model.Trailblock
+import scala.Some
+import model.Trailblock
+import scala.Some
+import model.Trailblock
+import model.Trailblock
+import model.Trailblock
+import model.Trailblock
+import model.Trailblock
+import model.Trailblock
+import model.Trailblock
 
 
 // TODO, this needs a rethink, does not seem elegant
@@ -144,12 +160,23 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
         ("id", (edition.id.toLowerCase + "/" + {if (i.id.nonEmpty) i.id else "news"} + "/top-stories")),
         "displayName" -> i.name,
         "max" -> i.numItemsVisible.toString,
-        "style" -> i.style.map(_.className.toString).getOrElse(""),
+        "style" -> i.style.map(getStyle).getOrElse(""),
         "section" -> i.section,
         "showmore" -> i.showMore.toString
       )
     }
     Json.toJson(converted)
+  }
+
+  def getStyle(s: Style): String = s match {
+    case s if s == Featured => "featured"
+    case s if s == Thumbnail => "thumbnail"
+    case s if s == Headline => "headline"
+    case s if s == SectionFront => "sectionfront"
+    case s if s == Masthead => "masthead"
+    case s if s == FastNews => "fastnews"
+    case s if s == SectionZone => "sectionzone"
+    case _ => ""
   }
 
   def generateCollectionJson(trailblockDescription: TrailblockDescription): JsValue = {

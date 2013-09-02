@@ -6,6 +6,8 @@
 # For dev machines
 GET     /assets/*file                                                                         controllers.Assets.at(path="/public", file)
 
+GET     /faciaagent/*path                                                                     controllers.FaciaController.renderFaciaAgent(path)
+
 GET     /$path<(us|uk|au)?>                                                                   controllers.FaciaController.render(path)
 GET     /$path<(us|uk|au)?>.json                                                              controllers.FaciaController.render(path)
 GET     /$path<(\w\w/)?(culture|sport|australia|commentisfree|business|money)>                controllers.FaciaController.render(path)

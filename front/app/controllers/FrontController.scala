@@ -146,7 +146,6 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
         "max" -> i.numItemsVisible.toString,
         "style" -> i.style.map(_.className.toString).getOrElse(""),
         "section" -> i.section,
-        "isConfigured" -> i.isConfigured.toString,
         "showmore" -> i.showMore.toString
       )
     }

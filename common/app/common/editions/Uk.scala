@@ -90,20 +90,6 @@ object Uk extends Edition(
 
     Editionalise("money", Uk) -> Seq(
       ItemTrailblockDescription("money", "Money", numItemsVisible = 20, style = Some(Featured))
-    ),
-
-    Editionalise("australia", Uk) -> Seq(
-      ItemTrailblockDescription("", "News", numItemsVisible = 8, style = Some(Featured), showMore = false)(Au),
-      ItemTrailblockDescription("sport", "Sport", numItemsVisible = 3, style = Some(Featured), showMore = false)(Au),
-      ItemTrailblockDescription("sport/australia-sport", "Australia sport", numItemsVisible = 3, style = Some(Thumbnail), showMore = false)(Au),
-      Au.cultureCustomBlock,
-      Au.commentCustomBlock,
-      ItemTrailblockDescription("lifeandstyle", "Life and style", numItemsVisible = 1, style = Some(Thumbnail), showMore = false),
-      ItemTrailblockDescription("technology", "Technology", numItemsVisible = 1, style = Some(Thumbnail), showMore = false)(Au),
-      ItemTrailblockDescription("science", "Science", numItemsVisible = 1, style = Some(Thumbnail), showMore = false),
-      ItemTrailblockDescription("environment", "Environment", numItemsVisible = 1, style = Some(Thumbnail), showMore = false),
-      Au.videoCustomBlock
-
     )
   )
 

@@ -15,17 +15,25 @@ trait WsHttp extends Http[Future] with ExecutionContexts {
   import java.net.URLEncoder.encode
 
   override def GET(url: String, headers: Iterable[(String, String)]) = {
-    val urlWithHost = url + s"&host-name=${encode(host.name, "UTF-8")}"
+    val urlWithHost = url + s"&FRANCIS=true&host-name=${encode(host.name, "UTF-8")}"
 
+    println(urlWithHost)
+
+    val response = WS.url(urlWithHost).withHeaders(headers.toSeq: _*).withTimeout(2000).get()
     val start = currentTimeMillis
-    val response = WS.url(urlWithHost).withHeaders(headers.toSeq: _*).get()
 
     // record metrics
     response.onSuccess {
-      case _ => HttpTimingMetric.recordTimeSpent(currentTimeMillis - start)
+      case _ => {
+        println("Success: %s: %s".format(currentTimeMillis - start, urlWithHost))
+        HttpTimingMetric.recordTimeSpent(currentTimeMillis - start)
+      }
     }
     response.onFailure {
-      case e: Throwable if isTimeout(e) => HttpTimeoutCountMetric.increment
+      case e: Throwable if isTimeout(e) => {
+        println("Failed: %s: %s".format(currentTimeMillis - start, urlWithHost))
+        HttpTimeoutCountMetric.increment
+      }
     }
     response
   }.map {

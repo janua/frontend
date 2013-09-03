@@ -42,7 +42,6 @@ class Front extends Logging {
 
   def refresh() {
     log.info("Refreshing Front")
-    allFronts.foreach(_.refresh())
     ConfigAgent.refresh()
     refreshPageFrontAgent()
   }

@@ -53,8 +53,6 @@ trait ApiQueryDefaults extends QueryDefaults with implicits.Collections with Log
                 .showTags("all")
                 .showFields(trailFields)
                 .showInlineElements(inlineElements)
-                .showMedia("all")
-                .showReferences(references)
                 .showStoryPackage(true)
                 .tag(supportedTypes)
     query.response.onFailure{case t: Throwable => log.warn("%s: %s".format(id, t.toString))}
@@ -67,9 +65,7 @@ trait ApiQueryDefaults extends QueryDefaults with implicits.Collections with Log
                 .edition(edition.id)
                 .showTags("all")
                 .showInlineElements(inlineElements)
-                .showReferences(references)
                 .showFields(trailFields)
-                .showMedia("all")
                 .tag(supportedTypes)
     query.response.onFailure{case t: Throwable => log.warn("%s".format(t.toString))}
     query

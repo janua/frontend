@@ -29,7 +29,10 @@ class Front extends Logging {
       }
       oldValue ++ newFrontsFiltered
     }
-    pageFrontAgent().values.foreach(_.refresh())
+    pageFrontAgent().values.zipWithIndex map {
+      case (pageFront, index) => AkkaAsync(index%20) { pageFront.refresh()}
+    }
+    //pageFrontAgent().values.foreach(_.refresh())
   }
 
   def refresh() {

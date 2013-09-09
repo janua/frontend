@@ -37,7 +37,7 @@ trait ParseConfig extends ExecutionContexts {
   }
   def getConfig(id: String): Future[Seq[Config]] = getConfigMap(id) map { configMap =>
     configMap.map(parseConfig)
-  }
+  } fallbackTo Future(Nil)
 
   def parseConfig(json: JsValue): Config =
     Config(
@@ -70,7 +70,10 @@ trait ParseCollection extends ExecutionContexts with Logging {
     val collectionUrl = s"${Configuration.frontend.store}/${S3FrontsApi.location}/collection/$id/collection.json"
     log.info(s"loading running order configuration from: $collectionUrl")
     val response: Future[Response] = WS.url(collectionUrl).withTimeout(2000).get()
-    parseResponse(response, edition)
+    val x = parseResponse(response, edition)
+    x.fallbackTo(Future.successful(Collection(Nil)))
+    x.onFailure{case t: Throwable => println("getCollection fail: %s".format(x.toString))}
+    x
   }
 
   private def parseResponse(response: Future[Response], edition: Edition): Future[Collection] = {
@@ -94,6 +97,10 @@ trait ParseCollection extends ExecutionContexts with Logging {
             contentApiResults <- contentApiQuery
           } yield (idSearchResults ++ contentApiResults).take(max)
 
+          results.onFailure{case t: Throwable => log.warn("Results FAIL: %s".format(t.toString))}
+          results.onSuccess{case l => log.warn("Results SUCCESS: %s".format(l.toString))}
+          results fallbackTo Future.successful(Collection(Nil))
+
           results map {
             case l: List[Content] => Collection(l.toSeq)
           }
@@ -112,12 +119,15 @@ trait ParseCollection extends ExecutionContexts with Logging {
       Future(Nil)
     }
     else {
-      val results = articles.foldLeft(Future[List[Content]](Nil)){(foldList, id) =>
-        val response = ContentApi.item(id, edition).showFields("all").response
-        response.onFailure{case t: Throwable => log.warn("%s: %s".format(id, t.toString))}
-        for {l <- foldList; itemResponse <- response} yield {
-          itemResponse.content.map(Content(_)).map(_ +: l).getOrElse(l)
+      val results = articles.zipWithIndex.foldLeft(Future[List[Content]](Nil)){case (foldList, (id, index)) =>
+        val x = AkkaAsync.apply(index % 20) {
+          val response = ContentApi.item(id, edition).showFields("all").response
+          response.onFailure{case t: Throwable => log.warn("%s: %s".format(id, t.toString))}
+          for {l <- foldList; itemResponse <- response} yield {
+            itemResponse.content.map(Content(_)).map(_ +: l).getOrElse(l)
+          }
         }
+        x.flatMap(f => f)
       }
       val sorted = results map { _.sortBy(t => articles.indexWhere(_ == t.id))}
       sorted
@@ -139,12 +149,18 @@ trait ParseCollection extends ExecutionContexts with Logging {
         }
       }
       case Path(id)  => {
-        val search = ContentApi.item(id, edition)
-        val newSearch = queryParamsWithEdition.foldLeft(search){
-          case (query, (key, value)) => query.stringParam(key, value)
-        }.showFields("all")
-        newSearch.response map { r =>
-          r.editorsPicks.map(Content(_)) ++ r.results.map(Content(_))
+        if (id.contains("sport")){
+          println("Failure! %s".format(id))
+          Future.failed(throw new Throwable)
+        }
+        else {
+          val search = ContentApi.item(id, edition)
+          val newSearch = queryParamsWithEdition.foldLeft(search){
+            case (query, (key, value)) => query.stringParam(key, value)
+          }.showFields("all")
+          newSearch.response map { r =>
+            r.editorsPicks.map(Content(_)) ++ r.results.map(Content(_))
+          }
         }
       }
     }
@@ -160,8 +176,16 @@ class Query(id: String, edition: Edition) extends ParseConfig with ParseCollecti
 
   def getItems: Future[List[(Config, Collection)]] = {
     val futureConfig = getConfig(id) map {config =>
-      config map {c => c -> getCollection(c.id, edition)}
+      config map {c =>
+        val temp = getCollection(c.id, edition)
+        temp.onFailure{case t: Throwable => "GetItems Fail".format(t.toString)}
+        temp.onSuccess{case t => "GetItems Success".format(t.toString)}
+        c -> temp
+      }
     }
+    //futureConfig.fallbackTo(Future(Nil))
+    futureConfig.onFailure{case t: Throwable => println("FutureConfig FAIL: %s %s".format(id, t.toString))}
+    futureConfig.onSuccess{case l => println("FutureConfig SUCCESS: %s".format(l.toString))}
     futureConfig map (_.toVector) flatMap { configMapping =>
         configMapping.foldRight(Future(List[(Config, Collection)]()))((configMap, foldList) =>
           for {

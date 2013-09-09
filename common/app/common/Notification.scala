@@ -21,7 +21,7 @@ object Notification extends Logging {
       .withSubject(subject)
       .withMessage(message)
 
-    AkkaAsync {
+    AkkaAsync(1) {
       log.info("Issuing SNS notification for switch change.")
       sns.publish(request)
     }

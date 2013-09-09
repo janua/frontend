@@ -16,7 +16,9 @@ class Front extends Logging {
 
   def refresh() {
     log.info("Refreshing Front")
-    allFronts.foreach(_.refresh())
+    allFronts.zipWithIndex foreach {
+      case (front, index) => AkkaAsync(index%20) { front.refresh() }
+    }
   }
 
   def apply(path: String): Seq[Trailblock] = fronts(path)()

@@ -140,6 +140,12 @@ class FaciaController extends Controller with Logging with JsonTrails with Execu
       Action { Ok.withHeaders("X-Accel-Redirect" -> "/redirect/film/film") }
   }
 
+  def renderFaciaAgent(path: String) = Action {
+    val faciaPage = front.pageFrontAgent()(path)()
+    //Ok(faciaPage.collections.map{case (a,b) => a -> b.items.map(_.url)}.mkString("\n"))
+    Ok(faciaPage.collections.toString)
+  }
+
   def render(path: String) = Action { implicit request =>
 
       val editionalisedPath = editionPath(path, Edition(request))

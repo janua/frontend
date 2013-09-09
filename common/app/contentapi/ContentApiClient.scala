@@ -57,7 +57,8 @@ trait ApiQueryDefaults extends QueryDefaults with implicits.Collections with Log
                 .showReferences(references)
                 .showStoryPackage(true)
                 .tag(supportedTypes)
-    query.response.onFailure{case t: Throwable => log.warn("%s: %s".format(id, t.toString))}
+    query.response.onFailure{case t: Throwable => log.warn("CSV FAILURE, %s".format(id))}
+    query.response.onSuccess{case _ => log.info(s"CSV SUCCESS, ${id}")}
     query
   }
 
@@ -71,7 +72,8 @@ trait ApiQueryDefaults extends QueryDefaults with implicits.Collections with Log
                 .showFields(trailFields)
                 .showMedia("all")
                 .tag(supportedTypes)
-    query.response.onFailure{case t: Throwable => log.warn("%s".format(t.toString))}
+    query.response.onFailure{case t: Throwable => log.warn("CSV FAILURE, search")}
+    query.response.onSuccess{case _ => log.info(s"CSV SUCCESS, search")}
     query
   }
 }

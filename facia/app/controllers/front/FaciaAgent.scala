@@ -14,6 +14,7 @@ import scala.Some
 import play.api.libs.json.JsObject
 import services.S3FrontsApi
 import views.support._
+import scala.util.{Success, Random}
 
 object Path {
   def unapply[T](uri: String) = Some(uri.split('?')(0))
@@ -94,9 +95,11 @@ trait ParseCollection extends ExecutionContexts with Logging {
             contentApiResults <- contentApiQuery
           } yield (idSearchResults ++ contentApiResults).take(max)
 
-          results map {
+          val x = results map {
             case l: List[Content] => Collection(l.toSeq)
           }
+          x.onFailure{case t: Throwable => println("x")}
+          x
           //TODO: Removal of fallback forces full chain to fail
 
         case _ =>
@@ -120,7 +123,13 @@ trait ParseCollection extends ExecutionContexts with Logging {
         }
       }
       val sorted = results map { _.sortBy(t => articles.indexWhere(_ == t.id))}
-      sorted
+      if (Random.nextInt() % 2 > 0) {
+        println("Failed articles for %s %s".format(edition.id, articles.mkString(",")))
+        Future.failed(throw new Throwable("ON purpose error"))
+      }
+      else {
+        sorted
+      }
     }
   }
 
@@ -158,22 +167,52 @@ trait ParseCollection extends ExecutionContexts with Logging {
 class Query(id: String, edition: Edition) extends ParseConfig with ParseCollection {
   private lazy val queryAgent = AkkaAgent[List[(Config, Collection)]](Nil)
 
-  def getItems: Future[List[(Config, Collection)]] = {
+  def getItems: Future[List[(Config, Either[Throwable, Collection])]] = {
     val futureConfig = getConfig(id) map {config =>
       config map {c => c -> getCollection(c.id, edition)}
     }
-    futureConfig map (_.toVector) flatMap { configMapping =>
-        configMapping.foldRight(Future(List[(Config, Collection)]()))((configMap, foldList) =>
+    futureConfig.onFailure{case t: Throwable => println("4F %s".format(id))}
+    futureConfig.onSuccess{case t => println("4S %s".format(id))}
+    val f = futureConfig.map(_.toVector).flatMap{ configMapping =>
+        configMapping.foldRight(Future(List[(Config, Either[Throwable, Collection])]()))((configMap, foldList) =>
           for {
             newList <- foldList
-            collection <- configMap._2
+            collection <- {configMap._2.map(Right(_)).recover{case t: Throwable => Left(t)}}
           }
           yield (configMap._1, collection) +: newList)
+          /*  collection match {
+              case Right(r) => (configMap._1, r) +: newList
+              case Left(_) => newList
+            }
+          })*/
     }
+    f.onFailure{case t: Throwable => println("4.5F %s".format(id))}
+    f.onSuccess{case t => println("4.5S %s".format(id))}
+    //f.map{_.collect{case (c, Some(o)) => (c,o)}}//.filter{case (config, collectionOption) => collectionOption.isDefined }
+    f
+     //.map{case (config, collectionOption) => (config, collectionOption.get)}
   }
 
-  def refresh() = getItems map {m =>
-    queryAgent.send(m)
+  def refresh() = {
+    val currentState = queryAgent.get()
+    getItems map {m =>
+      if (currentState.size > m.size)
+      {
+        println("Send Function %s %s".format(currentState.size, m.size))
+        queryAgent.send{ old =>
+          m.foldRight(old){(configTuple, foldList) =>
+            if (!foldList.map(_._1).contains(configTuple._1))
+              configTuple +: foldList
+            else
+              configTuple +: foldList.dropWhile{_._1.id == configTuple._1.id}
+          }.toList
+        }
+      }
+      else {
+        println("Send Direct %s %s".format(currentState.size, m.size))
+        queryAgent.send(m)
+      }
+    }
   }
 
   def close() = queryAgent.close()

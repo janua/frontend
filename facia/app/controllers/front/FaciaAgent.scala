@@ -123,8 +123,8 @@ trait ParseCollection extends ExecutionContexts with Logging {
         }
       }
       val sorted = results map { _.sortBy(t => articles.indexWhere(_ == t.id))}
-      if (Random.nextInt() % 2 > 0) {
-        println("Failed articles for %s %s".format(edition.id, articles.mkString(",")))
+      if (articles.mkString("").contains("obama")) {
+        println("Failed Obama in %s %s".format(edition.id, articles.mkString(",")))
         Future.failed(throw new Throwable("ON purpose error"))
       }
       else {
@@ -193,27 +193,19 @@ class Query(id: String, edition: Edition) extends ParseConfig with ParseCollecti
      //.map{case (config, collectionOption) => (config, collectionOption.get)}
   }
 
-  def refresh() = {
-    val currentState = queryAgent.get()
+  def refresh() =
     getItems map {m =>
-      if (currentState.size > m.size)
-      {
-        println("Send Function %s %s".format(currentState.size, m.size))
-        queryAgent.send{ old =>
-          m.foldRight(old){(configTuple, foldList) =>
-            if (!foldList.map(_._1).contains(configTuple._1))
-              configTuple +: foldList
-            else
-              configTuple +: foldList.dropWhile{_._1.id == configTuple._1.id}
-          }.toList
+      queryAgent.send{ old =>
+        lazy val oldConfigMap = old.map{case (c, e) => (c.id, e)}.toMap
+        m.flatMap{collection =>
+          collection match {
+            case (config, Left(t)) => oldConfigMap.get(config.id).map(c => (config, c))
+            case (config, Right(c)) => Some((config, c))
+          }
         }
       }
-      else {
-        println("Send Direct %s %s".format(currentState.size, m.size))
-        queryAgent.send(m)
-      }
     }
-  }
+
 
   def close() = queryAgent.close()
 

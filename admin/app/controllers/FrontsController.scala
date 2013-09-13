@@ -94,4 +94,14 @@ object FrontsController extends Controller with Logging with ExecutionContexts {
     } getOrElse NotFound
   }
 
+  def updateItemMeta(id: String) = AuthAction { request =>
+    (for {
+      itemMeta <- request.body.asJson map JsonExtract.itemMeta
+      faciaCollection <- FrontsApi.getBlock(id)
+    } yield {
+      UpdateActions.updateItemMeta(faciaCollection, itemMeta)
+      Ok
+    }).getOrElse(NotFound)
+  }
+
 }

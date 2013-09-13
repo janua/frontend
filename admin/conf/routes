@@ -46,6 +46,7 @@ POST      /fronts/collection/*id         controllers.FrontsController.updateBloc
 DELETE    /fronts/collection/*id         controllers.FrontsController.deleteTrail(id)
 GET       /fronts/collection             controllers.FrontsController.listCollections
 GET       /fronts/config                 controllers.FrontsController.listConfigs
+POST      /fronts/collection/item-meta/*id      controllers.FrontsController.updateItemMeta(id)
 
 # Analytics
 GET     /analytics/kpis                  controllers.AnalyticsController.kpis()

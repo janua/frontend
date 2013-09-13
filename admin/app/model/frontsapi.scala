@@ -23,14 +23,17 @@ case class Trail(
                   id: String,
                   title: Option[String],
                   trailImage: Option[String],
-                  linkText: Option[String]
+                  linkText: Option[String],
+                  meta: Option[Map[String, String]]
                   ) extends JsonShape
 
 
 case class BlockActionJson(publish: Option[Boolean], discard: Option[Boolean]) extends JsonShape
 case class UpdateTrailblockJson(config: UpdateTrailblockConfigJson) extends JsonShape
 case class UpdateTrailblockConfigJson(contentApiQuery: Option[String], max: Option[Int], min: Option[Int], displayName: Option[String])
-case class UpdateList(item: String, position: Option[String], after: Option[Boolean], live: Boolean, draft: Boolean) extends JsonShape
+case class UpdateList(item: String, position: Option[String], after: Option[Boolean], meta: Option[Map[String, String]], live: Boolean, draft: Boolean) extends JsonShape
+
+case class ItemMetaUpdate(id: String, meta: Map[String, String], live: Boolean, draft: Boolean)
 
 trait JsonExtract {
   implicit val updateListRead = Json.reads[UpdateList]
@@ -48,6 +51,13 @@ trait JsonExtract {
       .toRight("Invalid Json")
 
   def build(v: JsValue) = extractJson(v).right.toOption
+
+  def itemMeta(v: JsValue) = ItemMetaUpdate(
+    (v \ "item").as[String],
+    (v \ "meta").as[Map[String, String]],
+    (v \ "live").as[Boolean],
+    (v \ "draft").as[Boolean]
+  )
 }
 
 object JsonExtract extends JsonExtract
@@ -57,7 +67,7 @@ trait UpdateActions {
   lazy val defaultMinimumTrailblocks = 0
   lazy val defaultMaximumTrailblocks = 20
 
-  def emptyTrailWithId(id: String) = Trail(id, None, None, None)
+  def emptyTrailWithId(id: String) = Trail(id, None, None, None, None)
 
   def shouldUpdate[T](cond: Boolean, original: T, updated: => T) = if (cond) updated else original
 
@@ -77,7 +87,14 @@ trait UpdateActions {
         updateList(update, l)
       } orElse {if (update.draft) Some(updateList(update, block.live)) else None}
       lazy val updatedLive = updateList(update, block.live)
-      updateCollection(id, block, update, identity, updatedDraft, updatedLive)
+
+      val withNewMeta = {
+        for {
+          metaMap <- update.meta
+        } yield updateItemMeta(block, metaMap)
+      } getOrElse block
+
+      updateCollection(id, withNewMeta, update, identity, updatedDraft, updatedLive)
     } getOrElse {
       UpdateActions.createBlock(id, identity, update)
     }
@@ -120,6 +137,20 @@ trait UpdateActions {
         FrontsApi.putBlock(id, newBlock, identity)
       }
     }
+  }
+
+  def updateItemMeta(faciaCollection: Block, itemMeta: ItemMetaUpdate) {
+
+  }
+
+  def updateItemMetaList(l: List[Trail], m: Map[String, String]): List[Trail] = {
+    lazy val fields: Seq[String] = Seq("webTitle")
+    lazy val newMetaMap = m.filter{case (k, v) => fields.contains(k)}
+
+    for {
+      trail <- l
+      metaMap <- trail.meta
+    } yield trail.copy(meta = Some(metaMap ++ newMetaMap))
   }
 }
 

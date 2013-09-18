@@ -14,6 +14,7 @@ import scala.Some
 import play.api.libs.json.JsObject
 import services.S3FrontsApi
 import views.support._
+import scala.collection.immutable.ListSet
 
 object Path {
   def unapply[T](uri: String) = Some(uri.split('?')(0))
@@ -29,22 +30,29 @@ object Seg {
 
 trait Deduping {
 
-  def dedupe(faciaPage: FaciaPage): FaciaPage = {
-    val newCollection = faciaPage.collections.map {
-      case (head@(config: Config, items: Collection)) :: tail: List[(Config, Collection)] =>
-        val cut = tail.drop(faciaPage.collections.indexOf(head))
-        val newItems = items.items.filter(has(cut, _))
-        println("Old Items: %s".format(items.items.map(_.url)))
-        println("New Items: %s".format(newItems.map(_.url)))
-        (config, items.copy(items = newItems))
+  def dedupee(faciaPage: FaciaPage): FaciaPage = {
+    def f(l: List[(Config, Collection)]): List[(Config, Collection)] = l match {
+      case head@(config, items) :: tail =>
+        val newItems = items.items.distinct.filterNot(has(tail,_))
+        println("Old items: %s".format(items.items.map(_.url)))
+        println("New items: %s".format(newItems.map(_.url)))
+        (config, items.copy(items = newItems)) +: f(tail)
+      case _ => Nil
     }
+    val newCollection = f(faciaPage.collections)
     faciaPage.copy(collections = newCollection)
   }
 
-  def has(items: List[(Config, Collection)], trail: Trail): Boolean =
-    items.filterNot {
-      case (c, i) => i.items.contains(trail)
-    }.isEmpty
+  def dedupe(faciaPage: FaciaPage): FaciaPage = {
+    faciaPage.copy(collections = faciaPage.collections.foldLeft(List[(Config, Collection)]()) {
+      case (l, item) =>
+        val newItems = item._2.items.distinct.filterNot(has(l, _))
+        l :+ (item._1, item._2.copy(items = newItems))
+    })
+  }
+
+  private def has(items: List[(Config, Collection)], trail: Trail): Boolean =
+    items.flatMap{c => c._2.items.map(_.url)}.contains(trail.url)
 }
 
 trait ParseConfig extends ExecutionContexts {

@@ -30,23 +30,23 @@ object Seg {
 
 trait Deduping {
 
-  def dedupee(faciaPage: FaciaPage): FaciaPage = {
+  def dedupe(faciaPage: FaciaPage): FaciaPage = {
     def f(l: List[(Config, Collection)]): List[(Config, Collection)] = l match {
       case head@(config, items) :: tail =>
-        val newItems = items.items.distinct.filterNot(has(tail,_))
-        println("Old items: %s".format(items.items.map(_.url)))
-        println("New items: %s".format(newItems.map(_.url)))
+        //First, remove dupes within THIS collection
+        //Second, filter out the ones that exist ahead in tail
+        val newItems = items.items.map(_.url).distinct.flatMap(id => items.items.find(_.url==id)).filterNot(has(tail, _))
         (config, items.copy(items = newItems)) +: f(tail)
       case _ => Nil
     }
-    val newCollection = f(faciaPage.collections)
-    faciaPage.copy(collections = newCollection)
+    val dedupedReversedCollection = f(faciaPage.collections.reverse)
+    faciaPage.copy(collections = dedupedReversedCollection.reverse)
   }
 
-  def dedupe(faciaPage: FaciaPage): FaciaPage = {
+  def dedupea(faciaPage: FaciaPage): FaciaPage = {
     faciaPage.copy(collections = faciaPage.collections.foldLeft(List[(Config, Collection)]()) {
       case (l, item) =>
-        val newItems = item._2.items.distinct.filterNot(has(l, _))
+        val newItems = item._2.items.map(_.url).distinct.flatMap(id => item._2.items.find(_.url==id)).filterNot(has(l, _))
         l :+ (item._1, item._2.copy(items = newItems))
     })
   }

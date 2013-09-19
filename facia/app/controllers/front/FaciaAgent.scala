@@ -30,7 +30,7 @@ object Seg {
 
 trait Deduping {
 
-  def dedupe(faciaPage: FaciaPage): FaciaPage = {
+  def dedupeRecursiveReverse(faciaPage: FaciaPage): FaciaPage = {
     def f(l: List[(Config, Collection)]): List[(Config, Collection)] = l match {
       case head@(config, items) :: tail =>
         //First, remove dupes within THIS collection
@@ -43,11 +43,19 @@ trait Deduping {
     faciaPage.copy(collections = dedupedReversedCollection.reverse)
   }
 
-  def dedupea(faciaPage: FaciaPage): FaciaPage = {
+  def dedupeFoldLeftNonReverse(faciaPage: FaciaPage): FaciaPage = {
     faciaPage.copy(collections = faciaPage.collections.foldLeft(List[(Config, Collection)]()) {
       case (l, item) =>
         val newItems = item._2.items.map(_.url).distinct.flatMap(id => item._2.items.find(_.url==id)).filterNot(has(l, _))
         l :+ (item._1, item._2.copy(items = newItems))
+    })
+  }
+
+  def dedupe(faciaPage: FaciaPage): FaciaPage = {
+    faciaPage.copy(collections = faciaPage.collections.reverse.foldLeft(List[(Config, Collection)]()) {
+      case (l, item) =>
+        val newItems = item._2.items.map(_.url).distinct.flatMap(id => item._2.items.find(_.url==id)).filterNot(has(l, _))
+        (item._1, item._2.copy(items = newItems)) +: l
     })
   }
 

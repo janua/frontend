@@ -34,6 +34,7 @@ trait SNS {
         new UnsubscribeRequest()
           .withSubscriptionArn(subscriptionId)
       )
+      agent.send(None)
     }
   }
 

@@ -3,6 +3,7 @@ package controllers.front
 import common.{AkkaAsync, Jobs}
 import play.api.GlobalSettings
 import scala.concurrent.duration._
+import service.SNS
 
 trait FrontLifecycle extends GlobalSettings {
   override def onStart(app: play.api.Application) {
@@ -25,6 +26,7 @@ trait FrontLifecycle extends GlobalSettings {
 
   override def onStop(app: play.api.Application) {
     Jobs.deschedule("FrontRefreshJob")
+    SNS.unsubscribe
     super.onStop(app)
   }
 }

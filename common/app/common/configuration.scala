@@ -40,6 +40,10 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val isNonProd = List("dev", "code", "gudev").contains(stage)
   }
 
+  object sns {
+    val faciaSns: String = "arn:aws:sns:eu-west-1:642631414762:facia-test-push"
+  }
+
   object switches {
     lazy val configurationUrl = configuration.getMandatoryStringProperty("switchboard.config.url")
   }

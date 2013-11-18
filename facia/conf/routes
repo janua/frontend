@@ -10,6 +10,9 @@ GET        /assets/*path                                                        
 GET        /                                                                                         controllers.FaciaController.editionRedirect(path = "")
 GET        /$path<(culture|sport|australia|commentisfree|business|money)>                            controllers.FaciaController.editionRedirect(path)
 
+POST       /receive controllers.NotifyController.receiveNotification
+GET        /subscribe   controllers.NotifyController.explicitSubscribe
+GET        /unsubscribe controllers.NotifyController.explicitUnsubscribe
 
 # Editionalised pages
 GET        /$path<(us|uk|au)?>                                                                       controllers.FaciaController.renderEditionFront(path)

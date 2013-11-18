@@ -191,7 +191,7 @@ class FaciaController extends Controller with Logging with JsonTrails with Execu
       Ok(views.html.fragments.responsiveViewer())
     }
   }
-
+  import A.s
 }
 
 object FaciaController extends FaciaController

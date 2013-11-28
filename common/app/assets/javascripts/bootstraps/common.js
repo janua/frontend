@@ -1,4 +1,3 @@
-/*global Imager:true */
 define([
     //Commmon libraries
     '$',
@@ -35,9 +34,10 @@ define([
     "modules/adverts/video",
     "modules/discussion/comment-count",
     "modules/gallery/lightbox",
-    "modules/facia/images",
     "modules/onward/history",
-    "modules/onward/sequence"
+    "modules/onward/sequence",
+    "modules/ui/message",
+    "modules/identity/autosignin"
 ], function (
     $,
     mediator,
@@ -55,7 +55,7 @@ define([
     popular,
     related,
     Router,
-    Images,
+    images,
     TopStories,
     Profile,
     Sections,
@@ -74,29 +74,17 @@ define([
     VideoAdvert,
     CommentCount,
     LightboxGallery,
-    faciaImages,
     History,
-    sequence
+    sequence,
+    Message,
+    AutoSignin
 ) {
 
     var modules = {
 
         upgradeImages: function () {
-            faciaImages.upgrade();
-
-            var images = new Images();
-            mediator.on('page:common:ready', function(config, context) {
-                images.upgrade(context);
-            });
-            mediator.on('fragment:ready:images', function(context) {
-                images.upgrade(context);
-            });
-            mediator.on('modules:related:loaded', function(config, context) {
-                images.upgrade(context);
-            });
-            mediator.on('modules:images:upgrade', function() {
-                $('body').addClass('images-upgraded');
-            });
+            images.upgrade();
+            images.listen();
         },
 
         initialiseNavigation: function (config) {
@@ -186,7 +174,8 @@ define([
         loadAnalytics: function () {
             var omniture = new Omniture();
 
-            mediator.on('page:common:deferred:loaded:omniture', function(config, context) {
+            mediator.on('page:common:deferred:loaded', function(config, context) {
+
                 omniture.go(config, function(){
                     // callback:
 
@@ -204,11 +193,6 @@ define([
                         var advertsAnalytics = new AdvertsAnalytics(config, context);
                     }
                 });
-            });
-
-            mediator.on('page:common:deferred:loaded', function(config, context) {
-
-                mediator.emit('page:common:deferred:loaded:omniture', config, context);
 
                 require(config.page.ophanUrl, function (Ophan) {
 
@@ -260,7 +244,6 @@ define([
                 mediator.on('window:resize', function () {
                     Adverts.hideAds();
                 });
-                
                 mediator.on('window:orientationchange', function () {
                     Adverts.hideAds();
                 });
@@ -300,28 +283,36 @@ define([
         // display a flash message to devices over 600px who don't have the mobile cookie
         displayReleaseMessage: function (config) {
 
-            var alreadyOptedIn = !!userPrefs.get('releaseMessage'),
-                releaseMessage = {
-                    show: function () {
-                        $('#header').addClass('js-site-message');
-                        $('.site-message').removeClass('u-h');
-                    },
-                    hide: function () {
-                        userPrefs.set('releaseMessage', true);
-                        $('#header').removeClass('js-site-message');
-                        $('.site-message').addClass('u-h');
-                    }
-                };
+            var path = (document.location.pathname) ? document.location.pathname : '/',
+                exitLink = '/preference/platform/desktop?page=' + encodeURIComponent(path + '?view=desktop'),
+                msg = '<p class="site-message__message">' +
+                            'You’re viewing an alpha release of the Guardian’s responsive website. <a href="/help/2013/oct/04/alpha-testing-and-evolution-of-our-mobile-site">Find out more</a>' +
+                      '</p>' +
+                      '<ul class="site-message__actions unstyled">' +
+                           '<li class="site-message__actions__item">' +
+                               '<i class="i i-comment-grey"></i>' +
+                               '<a href="http://survey.omniture.com/d1/hosted/815f9cfba1" data-link-name="feedback" target="_blank">We’d love to hear your feedback</a>' +
+                           '</li>' +
+                           '<li class="site-message__actions__item">' +
+                               '<i class="i i-back"></i>' +
+                                   '<a class="js-main-site-link" rel="nofollow" href="' + exitLink + '"' +
+                                       'data-link-name="opt-out">Opt-out and return to standard desktop site </a>' +
+                           '</li>' +
+                      '</ul>';
+
+            var releaseMessage = new Message('alpha');
+            var alreadyOptedIn = !!releaseMessage.hasSeen('releaseMessage');
 
             if (config.switches.releaseMessage && !alreadyOptedIn && (detect.getBreakpoint() !== 'mobile')) {
                 // force the visitor in to the alpha release for subsequent visits
                 Cookies.add("GU_VIEW", "mobile", 365);
+                releaseMessage.show(msg);
+            }
+        },
 
-                releaseMessage.show();
-
-                bean.on(document, 'click', '.js-site-message-close', function(e) {
-                    releaseMessage.hide();
-                });
+        unshackleParagraphs: function (config, context) {
+            if (userPrefs.isOff('para-indents')) {
+                $('.paragraph-spacing--indents', context).removeClass('paragraph-spacing--indents');
             }
         },
 
@@ -337,6 +328,14 @@ define([
                     });
                 }
                 sequence.init();
+            });
+        },
+
+        initAutoSignin : function() {
+           mediator.on('page:common:ready', function(config) {
+                if (config.switches && config.switches.facebookAutosignin && detect.getBreakpoint() !== 'mobile') {
+                    new AutoSignin(config).init();
+                }
             });
         },
 
@@ -362,9 +361,7 @@ define([
             if (!self.initialisedDeferred) {
                 self.initialisedDeferred = true;
                 modules.loadAdverts();
-                if (!config.switches.analyticsOnDomReady) {
-                    modules.loadAnalytics();
-                }
+                modules.loadAnalytics();
 
                 // TODO: make these run in event 'page:common:deferred:loaded'
                 modules.cleanupCookies(context);
@@ -378,8 +375,14 @@ define([
             this.initialised = true;
 
             mediator.on("page:common:ready", function(config, context){
-                modules.runAbTests(config, context);
-                modules.transcludeRelated(config, context);
+                try {
+                    modules.runAbTests(config, context);
+                    modules.transcludeRelated(config, context);
+                } catch(error) {
+                    // This catch ensures errors in AbTests and Related do not
+                    // affect the likelihood of reaching the analytics load.
+                    mediator.emit('module:error', 'Failed to run ab tests or transclude related: ' + error, 'bootstraps/common');
+                }
             });
 
             modules.windowEventListeners();
@@ -391,14 +394,13 @@ define([
             modules.transcludePopular();
             modules.loadVideoAdverts(config);
             modules.initClickstream();
-            if (config.switches.analyticsOnDomReady) {
-                modules.loadAnalytics();
-            }
             modules.transcludeCommentCounts();
             modules.initLightboxGalleries();
             modules.optIn();
             modules.displayReleaseMessage(config);
             modules.logReadingHistory();
+            modules.unshackleParagraphs(config, context);
+            modules.initAutoSignin(config);
         }
         mediator.emit("page:common:ready", config, context);
     };

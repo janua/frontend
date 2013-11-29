@@ -7,7 +7,6 @@ import play.api.libs.json.{JsValue, Json}
 
 
 object SubscriptionConfirmation {
-  def unapply(s: String): Option[SubscriptionConfirmation.type] = if (s == "SubscriptionRequest") Some(SubscriptionConfirmation) else None
   def unapply(json: JsValue): Option[String] =
     if ((json \ "Type").asOpt[String].filter(_ == "SubscriptionConfirmation").isDefined)
       (json \ "Token").asOpt[String]
@@ -16,7 +15,6 @@ object SubscriptionConfirmation {
 }
 
 object Notification {
-  def unapply(s: String): Option[Notification.type] = if (s == "Notification") Some(Notification) else None
   def unapply(json: JsValue): Option[JsValue] = if ((json \ "Type").asOpt[String].filter(_ == "Notification").isDefined) Some(json) else None
 }
 

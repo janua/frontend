@@ -8,6 +8,7 @@ import play.api.Play.current
 import java.io.{FileInputStream, File}
 import org.apache.commons.io.IOUtils
 import conf.Configuration
+import java.net.InetAddress
 
 class BadConfigurationException(property: String) extends RuntimeException(s"Property $property not configured")
 
@@ -37,6 +38,10 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     val secure = Play.application.configuration.getBoolean("guardian.secure").getOrElse(false)
 
     lazy val isNonProd = List("dev", "code", "gudev").contains(stage)
+  }
+
+  object sns {
+    val faciaSns: String = configuration.getMandatoryStringProperty("facia.sns")
   }
 
   object switches {
@@ -80,6 +85,10 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
   object mongo {
     lazy val connection = configuration.getMandatoryStringProperty("mongo.connection.readonly.password")
+  }
+
+  object hostMachine {
+    lazy val name = InetAddress.getLocalHost.getHostName
   }
 
   object site {

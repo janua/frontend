@@ -27,6 +27,8 @@ trait FrontLifecycle extends GlobalSettings {
   override def onStop(app: play.api.Application) {
     Jobs.deschedule("FrontRefreshJob")
     SNS.unsubscribe
+    ConfigAgent.close()
+    CollectionCache.close()
     super.onStop(app)
   }
 }

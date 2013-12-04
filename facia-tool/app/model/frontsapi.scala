@@ -5,6 +5,7 @@ import tools.FaciaApi
 import controllers.Identity
 import org.joda.time.DateTime
 import play.api.templates.HtmlFormat
+import play.api.libs.json.util._
 
 trait JsonShape
 
@@ -21,7 +22,7 @@ case class Block(
 
 case class Trail(
                   id: String,
-                  meta: Option[Map[String, String]]
+                  meta: Map[String, String]
                   ) extends JsonShape
 
 
@@ -32,7 +33,10 @@ case class UpdateList(item: String, position: Option[String], after: Option[Bool
 
 trait JsonExtract {
   implicit val updateListRead = Json.reads[UpdateList]
-  implicit val trailActionRead = Json.reads[Trail]
+  implicit val trailActionRead = (
+    (__ \ 'id).read[String] and
+    (__ \ 'meta).read[Option[Map[String, String]]].getOrElse(Map.empty)
+    )(Trail.apply _)
   implicit val blockActionRead = Json.reads[Block]
   implicit val blockActionJsonRead = Json.reads[BlockActionJson]
   implicit val updateMetaRead = Json.reads[UpdateTrailblockConfigJson]
@@ -118,14 +122,14 @@ trait UpdateActions {
       }
     }
 
-    splitList._1 ++ List(Trail(update.item, None)) ++ splitList._2
+    splitList._1 ++ List(Trail(update.item, Map.empty)) ++ splitList._2
   }
 
   def createBlock(id: String, identity: Identity, update: UpdateList) {
     if (update.live)
-      FaciaApi.putBlock(id, Block(id, None, List(Trail(update.item, update.itemMeta)), None, DateTime.now.toString, identity.fullName, identity.email, None), identity)
+      FaciaApi.putBlock(id, Block(id, None, List(Trail(update.item, update.itemMeta.getOrElse(Map.empty))), None, DateTime.now.toString, identity.fullName, identity.email, None), identity)
     else
-      FaciaApi.putBlock(id, Block(id, None, Nil, Some(List(Trail(update.item, update.itemMeta))), DateTime.now.toString, identity.fullName, identity.email, None), identity)
+      FaciaApi.putBlock(id, Block(id, None, Nil, Some(List(Trail(update.item, update.itemMeta.getOrElse(Map.empty)))), DateTime.now.toString, identity.fullName, identity.email, None), identity)
   }
 
   def updateTrailblockJson(id: String, updateTrailblock: UpdateTrailblockJson, identity: Identity) = {
@@ -148,9 +152,8 @@ trait UpdateActions {
 
     for {
       trail <- trailList
-      metaMap <- trail.meta.orElse(Option(Map.empty[String, String]))
     } yield {
-      if (id == trail.id) trail.copy(meta = Some(metaMap ++ newMetaMap)) else trail
+      if (id == trail.id) trail.copy(meta = trail.meta ++ newMetaMap) else trail
     }
   }
 

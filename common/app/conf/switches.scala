@@ -6,7 +6,6 @@ import implicits.Collections
 import play.api.Plugin
 import play.api.libs.ws.WS
 
-
 sealed trait SwitchState
 case object On extends SwitchState
 case object Off extends SwitchState
@@ -97,14 +96,14 @@ object Switches extends Collections {
     "Turns on our real-time KPIs",
     safeState = On)
 
+  val UserzoomSwitch = Switch("Analytics", "userzoom",
+    "Turns on userzoom survey popups",
+    safeState = Off)
+
   // Discussion Switches
 
   val DiscussionSwitch = Switch("Discussion", "discussion",
     "If this switch is on, comments are displayed on articles.",
-    safeState = Off)
-
-  val ShortDiscussionSwitch = Switch("Discussion", "short-discussion",
-    "If this switch is on, only 10 top level comments are requested from discussion api.",
     safeState = Off)
 
   val DiscussionCommentRecommend = Switch("Discussion", "discussion-comment-recommend",
@@ -225,17 +224,21 @@ object Switches extends Collections {
     "If this is switched on an AA test runs to prove the assignment of users in to segments is working reliably.",
     safeState = Off)
 
-  val ABLiveBlogShowMore = Switch("A/B Tests", "ab-live-blog-show-more",
-    "If this is switched on an AB test runs to trial the impact of only displaying 10 live blog blocks with a show more cta",
-    safeState = Off)
-
   val ABAlphaAdverts = Switch("A/B Tests", "ab-alpha-adverts",
+    "If this is switched on an AB test runs to trial new advertising user experiences and commercial models",
+    safeState = Off)
+  
+  val ABAlphaComm = Switch("A/B Tests - second tranche", "ab-alpha-comm",
     "If this is switched on an AB test runs to trial new advertising user experiences and commercial models",
     safeState = Off)
 
   val ABCommercialComponents = Switch("A/B Tests", "ab-commercial-components",
     "If this is switched on an AB test runs to test the new commercial components",
     safeState = Off)
+
+  val ABMobileFacebookAutosignin = Switch("A/B Tests", "ab-mobile-facebook-autosignin",
+    "If this is switched on an AB test runs to test facebook autosignin for mobile users",
+   safeState = Off)
 
   val ABImproveOnwardTrails = Switch("A/B Tests", "ab-improve-onward-trails",
     "If this is switched on an AB test runs to test re-ordering story packages",
@@ -269,15 +272,16 @@ object Switches extends Collections {
     "Switch to redirect to facia if request has X-Gu-Facia=true",
     safeState = Off  )
 
+  val UkAlphaSwitch = Switch("Facia", "facia-uk-alpha",
+    "If this is switched on then UK-Alpha will be served for requests with the cookie GU_UK_ALPHA",
+    safeState = Off
+  )
+
   // Image Switch
 
   val ServeWebPImagesSwitch = Switch("Image Server", "serve-webp-images",
     "If this is switched on the Image server will use the webp format when requested.",
-    safeState = Off)
-
-  val AddVaryAcceptHeader = Switch("Image Server", "add-vary-accept-header",
-    "If this is switched on the Image server will add vary-accept to responses.",
-    safeState = Off)
+    safeState = On)
 
   val ImageServerSwitch = Switch("Image Server", "image-server",
     "If this switch is on images will be served off i.guim.co.uk (dynamic image host).",
@@ -295,7 +299,6 @@ object Switches extends Collections {
     DiscussionPostCommentSwitch,
     DiscussionTopCommentsSwitch,
     OpenCtaSwitch,
-    ShortDiscussionSwitch,
     SwipeNav,
     SwipeNavOnClick,
     FontSwitch,
@@ -321,16 +324,16 @@ object Switches extends Collections {
     LiveSummarySwitch,
     LiveCricketSwitch,
     LiveStatsSwitch,
+    UserzoomSwitch,
     FaciaSwitch,
     AdSlotImpressionStatsSwitch,
-    ABLiveBlogShowMore,
     CssFromStorageSwitch,
     ElasticSearchSwitch,
     ShowUnsupportedEmbedsSwitch,
     ServeWebPImagesSwitch,
-    AddVaryAcceptHeader,
     ArticleKeywordsSwitch,
     ABAlphaAdverts,
+    ABAlphaComm,
     ABCommercialComponents,
     EditionRedirectLoggingSwitch,
     FacebookAutoSigninSwitch,
@@ -338,7 +341,9 @@ object Switches extends Collections {
     ABOnwardIntrusive,
     ABInitialShowMore,
     AdDwellTimeLoggerSwitch,
-    ABShowMoreLayout
+    ABShowMoreLayout,
+    ABMobileFacebookAutosignin,
+    UkAlphaSwitch
   )
 
   val grouped: List[(String, Seq[Switch])] = all.toList stableGroupBy { _.group }

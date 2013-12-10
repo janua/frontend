@@ -52,6 +52,7 @@ case class MasterClass(id: String,
                        capacity: Int,
                        guardianUrl: String,
                        firstParagraph: String = "") extends Ad {
+
   def isOpen = {status == "Live"}
 
   lazy val displayPrice = {
@@ -62,7 +63,11 @@ case class MasterClass(id: String,
     } else f"${priceList.head}%,.2f"
   }
 
-  def isTargetedAt(segment: Segment) = true
+  def isTargetedAt(segment: Segment) = segment.context.isInSection("music")
+
+  private val readableDateFormat = DateTimeFormat.forPattern("d MMMMM yyyy")
+
+  def readableDate = readableDateFormat.print(startDate)
 }
 
 case class Ticket(price: Double)

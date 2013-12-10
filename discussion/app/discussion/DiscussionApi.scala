@@ -1,12 +1,9 @@
 package discussion
 
 import common.{ExecutionContexts, Logging}
-import conf.Switches.ShortDiscussionSwitch
 import scala.concurrent.Future
-import play.api.libs.json.JsArray
+import play.api.libs.json.{JsValue, JsArray, JsObject, JsNumber}
 import play.api.libs.ws.Response
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsNumber
 import discussion.model.{DiscussionKey, Profile, Comment, CommentCount, Switch}
 import play.api.mvc.Headers
 import discussion.util.Http
@@ -17,10 +14,12 @@ trait DiscussionApi extends Http with ExecutionContexts with Logging {
 
   protected val apiRoot: String
   protected val clientHeaderValue: String
+  protected val orderBy: String = "newest"
+  protected val pageSize: String = "10"
 
   def commentCounts(ids: String): Future[Seq[CommentCount]] = {
     def onError(response: Response) =
-      s"Error loading comment count ids: $ids status: ${response.status} message: ${response.statusText}"
+      s"Discussion API: Error loading comment count ids: $ids status: ${response.status} message: ${response.statusText}"
     val apiUrl = s"$apiRoot/getCommentCounts?short-urls=$ids"
 
     getJsonOrError(apiUrl, onError) map {
@@ -34,20 +33,12 @@ trait DiscussionApi extends Http with ExecutionContexts with Logging {
 
   private def getJsonForUri(key: DiscussionKey, apiUrl: String): Future[CommentPage] = {
     def onError(r: Response) =
-      s"Error loading comments id: $key status: ${r.status} message: ${r.statusText}"
+      s"Discussion API: Error loading comments id: $key status: ${r.status} message: ${r.statusText}"
 
     getJsonOrError(apiUrl, onError) map {
       json =>
         val comments = (json \\ "comments")(0).asInstanceOf[JsArray].value map {
-          commentJson =>
-            val responses = (commentJson \\ "responses").headOption map {
-              responsesJson =>
-                responsesJson.asInstanceOf[JsArray].value map {
-                  responseJson =>
-                    Comment(responseJson)
-                }
-            } getOrElse Nil
-            Comment(commentJson, responses)
+          commentJson =>  Comment(commentJson)
         }
 
         CommentPage(
@@ -66,21 +57,44 @@ trait DiscussionApi extends Http with ExecutionContexts with Logging {
     }
   }
 
-  def commentsFor(key: DiscussionKey, page: String, pageSize: String = ""): Future[CommentPage] = {
-    getJsonForUri(key, s"$apiRoot/discussion/$key?pageSize=${getPageSize(pageSize)}&page=$page&orderBy=newest&showSwitches=true")
+  private def getCommentJsonForId(id: String, apiUrl: String): Future[Comment] = {
+    def onError(r: Response) =
+      s"Error loading comment id: $id status: ${r.status} message: ${r.statusText}"
+
+    getJsonOrError(apiUrl, onError) map {
+      json => 
+        val comment = (json \ "comment")
+        Comment(comment)
+    }
   }
 
-  def topCommentsFor(key: DiscussionKey, page: String, pageSize: String = ""): Future[CommentPage] = {
-    getJsonForUri(key, s"$apiRoot/discussion/$key/topcomments?pageSize=${getPageSize(pageSize)}&page=$page&orderBy=newest&showSwitches=true")
+  def commentFor(id: String): Future[Comment] = {
+    getCommentJsonForId(id, s"$apiRoot/comment/$id?displayResponses=true&displayThreaded=true")
   }
 
-  private def getPageSize(pageSize: String): String = {
-    if (pageSize != "") pageSize else if (ShortDiscussionSwitch.isSwitchedOn) "10" else "50"
+  def commentsFor(key: DiscussionKey, page: String, allResponses: Boolean = false): Future[CommentPage] = {
+    getJsonForUri(key, s"$apiRoot/discussion/$key?pageSize=$pageSize&page=$page&orderBy=$orderBy&showSwitches=true" + (if(allResponses) "" else "&maxResponses=3"))
+  }
+
+  def topCommentsFor(key: DiscussionKey, page: String): Future[CommentPage] = {
+    getJsonForUri(key, s"$apiRoot/discussion/$key/topcomments?pageSize=$pageSize&page=$page&orderBy=$orderBy&showSwitches=true")
+  }
+
+  def commentContext(id: Int): Future[(DiscussionKey, Int)] = {
+    def onError(r: Response) =
+      s"Discussion API: Cannot load comment context, status: ${r.status}, message: ${r.statusText}, response: ${r.body}"
+
+    val apiUrl = s"$apiRoot/comment/$id/context?pageSize=$pageSize&orderBy=$orderBy"
+
+    getJsonOrError(apiUrl, onError) map {
+      json =>
+        (DiscussionKey((json \ "discussionKey").as[String]), (json \ "page").as[Int])
+    }
   }
 
   def myProfile(headers: Headers): Future[Profile] = {
     def onError(r: Response) =
-      s"Error loading profile, status: ${r.status}, message: ${r.statusText}, response: ${r.body}"
+      s"Discussion API: Error loading profile, status: ${r.status}, message: ${r.statusText}, response: ${r.body}"
     val apiUrl = s"$apiRoot/profile/me"
 
     val authHeader = AuthHeaders.filterHeaders(headers).toSeq

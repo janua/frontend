@@ -5,15 +5,26 @@ import common.JsonComponent
 import play.api.mvc.Action
 import play.api.libs.json.Json
 import discussion.model.{DiscussionKey, Comment}
+import scala.concurrent.Future
+import play.api.mvc.Results.Redirect
 
-trait CommentPageController extends DiscussionController {
+trait CommentPageController extends DiscussionController {  
+
+  def commentRedirectJson(id: Int) = commentRedirect(id)
+  def commentRedirect(id: Int) = Action.async {
+    implicit request =>
+      discussionApi.commentContext(id) map {
+        page =>
+          Redirect("/discussion"+ page._1 + (if (request.isJson) ".json" else "") +"?page="+ page._2 + "&allResponses=true#comment-"+ id).withHeaders("Access-Control-Allow-Origin" -> "*")
+      }
+  }
 
   def commentPageJson(key: DiscussionKey) = commentPage(key)
-
   def commentPage(key: DiscussionKey) = Action.async {
     implicit request =>
       val page = request.getQueryString("page").getOrElse("1")
-      val commentPage = discussionApi.commentsFor(key, page)
+      val allResponses = request.getQueryString("allResponses").exists( _ == "true")
+      val commentPage = discussionApi.commentsFor(key, page, allResponses)
       val blankComment = Comment(Json.parse("""{
         "id": 5,
         "body": "",

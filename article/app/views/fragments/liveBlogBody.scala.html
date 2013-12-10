@@ -63,16 +63,16 @@
                             </div>
                         }
 
-                        <div class="article-body u-cf from-content-api @if(article.isLive) {live-blog} js-live-blog"
+                        <div class="article-body u-cf from-content-api @if(article.isLive) {live-blog}"
                         itemprop="@if(article.isReview){reviewBody} else {articleBody}">
 
                             @if(article.groupedBlocks.nonEmpty) {
                                 @article.groupedBlocks.map{ blockGroup =>
-                                    <div class="live-blog__blocks js-live-blog-blocks">
+                                    <div class="live-blog__blocks">
                                         @BodyCleaner(article, blockGroup)
                                     </div>
                                 }
-                                <button class="h u-button-reset cta cta--read-more js-live-blog-show-more" data-link-name="live blog | read more">
+                                <button class="h u-button-reset cta cta--read-more" data-link-name="live blog | read more">
                                     Read more <i class="i i-swipe-arrow cta--read-more__icon"></i>
                                 </button>
                             }  else {
@@ -125,14 +125,14 @@
                 @fragments.discussion(article.isClosedForComments, article.shortUrlId)
             }
             @if(storyPackage.nonEmpty) {
-                <aside role="complementary" data-link-context="@article.section">
+                <aside role="complementary">
                     @fragments.relatedTrails(storyPackage, heading = "More on this story", visibleTrails = 5)
                 </aside>
             } else {
-                <aside class="js-related" role="complementary" data-link-context="related@article.url"></aside>
+                <aside class="js-related" role="complementary"></aside>
             }
 
-            @fragments.mostPopularPlaceholder(article.section)
         </div>
+        @fragments.mostPopularPlaceholder(article.section)
     </div>
     }

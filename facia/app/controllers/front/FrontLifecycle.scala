@@ -28,7 +28,7 @@ trait FrontLifecycle extends GlobalSettings {
     Jobs.deschedule("FrontRefreshJob")
     SNS.unsubscribe
     ConfigAgent.close()
-    CollectionCache.close()
+    CollectionAgent.close()
     super.onStop(app)
   }
 }

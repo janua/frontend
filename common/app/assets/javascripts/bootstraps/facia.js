@@ -6,6 +6,7 @@ define([
     'qwery',
     // Modules
     'utils/detect',
+    'utils/storage',
     'modules/facia/popular',
     'modules/facia/collection-show-more',
     'modules/facia/container-toggle',
@@ -17,6 +18,7 @@ define([
     bonzo,
     qwery,
     detect,
+    storage,
     popular,
     CollectionShowMore,
     ContainerToggle,
@@ -87,7 +89,12 @@ define([
 
         showPopular: function () {
             mediator.on('page:front:ready', function(config, context) {
-                popular.render(config);
+                var opts = {};
+                // put popular after the first container if this is us-alpha front
+                if (config.page.pageId === 'us-alpha') {
+                    opts.insertAfter = $('.container').first();
+                }
+                popular.render(config, opts);
             });
         },
 
@@ -95,8 +102,49 @@ define([
             mediator.on('page:front:ready', function(config, context) {
                 cricket.cricketTrail(config, context);
             });
-        }
+        },
 
+        showUserzoom: function(config) {
+            var path,
+                steps;
+
+            if (config.switches.userzoom && config.switches.faciaUkAlpha) {
+                path = window.location.pathname.substring(1);
+
+                if (path !== 'uk' && path !=='uk-alpha') { return; }
+
+                steps = [
+                    {
+                        pageId: 'uk-alpha',
+                        visits: 0,
+                        script: 'userzoom-uk-alpha'
+                    },
+                    {
+                        pageId: '',
+                        visits: 2,
+                        script: 'userzoom-uk'
+                    }
+                ];
+
+                mediator.on('page:front:ready', function(config, context) {
+                    steps.some(function(step) {
+                        var storeKey,
+                            visits;
+
+                        if (step.pageId === config.page.pageId) {
+                            storeKey = 'gu.userzoom.uk.' + step.pageId;
+                            visits = parseInt(storage.local.get(storeKey) || 0, 10);
+                            if(visits >= step.visits) {
+                                require(['js!' + step.script]);
+                            } else {
+                                storage.local.set(storeKey, visits + 1);
+                            }
+                            return true;
+                        }
+                    });
+                });
+            }
+        }
     };
 
     var ready = function (config, context) {
@@ -106,6 +154,7 @@ define([
             modules.showContainerToggle();
             modules.showFootballFixtures();
             modules.showPopular();
+            modules.showUserzoom(config);
         }
         mediator.emit("page:front:ready", config, context);
     };

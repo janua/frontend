@@ -1,9 +1,62 @@
 package controllers
 
 import play.api.mvc.{Action, Controller}
-import common.Logging
+import common.{ExecutionContexts, AkkaAgent, Logging}
 import service.SNS
 import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.WS
+
+
+object VerifySNSRequest extends ExecutionContexts {
+
+  val certificateAgent = AkkaAgent[Option[String]](None)
+
+  def apply(json: JsValue) = {
+    for {
+      token <- (json \ "Token").asOpt[String]
+      signature <- (json \ "Signature").asOpt[String]
+      certificate <- certificateAgent.get()
+    }
+    {
+
+    }
+  }
+
+  def generateStringToSign(json: JsValue): Option[String] = {
+    def getString(json: JsValue)(value: String): Option[String] = (json \ value).asOpt[String]
+    val get: (String) => Option[String] = getString(json)
+    for {
+      message           <- get("Message")
+      messageId         <- get("MessageId")
+      subject           <- get("Subject")
+      timestamp         <- get("Timestamp")
+      topicArn          <- get("TopicArn")
+      notificationType  <- get("Type")
+    } yield {
+      s"Message\n$message\n" +
+      s"MessageId\n$messageId\n" +
+      s"Subject\n$subject\n" +
+      s"Timestamp\n$timestamp\n" +
+      s"TopicArn\n$topicArn\n" +
+      s"Type\n$notificationType"
+    }
+  }
+
+  def generate(json: JsValue): String = {
+    val values = Seq("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
+    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
+    seq.mkString(start="", sep="\n", end="")
+  }
+
+  def updateCertificate(json: JsValue) {
+    for (certificateUrl <- (json \ "SigningCertURL").asOpt[String])
+    {
+      WS.url(certificateUrl).get() map { response =>
+        certificateAgent.send(Option(response.body))
+      }
+    }
+  }
+}
 
 
 object SubscriptionConfirmation {
@@ -27,6 +80,7 @@ class NotifyController extends Controller with Logging {
       case SubscriptionConfirmation(token) => {
         log.info(s"Confirming SNS Subscription for token $token")
         SNS.confirmSubscription(token)
+        VerifySNSRequest.updateCertificate(json)
         Ok
       }
       case Notification(js) => {

@@ -86,6 +86,9 @@ class NotifyController extends Controller with Logging {
       }
       case Notification(js) => {
         log.info(s"Received notification for subject: ${(js \ "Subject").asOpt[String].getOrElse("")}")
+        (json \ "Message").asOpt[String].map { collectionId =>
+          CollectionAgent.updateCollectionById(collectionId)
+        }
         Ok
       }
       case _  => InternalServerError

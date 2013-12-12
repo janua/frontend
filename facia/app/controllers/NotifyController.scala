@@ -5,20 +5,39 @@ import common.{ExecutionContexts, AkkaAgent, Logging}
 import service.SNS
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WS
+import java.security.cert.{X509Certificate, Certificate, CertificateFactory}
+import com.sun.org.apache.xml.internal.security.utils.Base64
+import java.security.Signature
+import controllers.front.CollectionAgent
 
 
-object VerifySNSRequest extends ExecutionContexts {
+object VerifySNSRequest extends ExecutionContexts with Logging {
 
-  val certificateAgent = AkkaAgent[Option[String]](None)
+  val certificateAgent = AkkaAgent[Option[Certificate]](None)
 
-  def apply(json: JsValue) = {
-    for {
-      token <- (json \ "Token").asOpt[String]
-      signature <- (json \ "Signature").asOpt[String]
+  def apply(json: JsValue): Boolean = {
+    (for {
       certificate <- certificateAgent.get()
-    }
-    {
-
+      stringToSign <- generateStringToSign(json)
+      signature <- (json \ "Signature").asOpt[String] map Base64.decode
+    } yield {
+      certificateAgent.get().exists{ cert =>
+        try {
+          val sig: Signature = Signature.getInstance("SHA1withRSA")
+          sig.initVerify(cert.getPublicKey)
+          sig.update(stringToSign.getBytes)
+          sig.verify(signature)
+        }
+        catch {
+          case t: Throwable => {
+            log.error(s"SNS Signature Verification: $t")
+            false
+          }
+        }
+      }
+    }).getOrElse {
+      log.warn("No certificate to verify against")
+      false
     }
   }
 

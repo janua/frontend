@@ -78,7 +78,10 @@ object SubscriptionConfirmation {
 
 object Notification {
   def unapply(json: JsValue): Option[JsValue] =
-    if ((json \ "Type").asOpt[String].exists(_ == "Notification") && VerifySNSRequest.verifyNotification(json)) Some(json) else None
+    if ((json \ "Type").asOpt[String].exists(_ == "Notification") && VerifySNSRequest.verifyNotification(json))
+      Some(json)
+    else
+      None
 }
 
 

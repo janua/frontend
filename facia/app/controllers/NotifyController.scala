@@ -52,7 +52,9 @@ object VerifySNSRequest extends ExecutionContexts {
     for (certificateUrl <- (json \ "SigningCertURL").asOpt[String])
     {
       WS.url(certificateUrl).get() map { response =>
-        certificateAgent.send(Option(response.body))
+        val cf: CertificateFactory = CertificateFactory.getInstance("X.509")
+        val certificate: X509Certificate = cf.generateCertificate(response.getAHCResponse.getResponseBodyAsStream).asInstanceOf[X509Certificate]
+        certificateAgent.send(Option(certificate))
       }
     }
   }

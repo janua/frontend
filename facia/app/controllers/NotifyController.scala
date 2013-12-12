@@ -38,14 +38,14 @@ object VerifySNSRequest extends ExecutionContexts {
       s"Subject\n$subject\n" +
       s"Timestamp\n$timestamp\n" +
       s"TopicArn\n$topicArn\n" +
-      s"Type\n$notificationType"
+      s"Type\n$notificationType\n"
     }
   }
 
   def generate(json: JsValue): String = {
     val values = Seq("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
     val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
-    seq.mkString(start="", sep="\n", end="")
+    seq.mkString(start="", sep="\n", end="\n")
   }
 
   def updateCertificate(json: JsValue) {

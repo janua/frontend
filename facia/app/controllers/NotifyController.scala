@@ -15,17 +15,19 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
 
   val certificateAgent = AkkaAgent[Option[Certificate]](None)
 
-  def apply(json: JsValue): Boolean = {
+  def verifySubscription(json: JsValue): Boolean = verify(json, generateStringForSubscription(json))
+  def verifyNotification(json: JsValue): Boolean = verify(json, generateStringForNotification(json))
+
+  private def verify(json: JsValue, signedString: String): Boolean = {
     (for {
       certificate <- certificateAgent.get()
-      stringToSign <- generateStringToSign(json)
       signature <- (json \ "Signature").asOpt[String] map Base64.decode
     } yield {
       certificateAgent.get().exists{ cert =>
         try {
           val sig: Signature = Signature.getInstance("SHA1withRSA")
           sig.initVerify(cert.getPublicKey)
-          sig.update(stringToSign.getBytes)
+          sig.update(signedString.getBytes)
           sig.verify(signature)
         }
         catch {
@@ -61,8 +63,14 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
     }
   }
 
-  def generate(json: JsValue): String = {
+  def generateStringForNotification(json: JsValue): String = {
     val values = Seq("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
+    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
+    seq.mkString(start="", sep="\n", end="\n")
+  }
+
+  def generateStringForSubscription(json: JsValue): String = {
+    val values = Seq("Message", "MessageId", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type")
     val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
     seq.mkString(start="", sep="\n", end="\n")
   }
@@ -90,7 +98,7 @@ object SubscriptionConfirmation {
 
 object Notification {
   def unapply(json: JsValue): Option[JsValue] =
-    if ((json \ "Type").asOpt[String].exists(_ == "Notification") && VerifySNSRequest(json)) Some(json) else None
+    if ((json \ "Type").asOpt[String].exists(_ == "Notification") && VerifySNSRequest.verifyNotification(json)) Some(json) else None
 }
 
 

@@ -43,26 +43,6 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
     }
   }
 
-  def generateStringToSign(json: JsValue): Option[String] = {
-    def getString(json: JsValue)(value: String): Option[String] = (json \ value).asOpt[String]
-    val get: (String) => Option[String] = getString(json)
-    for {
-      message           <- get("Message")
-      messageId         <- get("MessageId")
-      subject           <- get("Subject")
-      timestamp         <- get("Timestamp")
-      topicArn          <- get("TopicArn")
-      notificationType  <- get("Type")
-    } yield {
-      s"Message\n$message\n" +
-      s"MessageId\n$messageId\n" +
-      s"Subject\n$subject\n" +
-      s"Timestamp\n$timestamp\n" +
-      s"TopicArn\n$topicArn\n" +
-      s"Type\n$notificationType\n"
-    }
-  }
-
   def generateStringForNotification(json: JsValue): String = {
     val values = Seq("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
     val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}

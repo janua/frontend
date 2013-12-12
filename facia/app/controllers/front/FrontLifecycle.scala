@@ -9,6 +9,8 @@ trait FrontLifecycle extends GlobalSettings {
   override def onStart(app: play.api.Application) {
     super.onStart(app)
 
+    SNS.subscribe
+
     Jobs.deschedule("FrontRefreshJob")
     Jobs.schedule("FrontRefreshJob", "0 * * * * ?") {
 

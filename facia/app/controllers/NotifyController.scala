@@ -61,14 +61,15 @@ object VerifySNSRequest extends ExecutionContexts {
 
 object SubscriptionConfirmation {
   def unapply(json: JsValue): Option[String] =
-    if ((json \ "Type").asOpt[String].filter(_ == "SubscriptionConfirmation").isDefined)
+    if ((json \ "Type").asOpt[String].exists(_ == "SubscriptionConfirmation"))
       (json \ "Token").asOpt[String]
     else
       None
 }
 
 object Notification {
-  def unapply(json: JsValue): Option[JsValue] = if ((json \ "Type").asOpt[String].filter(_ == "Notification").isDefined) Some(json) else None
+  def unapply(json: JsValue): Option[JsValue] =
+    if ((json \ "Type").asOpt[String].exists(_ == "Notification") && VerifySNSRequest(json)) Some(json) else None
 }
 
 

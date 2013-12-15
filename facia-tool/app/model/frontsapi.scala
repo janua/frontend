@@ -21,14 +21,17 @@ case class Block(
 
 case class Trail(
                   id: String,
-                  meta: Option[Map[String, String]]
+                  meta: Option[ItemMeta]
                   ) extends JsonShape
 
 
 case class BlockActionJson(publish: Option[Boolean], discard: Option[Boolean]) extends JsonShape
 case class UpdateTrailblockJson(config: UpdateTrailblockConfigJson) extends JsonShape
 case class UpdateTrailblockConfigJson(contentApiQuery: Option[String], max: Option[Int], min: Option[Int], displayName: Option[String])
-case class UpdateList(item: String, position: Option[String], after: Option[Boolean], itemMeta: Option[Map[String, String]], live: Boolean, draft: Boolean) extends JsonShape
+case class UpdateList(item: String, position: Option[String], after: Option[Boolean], itemMeta: Option[ItemMeta], live: Boolean, draft: Boolean) extends JsonShape
+
+
+case class ItemMeta(headline: String, group: String, sublinks: Option[List[Trail]])
 
 trait JsonExtract {
   implicit val updateListRead = Json.reads[UpdateList]
@@ -37,6 +40,8 @@ trait JsonExtract {
   implicit val blockActionJsonRead = Json.reads[BlockActionJson]
   implicit val updateMetaRead = Json.reads[UpdateTrailblockConfigJson]
   implicit val updateTrailblockRead = Json.reads[UpdateTrailblockJson]
+  implicit val itemMetaRead = Json.reads[ItemMeta]
+
 
   private def extractJson(v: JsValue): Either[String, JsonShape] =
     v.asOpt[Block]
@@ -148,9 +153,8 @@ trait UpdateActions {
 
     for {
       trail <- trailList
-      metaMap <- trail.meta.orElse(Option(Map.empty[String, String]))
     } yield {
-      if (id == trail.id) trail.copy(meta = Some(metaMap ++ newMetaMap)) else trail
+      if (id == trail.id) trail.copy(meta = Option(metaData)) else trail
     }
   }
 

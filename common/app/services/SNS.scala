@@ -12,7 +12,7 @@ trait SNS {
 
   val arn: String = Configuration.sns.faciaSns
   val protocol: String = "http"
-  lazy val endpoint: String = Configuration.hostMachine.name
+  lazy val endpoint: String = "http://dxey.t.proxylocal.com/receive"//Configuration.hostMachine.name
 
   def subscribe = {
     val snsClient = new AmazonSNSClient(Configuration.aws.credentials)

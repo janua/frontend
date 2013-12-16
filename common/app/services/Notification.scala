@@ -5,9 +5,9 @@ import com.amazonaws.services.sns.AmazonSNSAsyncClient
 import com.amazonaws.services.sns.model.PublishRequest
 import conf.Configuration
 
-object Notification extends Logging {
+trait Notification extends Logging {
 
-  lazy val topic = Configuration.aws.sns
+  val topic: String
 
   def sns = {
     val client = new AmazonSNSAsyncClient(Configuration.aws.credentials)
@@ -23,10 +23,14 @@ object Notification extends Logging {
       .withMessage(message)
 
     AkkaAsync {
-      log.info("Issuing SNS notification for switch change.")
+      log.info(s"Issuing SNS notification: $subject:$message")
       sns.publish(request)
     }
   }
+}
+
+object Notification extends Notification {
+  lazy val topic: String = Configuration.aws.sns
 
   def onSwitchChanges(requester: String, stage: String, changes: List[String]) {
     val subject = s"${stage.toUpperCase}: Switch changes by ${requester}"
@@ -40,4 +44,8 @@ object Notification extends Logging {
 
     send(subject, message)
   }
+}
+
+object FaciaNotification extends Notification {
+  lazy val topic: String = Configuration.sns.faciaSns
 }

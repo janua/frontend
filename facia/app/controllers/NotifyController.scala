@@ -19,6 +19,7 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
   def verifyNotification(json: JsValue): Boolean = verify(json, generateStringForNotification(json))
 
   private def verify(json: JsValue, signedString: String): Boolean = {
+    lazy val message: Option[String] = (json \ "Message").asOpt[String]
     (for {
       certificate <- certificateAgent.get()
       signature <- (json \ "Signature").asOpt[String] map Base64.decode
@@ -28,7 +29,12 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
           val sig: Signature = Signature.getInstance("SHA1withRSA")
           sig.initVerify(cert.getPublicKey)
           sig.update(signedString.getBytes)
-          sig.verify(signature)
+
+          val isValidRequest = sig.verify(signature)
+          if (!isValidRequest) {
+            log.warn(s"Verification failed for message: $message")
+          }
+          isValidRequest
         }
         catch {
           case t: Throwable => {

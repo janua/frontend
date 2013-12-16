@@ -45,13 +45,13 @@ object VerifySNSRequest extends ExecutionContexts with Logging {
 
   def generateStringForNotification(json: JsValue): String = {
     val values = Seq("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
-    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
+    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s ++ (json \ v).asOpt[String].map(Seq(v, _)).getOrElse(Nil)}
     seq.mkString(start="", sep="\n", end="\n")
   }
 
   def generateStringForSubscription(json: JsValue): String = {
     val values = Seq("Message", "MessageId", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type")
-    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s :+ v :+ (json \ v).asOpt[String].getOrElse("")}
+    val seq = values.foldLeft(Seq[String]()) {case (s, v) => s ++ (json \ v).asOpt[String].map(Seq(v, _)).getOrElse(Nil)}
     seq.mkString(start="", sep="\n", end="\n")
   }
 

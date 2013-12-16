@@ -103,8 +103,9 @@ class NotifyController extends Controller with Logging {
         Ok
       }
       case Notification(js) => {
-        log.info(s"Received notification for subject: ${(js \ "Subject").asOpt[String].getOrElse("")}")
+        log.info(s"Received notification for subject: ${(js \ "Subject").asOpt[String].getOrElse("No Subject")}")
         (json \ "Message").asOpt[String].map { collectionId =>
+          log.info(s"Updating collection ID: $collectionId")
           CollectionAgent.updateCollectionById(collectionId)
         }
         Ok

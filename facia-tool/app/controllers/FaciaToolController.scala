@@ -7,7 +7,7 @@ import play.api.libs.json._
 import common.{FaciaToolMetrics, ExecutionContexts, Logging}
 import conf.Configuration
 import tools.FaciaApi
-import services.S3FrontsApi
+import services.{FaciaNotification, S3FrontsApi}
 import play.api.libs.ws.WS
 
 
@@ -56,6 +56,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
         UpdateActions.updateCollectionList(id, update, identity)
         //TODO: How do we know if it was updated or created? Do we need to know?
         notifyContentApi(id)
+        ChangeServices.notifyAll(id)
         Ok
       }
       case blockAction: BlockActionJson => {
@@ -65,6 +66,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
             FaciaToolMetrics.DraftPublishCount.increment()
             FaciaApi.publishBlock(id, identity)
             notifyContentApi(id)
+            ChangeServices.notifyAll(id)
             Ok
           }
           .orElse {
@@ -79,6 +81,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
         val identity = Identity(request).get
         UpdateActions.updateTrailblockJson(id, updateTrailblock, identity)
         notifyContentApi(id)
+        ChangeServices.notifyAll(id)
         Ok
       }
       case _ => NotFound
@@ -98,6 +101,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
         val identity = Identity(request).get
         UpdateActions.updateCollectionFilter(id, update, identity)
         notifyContentApi(id)
+        ChangeServices.notifyAll(id)
         Ok
       }
       case _ => NotFound
@@ -114,3 +118,16 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
   }
 
 }
+
+trait ChangeServices {
+
+  lazy val all: Seq[(String) => Unit] = Seq(notifySNS)
+
+  def notifyAll(id: String) = all.foreach(_(id))
+
+  def notifySNS(id: String): Unit = {
+    FaciaNotification.send("FaciaNotification", id)
+  }
+}
+
+object ChangeServices extends ChangeServices

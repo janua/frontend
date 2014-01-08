@@ -38,7 +38,7 @@ trait Index extends ConciergeRepository with QueryDefaults {
       .tag(s"$firstTag,$secondTag")
       .pageSize(20)
       .response.map {response =>
-        val trails = response.results map { Content(_) }
+        val trails = response.results map { Content(_) } distinctBy(_.id)
         trails match {
           case Nil => Right(NotFound)
           case head :: _ =>
@@ -67,7 +67,7 @@ trait Index extends ConciergeRepository with QueryDefaults {
       val editorsPicks = response.editorsPicks map { Content(_) }
       val editorsPicksIds = editorsPicks map { _.id }
       val latestContent = response.results map { Content(_) } filterNot { c => editorsPicksIds contains (c.id) }
-      val trails = (editorsPicks ++ latestContent).take(math.max(editorsPicks.length, 20))
+      val trails = (editorsPicks ++ latestContent).distinctBy(_.id).take(math.max(editorsPicks.length, 20))
       section map { IndexPage(_, trails) }
   }
 

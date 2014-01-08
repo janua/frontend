@@ -5,7 +5,7 @@ import play.api.libs.json.{Json, JsNull, JsValue}
 import model.Config
 
 trait ConfigAgentTrait extends ExecutionContexts {
-  private val configAgent = AkkaAgent[JsValue](JsNull)
+  val configAgent = AkkaAgent[JsValue](JsNull)
 
   def refresh() = S3FrontsApi.getMasterConfig map {s => configAgent.send(Json.parse(s))}
 
@@ -29,9 +29,9 @@ trait ConfigAgentTrait extends ExecutionContexts {
         (collectionJson \ "apiQuery").asOpt[String],
         (collectionJson \ "displayName").asOpt[String].filter(_.nonEmpty),
         (collectionJson \ "tone").asOpt[String],
-        (json \ "href").asOpt[String],
-        (json \ "groups").asOpt[Seq[String]] getOrElse Nil,
-        (json \ "roleName").asOpt[String]
+        (collectionJson \ "href").asOpt[String],
+        (collectionJson \ "groups").asOpt[Seq[String]] getOrElse Nil,
+        (collectionJson \ "roleName").asOpt[String]
       )
     }
   }

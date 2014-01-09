@@ -20,7 +20,7 @@
 
     <h1 class="identity-title">Edit your profile</h1>
 
-    <form class="form" novalidate action="@idUrlBuilder.buildUrl("/profile/public", idRequest)" role="main" method="post">
+    <form class="form js-profile-form" novalidate action="@idUrlBuilder.buildUrl("/profile/public", idRequest)" role="main" method="post">
         @views.html.helper.CSRF.formField
 
         <fieldset class="fieldset">
@@ -54,7 +54,7 @@
                             <p class="form__note">Your email has been verified.</p>
                         }else{
                             <p class="form__note">Your email has not yet been verified.</p>
-                            <button type="button" class="submit-input" data-link-name="Resend verification email">Resend my verification email</button>
+                            <button type="button" class="submit-input js-resend-validation-email" data-link-name="Resend verification email">Resend my verification email</button>
                         }
                     </li>
 

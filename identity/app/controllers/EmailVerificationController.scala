@@ -8,7 +8,6 @@ import common.ExecutionContexts
 import utils.SafeLogging
 import model.IdentityPage
 import play.api.libs.json._
-import play.api.libs.json.Json.toJson
 
 @Singleton
 class EmailVerificationController @Inject()( api : IdApiClient, idRequestParser: IdRequestParser, idUrlBuilder: IdentityUrlBuilder, authAction: actions.AuthAction )
@@ -23,17 +22,18 @@ class EmailVerificationController @Inject()( api : IdApiClient, idRequestParser:
 
   def resendVerificationEmail() = { 
 
-	authAction.async { implicit request =>
+    authAction.async { implicit request =>
 
-	    val idRequest = idRequestParser(request)
+        val idRequest = idRequestParser(request)
 
-	    api.resendEmailValidationEmail(request.auth, idRequest.trackingData) map {
-	      case Left(errors) =>
-	        NotFound(s"${errors.toString()}")
-	      case Right(apiOk) => Ok
-	    }
-	
-	}
+        api.resendEmailValidationEmail(request.auth, idRequest.trackingData) map {
+          case Left(errors) =>
+            val errorString = errors.mkString(",")
+            Ok(Json.parse(s"{'error':'${errorString}'}"))
+          case Right(apiOk) => Ok(Json.parse("{'status':'ok'}"))
+        }
+
+    }
 
   }
 

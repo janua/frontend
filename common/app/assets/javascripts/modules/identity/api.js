@@ -173,5 +173,15 @@ define([
         storage.local.set(Id.fbCheckKey, {}, {expires: nextFbCheckDue});
     };
 
+    Id.resendValidationEmail = function () {
+        if(Id.isUserLoggedIn()) {
+            return ajax({
+                url: Id.getUrl() + "/resend-verify-email",
+                type: 'jsonp',
+                crossOrigin: true
+            });
+        }
+    };
+
     return Id;
 });

@@ -1,9 +1,11 @@
 define([
     'bean',
-    'bonzo'
+    'bonzo',
+    'common/modules/identity/api'
 ], function (
     bean,
-    bonzo
+    bonzo,
+    IdApi
 ) {
 
     function forgottenEmail(config, context) {
@@ -56,9 +58,32 @@ define([
         }
     }
 
+    function resendValidationEmail(config, context) {
+        var form = context.querySelector('.js-profile-form');
+        if (form) {
+            var resendButton = form.querySelector('.js-resend-validation-email'),
+                $resendButton = bonzo(resendButton);
+            
+            bean.on(resendButton, 'click', function (event) {
+                event.preventDefault();
+                
+                $resendButton.css('width', resendButton.offsetWidth);
+                resendButton.innerHTML = "Loading...";
+                
+                IdApi.resendValidationEmail()
+                    .then(function (response) {
+                        //console.log("sucess: ", response);
+                    }).fail(function (error) {
+                        //console.log("error: ", error);
+                    });
+            });
+        }
+    }
+
     return {
         forgottenEmail: forgottenEmail,
         forgottenPassword: forgottenPassword,
-        passwordToggle: passwordToggle
+        passwordToggle: passwordToggle,
+        resendValidationEmail: resendValidationEmail
     };
 });

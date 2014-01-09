@@ -4,12 +4,27 @@
 
 @identityMain(page, Switches.all){
 }{
-<div class="identity-wrapper monocolumn-wrapper">
-    <h1 class="identity-title">Thankyou! Your email address has been validated.</h1>
-    <p>You will now be able to comment.</p>
-    <p><a href="@LinkTo{/}" data-link-name="Home">Return to the homepage</a>, <a href="@idUrlBuilder.buildUrl("/profile/public", idRequest)" data-link-name="Edit profile">edit your profile</a>.</p>
 
-	@registrationFooter(page, idRequest, idUrlBuilder)
+	@if(false){ @* Validated *@
+		<div class="identity-wrapper monocolumn-wrapper">
+		    <h1 class="identity-title">Thankyou! Your email address has been validated.</h1>
 
-</div>
+		    <p>You will now be able to comment.</p>
+
+		    <p><a href="@LinkTo{/}" data-link-name="Home">Return to the homepage</a>, <a href="@idUrlBuilder.buildUrl("/profile/public", idRequest)" data-link-name="Edit profile">edit your profile</a>.</p>
+
+			@registrationFooter(page, idRequest, idUrlBuilder)
+
+		</div>
+	}else{ @* Expired *@
+		<div class="identity-wrapper monocolumn-wrapper">
+		    <h1 class="identity-title">Error. Your code has expired.</h1>
+
+		    <p>Please click <a href="" data-link-name="Resend Validation Email">here</a> to resend your validation email.</p>
+
+			@registrationFooter(page, idRequest, idUrlBuilder)
+
+		</div>
+	}
+
 }

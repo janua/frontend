@@ -59,11 +59,10 @@ define([
     }
 
     function resendValidationEmail(config, context) {
-        var form = context.querySelector('.js-profile-form');
-        if (form) {
-            var resendButton = form.querySelector('.js-resend-validation-email'),
-                $resendButton = bonzo(resendButton);
-            
+        var resendButton = context.querySelector('.js-resend-validation-email'),
+            $resendButton = bonzo(resendButton);
+        
+        if (resendButton) {
             bean.on(resendButton, 'click', function (event) {
                 event.preventDefault();
                 
@@ -71,10 +70,14 @@ define([
                 resendButton.innerHTML = "Loading...";
                 
                 IdApi.resendValidationEmail()
-                    .then(function (response) {
+                    .then(function (response) { // Response ok
+                        
                         $resendButton.replaceWith("<p>Sent. Please check your email and follow the link.</p>");
-                    }).fail(function (error) {
+
+                    }).fail(function (error) { // Response *NOT* ok
+                        
                         resendButton.innerHTML = "Resend my verification email";
+
                     });
             });
         }

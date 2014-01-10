@@ -20,5 +20,4 @@ GET     /ethical-awards/complete                        @controllers.EthicalAwar
 GET     /ethical-awards/:formReference                  @controllers.EthicalAwardsController.ethicalAwardsForm(formReference: String)
 GET     /form/complete                                  @controllers.FormstackController.complete
 GET     /form/:formReference                            @controllers.FormstackController.formstackForm(formReference: String)
-GET    	/verify-email/:token                            @controllers.EmailVerificationController.verify(token: String)
-GET    	/resend-verify-email       						@controllers.EmailVerificationController.resendVerificationEmail
+GET    /verify-email/:token                             @controllers.EmailVerificationController.verify(token: String)

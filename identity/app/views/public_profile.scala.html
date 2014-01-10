@@ -49,12 +49,17 @@
             <div class="fieldset__fields">
                 <ul class="unstyled">
                     
-                    <li class="form-field">
+                    <li class="form-field email-validation">
+                        
                         @if(user.statusFields.userEmailValidated.getOrElse(false)){
-                            <p class="form__note">Your email has been verified.</p>
+                            <i class="i i-id-ok">
+                            <p class="form__note"></i>Your email address has been validated.</p>
                         }else{
-                            <p class="form__note">Your email has not yet been verified.</p>
-                            <button type="button" class="submit-input js-resend-validation-email" data-link-name="Resend verification email">Resend my verification email</button>
+                            <i class="i i-id-alert"></i>
+                            <p class="form__note">
+                            Please confirm your email address to post comments.</br>
+                            <a class="js-resend-validation-email" data-link-name="Resend verification email">Send validation email</a>
+                            </p>
                         }
                     </li>
 

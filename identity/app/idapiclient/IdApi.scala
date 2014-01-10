@@ -135,13 +135,6 @@ abstract class IdApi(val apiRootUrl: String, http: Http, jsonBodyParser: JsonBod
     val response = http.POST(apiUrl(apiPath), Some(write(subscriber)), params, headers)
     response map jsonBodyParser.extractUnit
   }
-
-  def resendEmailValidationEmail(auth: Auth, trackingParameters: TrackingData): Future[Response[Unit]] = {
-    val apiPath = urlJoin("user","resend-validtion-email")
-    val params = buildParams(tracking = Some(trackingParameters), auth = Some(auth))
-    val response = http.GET(apiUrl(apiPath), params, buildHeaders())
-    response map jsonBodyParser.extractUnit
-  }  
 }
 
 class SynchronousIdApi(apiRootUrl: String, http: Http, jsonBodyParser: JsonBodyParser, clientAuth: Auth)

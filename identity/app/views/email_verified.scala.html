@@ -18,9 +18,11 @@
 		</div>
 	}else{ @* Expired *@
 		<div class="identity-wrapper monocolumn-wrapper">
-		    <h1 class="identity-title">Error. Your code has expired.</h1>
+		    <h1 class="identity-title">Your email conformation link has expired</h1>
 
-		    <p>Please click <a href="" data-link-name="Resend Validation Email">here</a> to resend your validation email.</p>
+		    <p>The link in the email we sent you is valid for 30 minutes for security.</p>
+
+		    <button type="button" class="submit-input js-resend-validation-email" data-link-name="Resend verification email">Resend my verification email</button>
 
 			@registrationFooter(page, idRequest, idUrlBuilder)
 

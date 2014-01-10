@@ -72,9 +72,9 @@ define([
                 
                 IdApi.resendValidationEmail()
                     .then(function (response) {
-                        //console.log("sucess: ", response);
+                        $resendButton.replaceWith("<p>Sent. Please check your email and follow the link.</p>");
                     }).fail(function (error) {
-                        //console.log("error: ", error);
+                        resendButton.innerHTML = "Resend my verification email";
                     });
             });
         }

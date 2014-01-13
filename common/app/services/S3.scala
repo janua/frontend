@@ -111,6 +111,9 @@ object S3FrontsApi extends S3 {
     val now = DateTime.now
     putPrivate(s"${location}/history/collection/${id}/${now.year.get}/${"%02d".format(now.monthOfYear.get)}/${"%02d".format(now.dayOfMonth.get)}/${now}.json", json, "application/json")
   }
+
+  def putPressedJson(id: String, json: String) =
+    putPrivate(s"$location/collection/pressed/$id/pressed.json", json, "application/json")
 }
 
 trait SecureS3Request extends implicits.Dates with Logging {

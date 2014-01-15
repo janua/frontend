@@ -7,33 +7,40 @@ import services.{IdentityUrlBuilder, IdRequestParser}
 import common.ExecutionContexts
 import utils.SafeLogging
 import model.IdentityPage
-import play.api.libs.json._
-import play.api.libs.json.Json.toJson
 
 @Singleton
-class EmailVerificationController @Inject()(api: IdApiClient, idRequestParser: IdRequestParser, idUrlBuilder: IdentityUrlBuilder, authAction: actions.AuthAction)
+class EmailVerificationController @Inject()( api: IdApiClient,
+                                             idRequestParser: IdRequestParser,
+                                             idUrlBuilder: IdentityUrlBuilder)
   extends Controller with ExecutionContexts with SafeLogging {
+  import ValidationState._
 
   val page = IdentityPage("/verify-email", "Verify Email", "verify-email")
 
-  def verify(token: String) = Action {
+  def verify(token: String) = Action.async {
     implicit request =>
       val idRequest = idRequestParser(request)
-      Ok(views.html.email_verified(page, idRequest, idUrlBuilder))
+
+      api.validateEmail(token, idRequest.trackingData) map {
+        response =>
+          val validationState = response match {
+            case Left(errors) =>
+              errors.head.message match {
+                case "User Already Validated" => validated
+                case "Token expired" => expired
+                case _ => invalid
+              }
+
+            case Right(ok) => validated
+          }
+          Ok(views.html.email_verified(validationState, page, idRequest, idUrlBuilder))
+      }
   }
+}
 
-  def resendVerificationEmail() = {
-    authAction.async {
-      implicit request =>
-
-        val idRequest = idRequestParser(request)
-
-        api.resendEmailValidationEmail(request.auth, idRequest.trackingData) map {
-          case Left(errors) =>
-            InternalServerError(s"${errors.toString()}")
-          case Right(apiOk) => Ok
-        }
-    }
-  }
-
+sealed case class ValidationState(isValidated: Boolean, isExpired: Boolean)
+object ValidationState {
+  val validated = new ValidationState(true, false)
+  val expired = new ValidationState(false, true)
+  val invalid = new ValidationState(false, false)
 }

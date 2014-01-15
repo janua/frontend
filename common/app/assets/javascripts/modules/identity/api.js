@@ -179,7 +179,8 @@ define([
                 url: Id.idApiRoot + "/user/send-validation-email",
                 type: 'jsonp',
                 crossOrigin: true,
-                method: 'POST'
+                withCredentials: true,
+                data: {method: 'post'}
             });
         }
     };

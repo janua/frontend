@@ -58,35 +58,9 @@ define([
         }
     }
 
-    function resendValidationEmail(config, context) {
-        var resendButton = context.querySelector('.js-resend-validation-email'),
-            $resendButton = bonzo(resendButton);
-        
-        if (resendButton) {
-            bean.on(resendButton, 'click', function (event) {
-                event.preventDefault();
-                
-                $resendButton.css('width', resendButton.offsetWidth);
-                resendButton.innerHTML = "Loading...";
-                
-                IdApi.resendValidationEmail()
-                    .then(function (response) { // Response ok
-                        
-                        $resendButton.replaceWith("<p>Sent. Please check your email and follow the link.</p>");
-
-                    }).fail(function (error) { // Response *NOT* ok
-                        
-                        resendButton.innerHTML = "Resend my verification email";
-
-                    });
-            });
-        }
-    }
-
     return {
         forgottenEmail: forgottenEmail,
         forgottenPassword: forgottenPassword,
-        passwordToggle: passwordToggle,
-        resendValidationEmail: resendValidationEmail
+        passwordToggle: passwordToggle
     };
 });

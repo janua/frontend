@@ -29,7 +29,7 @@ define([
     'common/modules/adverts/adverts',
     'common/utils/cookies',
     'common/modules/analytics/omnitureMedia',
-    'common/modules/analytics/adverts',
+    'common/modules/analytics/livestats',
     'common/modules/experiments/ab',
     "common/modules/adverts/video",
     "common/modules/discussion/comment-count",
@@ -37,7 +37,8 @@ define([
     "common/modules/onward/history",
     "common/modules/onward/sequence",
     "common/modules/ui/message",
-    "common/modules/identity/autosignin"
+    "common/modules/identity/autosignin",
+    "common/modules/analytics/commercial/tags/container"
 ], function (
     $,
     mediator,
@@ -69,7 +70,7 @@ define([
     Adverts,
     Cookies,
     OmnitureMedia,
-    AdvertsAnalytics,
+    liveStats,
     ab,
     VideoAdvert,
     CommentCount,
@@ -77,7 +78,8 @@ define([
     History,
     sequence,
     Message,
-    AutoSignin
+    AutoSignin,
+    TagContainer
 ) {
 
     var modules = {
@@ -176,6 +178,10 @@ define([
             ab.run(config, context);
         },
 
+        logLiveStats: function (config) {
+            liveStats.log({ beaconUrl: config.page.beaconUrl }, config);
+        },
+
         loadAnalytics: function (config, context) {
             var omniture = new Omniture();
 
@@ -192,10 +198,11 @@ define([
                     }
                 });
 
-                if (config.switches.adslotImpressionStats) {
-                    var advertsAnalytics = new AdvertsAnalytics(config, context);
-                }
             });
+
+            if (config.switches.ophanMultiEvent) {
+                require('ophan/ng', function () {});
+            }
 
             require(config.page.ophanUrl, function (Ophan) {
 
@@ -226,7 +233,7 @@ define([
                     return viewData;
                 });
 
-                Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined, true);
+                Ophan.sendLog(undefined, true);
             });
         },
 
@@ -290,10 +297,6 @@ define([
                       '</p>' +
                       '<ul class="site-message__actions unstyled">' +
                            '<li class="site-message__actions__item">' +
-                               '<i class="i i-comment-grey"></i>' +
-                               '<a href="http://survey.omniture.com/d1/hosted/815f9cfba1" data-link-name="feedback" target="_blank">We’d love to hear your feedback</a>' +
-                           '</li>' +
-                           '<li class="site-message__actions__item">' +
                                '<i class="i i-back"></i>' +
                                    '<a class="js-main-site-link" rel="nofollow" href="' + exitLink + '"' +
                                        'data-link-name="opt-out">Opt-out and return to standard desktop site </a>' +
@@ -338,6 +341,12 @@ define([
                 }
             });
         },
+        
+        loadTags : function() {
+            mediator.on('page:common:ready', function(config) {
+                TagContainer.init(config);
+            });
+        },
 
         windowEventListeners: function() {
             var events = {
@@ -368,6 +377,7 @@ define([
             if (!self.initialisedDeferred) {
                 self.initialisedDeferred = true;
                 modules.initAbTests(config);
+                modules.logLiveStats(config);
                 modules.loadAdverts();
                 modules.loadAnalytics(config, context);
                 modules.cleanupCookies(context);
@@ -378,7 +388,7 @@ define([
         });
     };
 
-    var ready = function (config, context, contextHtml) {
+    var ready = function (config, context) {
         if (!this.initialised) {
             this.initialised = true;
             modules.windowEventListeners();
@@ -398,12 +408,13 @@ define([
             modules.logReadingHistory();
             modules.unshackleParagraphs(config, context);
             modules.initAutoSignin(config);
+            modules.loadTags(config);
         }
         mediator.emit("page:common:ready", config, context);
     };
 
-    var init = function (config, context, contextHtml) {
-        ready(config, context, contextHtml);
+    var init = function (config, context) {
+        ready(config, context);
         deferrable(config, context);
     };
 

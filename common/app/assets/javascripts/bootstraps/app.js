@@ -1,13 +1,11 @@
 /*global guardian:true */
 define([
-    'common/common',
-    'qwery',
     'domReady',
+    'common/utils/mediator',
     'common/utils/ajax',
     'common/utils/detect',
     
     'common/modules/analytics/errors',
-    'common/modules/analytics/livestats',
     'common/modules/ui/fonts',
     'common/modules/router',
     'common/utils/config',
@@ -27,14 +25,12 @@ define([
     'common/bootstraps/interactive',
     'common/bootstraps/identity'
 ], function (
-    common,
-    qwery,
     domReady,
+    mediator,
     ajax,
     detect,
 
     Errors,
-    LiveStats,
     Fonts,
     Router,
     config,
@@ -74,14 +70,7 @@ define([
                 beaconUrl: config.page.beaconUrl
             });
             e.init();
-            common.mediator.on('module:error', e.log);
-        },
-        
-        liveStats: function (config) {
-            if (!config.switches.liveStats) {
-                return false;
-            }
-            new LiveStats({ beaconUrl: config.page.beaconUrl }).log();
+            mediator.on('module:error', e.log);
         },
 
         loadFonts: function(config, ua) {
@@ -104,8 +93,7 @@ define([
 
     var routes = function() {
         domReady(function() {
-            var context = document.getElementById('preload-1'),
-                contextHtml = context.cloneNode(false).innerHTML;
+            var context = document.getElementById('preload-1');
 
             modules.initialiseAjax(config);
             modules.initialiseDiscussionApi(config);
@@ -113,14 +101,13 @@ define([
             modules.loadFonts(config, navigator.userAgent);
             modules.initId(config, context);
             modules.initUserAdTargeting();
-            modules.liveStats(config);
 
-            var pageRoute = function(config, context, contextHtml) {
+            var pageRoute = function(config, context) {
 
                 // We should rip out this router:
                 var r = new Router();
 
-                bootstrapCommon.init(config, context, contextHtml);
+                bootstrapCommon.init(config, context);
 
                 // Front
                 if (config.page.isFront) {
@@ -166,8 +153,8 @@ define([
                 r.init();
             };
 
-            common.mediator.on('page:ready', pageRoute);
-            common.mediator.emit('page:ready', config, context, contextHtml);
+            mediator.on('page:ready', pageRoute);
+            mediator.emit('page:ready', config, context);
         });
     };
 

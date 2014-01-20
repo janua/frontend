@@ -63,7 +63,8 @@ module.exports = function (grunt) {
                         swipeview:    "common/components/swipeview/src/swipeview",
                         lodash:       "common/components/lodash-amd/modern",
                         imager:       'common/components/imager.js/src/strategies/container',
-                        omniture:     '../../common/app/public/javascripts/vendor/omniture'
+                        omniture:     '../../common/app/public/javascripts/vendor/omniture',
+                        'ophan/ng':   'empty:'
                     },
                     shim: {
                         postscribe: {
@@ -268,6 +269,17 @@ module.exports = function (grunt) {
                     stdout: true,
                     stderr: true,
                     failOnError: false
+                }
+            },
+
+            abTestInfo: {
+                command: 'node tools/ab-test-info/ab-test-info.js ' +
+                         'common/app/assets/javascripts/modules/experiments/tests ' +
+                         'static/abtests.json',
+                options: {
+                    stdout: true,
+                    stderr: true,
+                    failOnError: true
                 }
             }
         },
@@ -772,7 +784,9 @@ module.exports = function (grunt) {
     grunt.registerTask('test:unit', function(app) {
         grunt.config.set('karma.options.singleRun', (singleRun === false) && app ? false : true);
         // Target common when no app is specified, because karma can only test what has been js-compiled.
-        grunt.task.run('karma' + (app ? ':' + app : ':common'));
+        var actualApp = app || 'common';
+        grunt.task.run('copy:javascript-' + actualApp);
+        grunt.task.run('karma:' + actualApp);
     });
 
     // Analyse tasks
@@ -783,4 +797,5 @@ module.exports = function (grunt) {
     // Miscellaneous task
     grunt.registerTask('hookmeup', ['clean:hooks', 'shell:copyHooks']);
     grunt.registerTask('snap', ['clean:screenshots', 'mkdir:screenshots', 'env:casperjs', 'casperjs:screenshot', 's3:screenshots']);
+    grunt.registerTask('emitAbTestInfo', ['shell:abTestInfo']);
 };

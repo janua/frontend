@@ -9,3 +9,7 @@
 
 # But you might want to start the app in DEV.
 GET /                                    controllers.IndexController.index()
+GET /press/*id                           controllers.IndexController.pressId(id)
+GET /print/*id                           controllers.IndexController.printId(id)
+GET /queue                               controllers.IndexController.getQueue
+GET /publishids                          controllers.IndexController.putStuffToSns

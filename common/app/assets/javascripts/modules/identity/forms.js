@@ -1,11 +1,9 @@
 define([
     'bean',
-    'bonzo',
-    'common/modules/identity/api'
+    'bonzo'
 ], function (
     bean,
-    bonzo,
-    IdApi
+    bonzo
 ) {
 
     function forgottenEmail(config, context) {

@@ -17,7 +17,7 @@ class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: CountMet
 
   override def GET(url: String, headers: Iterable[(String, String)]) = {
 
-    val contentApiTimeout = Configuration.contentApi.timeout
+    val contentApiTimeout = 20000//Configuration.contentApi.timeout
 
     val start = currentTimeMillis
 

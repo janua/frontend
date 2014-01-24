@@ -57,15 +57,15 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
   def publishCollection(id: String) = AjaxExpiringAuthentication { request =>
     val identity = Identity(request).get
     FaciaToolMetrics.DraftPublishCount.increment()
-    FaciaApi.publishBlock(id, identity)
-    notifyContentApi(id)
+    val block = FaciaApi.publishBlock(id, identity)
+    notify(block)
     Ok
   }
 
   def discardCollection(id: String) = AjaxExpiringAuthentication { request =>
     val identity = Identity(request).get
     FaciaApi.discardBlock(id, identity)
-    notifyContentApi(id)
+    notifyContentApi(id) //This will change in master, as I removed it.
     Ok
   }
 
@@ -74,8 +74,8 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     request.body.asJson flatMap(_.asOpt[CollectionMetaUpdate]) map {
       case update: CollectionMetaUpdate => {
         val identity = Identity(request).get
-        UpdateActions.updateCollectionMeta(id, update, identity)
-        notifyContentApi(id)
+        val block = UpdateActions.updateCollectionMeta(id, update, identity)
+        notify(block)
         Ok
       }
       case _ => NotFound
@@ -89,10 +89,8 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
         val identity = Identity(request).get
         val block = UpdateActions.updateCollectionList(id, update, identity)
 
-        block.foreach(b => FrontPressJob.pressByCollectionId(b.id))
-
         //TODO: How do we know if it was updated or created? Do we need to know?
-        notifyContentApi(id)
+        notify(block)
         Ok
       }
       case _ => NotFound
@@ -104,12 +102,19 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     request.body.asJson flatMap (_.asOpt[UpdateList]) map {
       case update: UpdateList => {
         val identity = Identity(request).get
-        UpdateActions.updateCollectionFilter(id, update, identity)
-        notifyContentApi(id)
+        val block = UpdateActions.updateCollectionFilter(id, update, identity)
+        notify(block)
         Ok
       }
       case _ => NotFound
     } getOrElse NotFound
+  }
+
+  def notify(block: Option[Block]): Unit = {
+    block.foreach { b =>
+      notifyContentApi(b.id)
+      FrontPressJob.pressByCollectionId(b.id)
+    }
   }
 
   def notifyContentApi(id: String): Unit = {

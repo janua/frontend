@@ -4,12 +4,15 @@ import frontsapi.model._
 import frontsapi.model.UpdateList
 import play.api.mvc.{AnyContent, Action, Controller}
 import play.api.libs.json._
-import common.{FaciaToolMetrics, ExecutionContexts, Logging}
+import common.{AkkaAsync, FaciaToolMetrics, ExecutionContexts, Logging}
 import conf.Configuration
 import tools.FaciaApi
 import services.S3FrontsApi
 import play.api.libs.ws.WS
 import model.{NoCache, Cached}
+import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.sns.AmazonSNSAsyncClient
+import com.amazonaws.regions.{Regions, Region}
 
 
 object FaciaToolController extends Controller with Logging with ExecutionContexts {
@@ -109,6 +112,18 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
   }
 
   def notifyContentApi(id: String): Unit = {
+    def client = {
+      val c = new AmazonSNSAsyncClient(Configuration.aws.credentials)
+      c.setRegion(Region.getRegion(Regions.EU_WEST_1))
+      c
+    }
+    val request = new PublishRequest()
+      .withTopicArn("arn:aws:sns:eu-west-1:642631414762:facia-push-2")
+      .withMessage(id)
+
+    AkkaAsync {
+      client.publish(request)
+    }
     Configuration.faciatool.contentApiPostEndpoint map { postUrl =>
       val url = "%s/collection/%s".format(postUrl, id)
       val r = WS.url(url).post("")

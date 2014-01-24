@@ -20,7 +20,7 @@ object Global extends GlobalSettings with CloudWatchApplicationMetrics {
     Jobs.schedule("AnalyticsSanityCheckJob", "0 0/15 * * * ?") {
       AnalyticsSanityCheckJob.run()
     }
-    Jobs.schedule("FrontPressJob", "0/5 * * * * ?") {
+    Jobs.schedule("FrontPressJob", "0/1 * * * * ?") {
       FrontPressJob.run()
     }
     Jobs.schedule("ConfigAgentJob", "0 * * * * ?") {

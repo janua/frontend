@@ -14,6 +14,7 @@ import scala.concurrent.Await
 
 object FrontPressJob extends ExecutionContexts with Logging with implicits.Collections {
 
+  val queueUrl: String = "https://sqs.eu-west-1.amazonaws.com/642631414762/facia-static-queue"
 
   def newClient = {
     val c = new AmazonSQSAsyncClient(Configuration.aws.credentials)

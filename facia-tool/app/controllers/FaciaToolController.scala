@@ -2,6 +2,7 @@ package controllers
 
 import frontsapi.model._
 import frontsapi.model.UpdateList
+import jobs.FrontPressJob
 import play.api.mvc.{AnyContent, Action, Controller}
 import play.api.libs.json._
 import common.{FaciaToolMetrics, ExecutionContexts, Logging}
@@ -86,7 +87,10 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     request.body.asJson flatMap (_.asOpt[UpdateList]) map {
       case update: UpdateList => {
         val identity = Identity(request).get
-        UpdateActions.updateCollectionList(id, update, identity)
+        val block = UpdateActions.updateCollectionList(id, update, identity)
+
+        block.foreach(b => FrontPressJob.pressByCollectionId(b.id))
+
         //TODO: How do we know if it was updated or created? Do we need to know?
         notifyContentApi(id)
         Ok

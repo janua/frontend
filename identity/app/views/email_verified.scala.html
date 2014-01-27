@@ -12,7 +12,7 @@
 
 		<p>You will now be able to comment.</p>
 
-		<p><a href="@LinkTo{/}" data-link-name="Home">Return to the homepage</a>, <a href="@idUrlBuilder.buildUrl("/profile/public", idRequest)" data-link-name="Edit profile">edit your profile</a>.</p>
+		<p><a href="@LinkTo{/}" data-link-name="Home">Return to the homepage</a> or <a href="@idUrlBuilder.buildUrl("/profile/public", idRequest)" data-link-name="Edit profile">edit your profile</a>.</p>
 
     }else { @* Invalid Token*@
         @if(state.isExpired){

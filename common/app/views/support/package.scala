@@ -1,27 +1,23 @@
 package views.support
 
 import common._
-import java.net.URLEncoder._
+import conf.Switches.{ShowUnsupportedEmbedsSwitch, TagLinking}
 import model._
-import org.jsoup.nodes.{ Element, Document }
-import org.jsoup.Jsoup
-import org.jsoup.safety.{ Whitelist, Cleaner }
+
+import java.net.URLEncoder._
+import org.apache.commons.lang.StringEscapeUtils
 import org.jboss.dna.common.text.Inflector
-import play.api.libs.json.Writes
-import play.api.libs.json.Json._
-import play.api.templates.Html
-import scala.collection.JavaConversions._
-import play.api.mvc.RequestHeader
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.apache.commons.lang.StringEscapeUtils
-import conf.Switches.ShowUnsupportedEmbedsSwitch
-import model.ImageAsset
-import scala.Some
+import org.jsoup.Jsoup
+import org.jsoup.nodes.{ Element, Document }
+import org.jsoup.safety.{ Whitelist, Cleaner }
+import play.api.libs.json.Json._
+import play.api.libs.json.Writes
+import play.api.mvc.RequestHeader
 import play.api.mvc.SimpleResult
-import model.Tag
-import model.VideoAsset
-import conf.Switches.{TagLinking}
+import play.api.templates.Html
+import scala.collection.JavaConversions._
 
 sealed trait Style {
   val className: String
@@ -85,10 +81,6 @@ case class FeaturesContainer(showMore: Boolean = true) extends Container {
 case class PopularContainer(showMore: Boolean = true) extends Container {
   val containerType = "popular"
   val tone: String = "news"
-}
-case class TopStoriesContainer(showMore: Boolean = true) extends Container {
-  val containerType = "top-stories"
-  val tone = "news"
 }
 case class SectionContainer(showMore: Boolean = true, tone: String = "news") extends Container {
   val containerType = "section"
@@ -330,12 +322,13 @@ class TagLinker(article: Article)(implicit val edition: Edition) extends HtmlCle
       article.keywords.filterNot(_.isSectionTag).sortBy(_.name.length).reverse.foreach{ keyword =>
         // don't link again in paragraphs we have already upgraded
         val unlinkedParas = paragraphs.filterNot(_.html.contains("<a"))
-        unlinkedParas.find(_.text().contains(keyword.name)).foreach{ p =>
+        unlinkedParas.find(_.text().contains(" " + keyword.name + " ")).foreach{ p =>
 
           val tagLink = d.createElement("a")
           tagLink.attr("href", LinkTo(keyword.url, edition))
           tagLink.text(keyword.name)
           tagLink.attr("data-link-name", "auto-linked-tag")
+          tagLink.addClass("u-underline")
 
           p.html(p.html().replaceFirst(keyword.name, tagLink.toString))
         }
@@ -352,7 +345,8 @@ object InBodyElementCleaner extends HtmlCleaner {
     "element-video",
     "element-image",
     "element-witness",
-    "element-comment"
+    "element-comment",
+    "element-interactive"
   )
 
   override def clean(document: Document): Document = {

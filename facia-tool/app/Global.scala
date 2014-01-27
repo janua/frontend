@@ -1,8 +1,8 @@
 import common.Jobs
+import frontpress.FaciaToolConfigAgent
 import java.io.File
 import jobs.FrontPressJob
 import play.api._
-import services.PorterConfigAgent
 
 object Global extends GlobalSettings {
 
@@ -15,7 +15,7 @@ object Global extends GlobalSettings {
 
   def scheduleJobs() {
     Jobs.schedule("ConfigAgentJob", "0 * * * * ?") {
-      PorterConfigAgent.refresh()
+      FaciaToolConfigAgent.refresh()
     }
     Jobs.schedule("FrontPressJob", "0/5 * * * * ?") {
       FrontPressJob.run()
@@ -31,7 +31,7 @@ object Global extends GlobalSettings {
     super.onStart(app)
     descheduleJobs()
     scheduleJobs()
-    PorterConfigAgent.refresh()
+    FaciaToolConfigAgent.refresh()
   }
 
   override def onStop(app: play.api.Application) {

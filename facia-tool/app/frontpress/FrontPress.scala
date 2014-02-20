@@ -75,6 +75,9 @@ trait FrontPress extends Logging {
       FrontPressSuccess.increment()
       log.info(s"Successful press of $id")
     }
+    futureSequence.map{ s =>
+      println(s.last._2.mostViewed.length)
+    }
     futureSequence
   }
 

@@ -5,11 +5,12 @@ import common._
 import conf.{SwitchingContentApi => ContentApi, Configuration}
 import model.{Collection, Config, Content}
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{JsNull, JsObject, JsValue}
 import play.api.libs.ws.Response
 import scala.concurrent.Future
 import scala.Some
 import contentapi.QueryDefaults
+import scala.util.{Failure, Success, Try}
 
 object Path {
   def unapply[T](uri: String) = Some(uri.split('?')(0))
@@ -49,9 +50,9 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
     val response = requestCollection(id)
     for {
       collectionList <- getCuratedList(response, edition, id, isWarmedUp)
-      collectionMeta <- getCollectionMeta(response).fallbackTo(Future.successful(CollectionMeta.empty))
-      displayName    <- parseDisplayName(response).fallbackTo(Future.successful(None))
-      href           <- parseHref(response).fallbackTo(Future.successful(None))
+      collectionMeta <- Future.successful(CollectionMeta.empty)
+      displayName    <- Future.successful(None)
+      href           <- Future.successful(None)
       contentApiList <- executeContentApiQuery(config.contentApiQuery, edition)
     } yield Collection(
       collectionList,
@@ -99,7 +100,15 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
       r.status match {
         case 200 =>
           try {
-            val bodyJson = parse(r.body)
+            val bodyJson = Try(parse(r.body)) match {
+              case Success(j) => j
+              case Failure(t) => {
+                println("+++" + t.toString + s"\n${r.body}")
+                JsNull
+              }
+            }
+
+
 
             // extract the articles
             val articles: Seq[CollectionItem] = (bodyJson \ "live").as[Seq[JsObject]] map { trail =>
@@ -211,6 +220,13 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
     }
 
     newSearch onFailure {case t: Throwable => log.warn("Content API Query failed: %s: %s".format(queryString, t.toString))}
+    if (queryString.startsWith("uk")) {
+      println("++++" + queryString)
+      newSearch.onComplete {
+        case Success(c) => println("OnComplete" + c.toString)
+        case Failure(t) => println("OnComplete" + t.toString)
+      }
+    }
     newSearch
   } getOrElse Future(Result(Nil, Nil, Nil, Nil))
 

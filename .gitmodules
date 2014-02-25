@@ -1,0 +1,3 @@
+[submodule "content-api-client"]
+  path = content-api-client
+  url = git://github.com/janua/content-api-client.git

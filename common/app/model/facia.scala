@@ -4,22 +4,18 @@ import org.joda.time.DateTime
 
 case class Config(
                    id: String,
-                   contentApiQuery: Option[String] = None,
-                   displayName: Option[String] = None,
-                   href: Option[String] = None,
-                   groups: Seq[String],
-                   `type`: Option[String],
-                   uneditable: Option[Boolean]
+                   contentApiQuery: Option[String]  = None,
+                   displayName: Option[String]      = None,
+                   href: Option[String]             = None,
+                   groups: Seq[String]              = Nil,
+                   `type`: Option[String]           = None,
+                   uneditable: Option[Boolean]      = None
                    ) {
   def collectionType = `type`
 }
 
 object Config {
-  def apply(id: String): Config = Config(id, None, None, None, Nil, None, None)
-  def apply(id: String, contentApiQuery: Option[String], displayName: Option[String], `type`: Option[String]): Config
-    = Config(id, contentApiQuery, displayName, `type`, Nil, None, None)
-  def apply (id: String, displayName: Option[String]): Config
-    = Config(id, None, displayName, None, Nil, None, None)
+  def fromId(id: String): Config = Config(id, None, None, None, Nil, None, None)
 }
 
 case class Collection(curated: Seq[Content],

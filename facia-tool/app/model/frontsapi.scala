@@ -98,7 +98,7 @@ trait UpdateActions extends Logging {
       case Success(_) => block
     }
 
-  def putMasterConfig(config: Config, identity: Identity): Option[Config] = {
+  def putMasterConfig(config: ConfigUpdate, identity: Identity): Option[ConfigUpdate] = {
     FaciaApi.archiveMasterConfig(config, identity)
     FaciaApi.putMasterConfig(config, identity)
   }

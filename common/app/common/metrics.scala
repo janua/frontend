@@ -7,7 +7,7 @@ import java.lang.management.ManagementFactory
 import model.diagnostics.CloudWatch
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
-import com.amazonaws.services.cloudwatch.model.Dimension
+import com.amazonaws.services.cloudwatch.model.{StandardUnit, Dimension}
 
 trait TimingMetricLogging extends Logging { self: TimingMetric =>
   override def measure[T](block: => T): T = {
@@ -37,48 +37,58 @@ object SystemMetrics extends implicits.Numbers {
 
   // divide by 1048576 to convert bytes to MB
 
-  object MaxHeapMemoryMetric extends GaugeMetric("system", "max-heap-memory", "Max heap memory (MB)", "Max heap memory (MB)",
+  object MaxHeapMemoryMetric extends SimpleGaugeMetric("system", "max-heap-memory", "Max heap memory (MB)", "Max heap memory (MB)",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getMax / 1048576
   )
 
-  object UsedHeapMemoryMetric extends GaugeMetric("system", "used-heap-memory", "Used heap memory (MB)", "Used heap memory (MB)",
+  object UsedHeapMemoryMetric extends SimpleGaugeMetric("system", "used-heap-memory", "Used heap memory (MB)", "Used heap memory (MB)",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed / 1048576
   )
 
-  object MaxNonHeapMemoryMetric extends GaugeMetric("system", "max-non-heap-memory", "Max non heap memory (MB)", "Max non heap memory (MB)",
+  object MaxNonHeapMemoryMetric extends SimpleGaugeMetric("system", "max-non-heap-memory", "Max non heap memory (MB)", "Max non heap memory (MB)",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getMax / 1048576
   )
 
-  object UsedNonHeapMemoryMetric extends GaugeMetric("system", "used-non-heap-memory", "Used non heap memory (MB)", "Used non heap memory (MB)",
+  object UsedNonHeapMemoryMetric extends SimpleGaugeMetric("system", "used-non-heap-memory", "Used non heap memory (MB)", "Used non heap memory (MB)",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getUsed / 1048576
   )
 
   //  http://docs.oracle.com/javase/6/docs/api/java/lang/management/OperatingSystemMXBean.html()
-  object LoadAverageMetric extends GaugeMetric("system", "load-average", "Load average", "Load average",
-    () => ManagementFactory.getOperatingSystemMXBean.getSystemLoadAverage
+  object LoadAverageMetric extends SimpleGaugeMetric("system", "load-average", "Load average", "Load average",
+    StandardUnit.Megabytes,
+    () => ManagementFactory.getOperatingSystemMXBean.getSystemLoadAverage.toLong
   )
 
-  object AvailableProcessorsMetric extends GaugeMetric("system", "available-processors", "Available processors", "Available processors",
+  object AvailableProcessorsMetric extends SimpleGaugeMetric("system", "available-processors", "Available processors", "Available processors",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getOperatingSystemMXBean.getAvailableProcessors
   )
 
-  object FreeDiskSpaceMetric extends GaugeMetric("system", "free-disk-space", "Free disk space (MB)", "Free disk space (MB)",
-    () => new File("/").getUsableSpace.toDouble / 1048576
+  object FreeDiskSpaceMetric extends SimpleGaugeMetric("system", "free-disk-space", "Free disk space (MB)", "Free disk space (MB)",
+    StandardUnit.Megabytes,
+    () => new File("/").getUsableSpace / 1048576
   )
 
-  object TotalDiskSpaceMetric extends GaugeMetric("system", "total-disk-space", "Total disk space (MB)", "Total disk space (MB)",
-    () => new File("/").getTotalSpace.toDouble / 1048576
+  object TotalDiskSpaceMetric extends SimpleGaugeMetric("system", "total-disk-space", "Total disk space (MB)", "Total disk space (MB)",
+    StandardUnit.Megabytes,
+    () => new File("/").getTotalSpace / 1048576
   )
 
   // yeah, casting to com.sun.. ain't too pretty
-  object TotalPhysicalMemoryMetric extends GaugeMetric("system", "total-physical-memory", "Total physical memory", "Total physical memory",
+  object TotalPhysicalMemoryMetric extends SimpleGaugeMetric("system", "total-physical-memory", "Total physical memory", "Total physical memory",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getOperatingSystemMXBean match {
       case b: com.sun.management.OperatingSystemMXBean => b.getTotalPhysicalMemorySize
       case _ => -1
     }
   )
 
-  object FreePhysicalMemoryMetric extends GaugeMetric("system", "free-physical-memory", "Free physical memory", "Free physical memory",
+  object FreePhysicalMemoryMetric extends SimpleGaugeMetric("system", "free-physical-memory", "Free physical memory", "Free physical memory",
+    StandardUnit.Megabytes,
     () => ManagementFactory.getOperatingSystemMXBean match {
       case b: com.sun.management.OperatingSystemMXBean => b.getFreePhysicalMemorySize
       case _ => -1
@@ -91,7 +101,8 @@ object SystemMetrics extends implicits.Numbers {
     case _ => -1 // dev machines do not have a build number
   }
 
-  object BuildNumberMetric extends GaugeMetric("application", "build-number", "Build number", "Build number",
+  object BuildNumberMetric extends SimpleGaugeMetric("application", "build-number", "Build number", "Build number",
+    StandardUnit.Count,
     () => buildNumber
   )
 
@@ -357,15 +368,22 @@ object Metrics {
   lazy val faciaTool = FaciaToolMetrics.all
 }
 
+trait FrontendMetric[T] extends AbstractMetric[T] {
+  val countUnit: StandardUnit
+  def getAndReset: Long
+}
+
 case class SimpleCountMetric(
                               group: String,
                               name: String,
                               title: String,
                               description: String
-                              ) extends AbstractMetric[Long] {
+                              ) extends FrontendMetric[Long] {
   val count = new AtomicLong(0)
   val currentCount = new AtomicLong(0)
   val `type` = "counter"
+
+  val countUnit: StandardUnit = StandardUnit.Count
 
   def increment() {
     count.incrementAndGet()
@@ -377,6 +395,21 @@ case class SimpleCountMetric(
 
   override def asJson: StatusMetric = super.asJson.copy(count = Some(getValue().toString))
 }
+
+case class SimpleGaugeMetric(
+                              group: String,
+                              name: String,
+                              title: String,
+                              description: String,
+                              countUnit: StandardUnit,
+                              getValue: () => Long
+                              ) extends FrontendMetric[Long] {
+
+  def getAndReset = getValue()
+
+  override val `type`: String = "gauge"
+}
+
 
 object PerformanceMetrics {
   val dogPileHitMetric = SimpleCountMetric(
@@ -398,31 +431,25 @@ trait CloudWatchApplicationMetrics extends GlobalSettings {
   val applicationMetricsNamespace: String = "Application"
   val applicationDimension: Dimension = new Dimension().withName("ApplicationName").withValue(applicationName)
   def applicationName: String
-  def applicationMetrics: Map[String, Double] = Map.empty
+  def applicationMetrics: Seq[FrontendMetric[_]] = Nil
 
-  def systemMetrics: Map[String, Double] = Map(
-    (s"$applicationName-max-heap-memory", SystemMetrics.MaxHeapMemoryMetric.getValue().toDouble),
-    (s"$applicationName-used-heap-memory", SystemMetrics.UsedHeapMemoryMetric.getValue().toDouble),
-
-    (s"$applicationName-total-physical-memory", SystemMetrics.TotalPhysicalMemoryMetric.getValue().toDouble),
-    (s"$applicationName-free-physical-memory", SystemMetrics.FreePhysicalMemoryMetric.getValue().toDouble),
-
-    (s"$applicationName-available-processors", SystemMetrics.AvailableProcessorsMetric.getValue().toDouble),
-
-    (s"$applicationName-load-average", SystemMetrics.LoadAverageMetric.getValue()),
-
-    (s"$applicationName-build-number", SystemMetrics.BuildNumberMetric.getValue().toDouble),
-
-    (s"$applicationName-free-disk-space", SystemMetrics.FreeDiskSpaceMetric.getValue()),
-    (s"$applicationName-total-disk-space", SystemMetrics.TotalDiskSpaceMetric.getValue()),
-
-    (s"$applicationName-dogpile-hits", PerformanceMetrics.dogPileHitMetric.count.getAndSet(0).toDouble),
-    (s"$applicationName-dogpile-miss", PerformanceMetrics.dogPileMissMetric.count.getAndSet(0).toDouble)
+  def systemMetrics: Seq[FrontendMetric[_]] = Seq(
+    SystemMetrics.MaxHeapMemoryMetric,
+    SystemMetrics.UsedHeapMemoryMetric,
+    SystemMetrics.TotalPhysicalMemoryMetric,
+    SystemMetrics.FreePhysicalMemoryMetric,
+    SystemMetrics.AvailableProcessorsMetric,
+    SystemMetrics.LoadAverageMetric,
+    SystemMetrics.BuildNumberMetric,
+    SystemMetrics.FreeDiskSpaceMetric,
+    SystemMetrics.TotalDiskSpaceMetric,
+    PerformanceMetrics.dogPileHitMetric,
+    PerformanceMetrics.dogPileMissMetric
   )
 
   def report() {
-    val systemMetrics: Map[String, Double] = this.systemMetrics
-    val applicationMetrics: Map[String, Double] = this.applicationMetrics
+    val systemMetrics: Seq[FrontendMetric[_]] = this.systemMetrics
+    val applicationMetrics: Seq[FrontendMetric[_]] = this.applicationMetrics
     CloudWatch.put("ApplicationSystemMetrics", systemMetrics)
     if (applicationMetrics.nonEmpty) {
       CloudWatch.putWithDimensions(applicationMetricsNamespace, applicationMetrics, Seq(applicationDimension))

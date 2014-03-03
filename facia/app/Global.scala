@@ -1,4 +1,4 @@
-import common.{ContentApiMetrics, FaciaMetrics, CloudWatchApplicationMetrics}
+import common.{FrontendMetric, ContentApiMetrics, FaciaMetrics, CloudWatchApplicationMetrics}
 import conf.{Management, RequestMeasurementMetrics}
 import controllers.front._
 import dev.DevParametersLifecycle
@@ -9,12 +9,12 @@ object Global extends WithFilters(RequestMeasurementMetrics.asFilters: _*) with 
                                                         with DevParametersLifecycle with CloudWatchApplicationMetrics {
   override lazy val applicationName = Management.applicationName
 
-  override def applicationMetrics: Map[String, Double] = Map(
-    ("s3-authorization-error", FaciaMetrics.S3AuthorizationError.getAndReset.toDouble),
-    ("json-parsing-error", FaciaMetrics.JsonParsingErrorCount.getAndReset.toDouble),
-    ("front-press-elastic-api-timeout", ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble),
-    ("front-press-solr-api-timeout", ContentApiMetrics.HttpTimeoutCountMetric.getAndReset.toDouble),
-    ("front-press-api-404", ContentApiMetrics.ContentApi404Metric.getAndReset.toDouble)
+  override def applicationMetrics: Seq[FrontendMetric[_]] = Seq(
+    FaciaMetrics.S3AuthorizationError,
+    FaciaMetrics.JsonParsingErrorCount,
+    ContentApiMetrics.ElasticHttpTimeoutCountMetric,
+    ContentApiMetrics.HttpTimeoutCountMetric,
+    ContentApiMetrics.ContentApi404Metric
   )
 
 }

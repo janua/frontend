@@ -22,7 +22,8 @@ object Global extends FaciaToolLifecycle with GlobalSettings with CloudWatchAppl
     ("front-press-success", FaciaToolMetrics.FrontPressSuccess.getAndReset.toDouble),
     ("front-press-elastic-api-timeout", ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble),
     ("front-press-solr-api-timeout", ContentApiMetrics.HttpTimeoutCountMetric.getAndReset.toDouble),
-    ("front-press-api-404", ContentApiMetrics.ContentApi404Metric.getAndReset.toDouble)
+    ("front-press-api-404", ContentApiMetrics.ContentApi404Metric.getAndReset.toDouble),
+    ("front-press-contentapi-calls", ContentApiMetrics.ElasticHttpTimingMetric.count.toDouble)
   )
 
   override def onLoadConfig(config: Configuration, path: File, classloader: ClassLoader, mode: Mode.Mode): Configuration = {

@@ -22,7 +22,7 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
   case class ContentApiPut(
                             `type`: String,
                             displayName: Option[String],
-                            groups: Seq[String],
+                            groups: Option[Seq[String]],
                             curatedContent: Seq[Item],
                             backfill: Option[String],
                             lastModified: String,

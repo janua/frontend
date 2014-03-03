@@ -7,11 +7,11 @@ import org.joda.time.DateTime
 import scala.util.{Success, Failure, Try}
 import common.Logging
 import conf.Configuration
-import model.Config
+import model.ConfigForJson
 
 case class ConfigUpdate(
   fronts: Map[String, Front],
-  collections: Map[String, Config]
+  collections: Map[String, ConfigForJson]
 )
 
 case class Front(

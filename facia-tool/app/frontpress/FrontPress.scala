@@ -89,7 +89,7 @@ trait FrontPress extends Logging {
         lastModified   = collection.lastUpdated,
         updatedBy      = collection.updatedBy,
         updatedEmail   = collection.updatedEmail,
-        groups         = Option(config.groups).filter(_.nonEmpty),
+        groups         = config.groups.filter(_.nonEmpty),
         href           = collection.href.orElse(config.href),
         `type`         = config.collectionType
       )

@@ -13,14 +13,14 @@ import play.api.libs.ws.Response
 import scala.concurrent.Future
 import conf.Switches.ContentApiPutSwitch
 import services.S3FrontsApi
-import model.{Config, NoCache, Cached}
+import model.{ConfigForJson, Config, NoCache, Cached}
 
 
 object FaciaToolController extends Controller with Logging with ExecutionContexts {
-  implicit val collectionRead = Json.reads[Config]
+  implicit val collectionRead = Json.reads[ConfigForJson]
   implicit val frontRead = Json.reads[Front]
   implicit val configRead = Json.reads[ConfigUpdate]
-  implicit val collectionWrite = Json.writes[Config]
+  implicit val collectionWrite = Json.writes[ConfigForJson]
   implicit val frontWrite= Json.writes[Front]
   implicit val configWrite = Json.writes[ConfigUpdate]
 
@@ -63,7 +63,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
           Ok
         }
         case _ => NotFound
-      } getOrElse NotFound
+      } getOrElse NotFound("NoCast")
     }
   }
 

@@ -9,7 +9,7 @@ import play.api.libs.json.{JsValue, Json}
 import services.S3FrontsApi
 import controllers.Identity
 import scala.util.Try
-import model.Config
+import model.{ConfigForJson, Config}
 import scala.Some
 
 trait FaciaApiRead {
@@ -27,10 +27,10 @@ trait FaciaApiWrite {
 }
 
 object FaciaApi extends FaciaApiRead with FaciaApiWrite {
-  implicit val collectionRead = Json.reads[Config]
+  implicit val collectionRead = Json.reads[ConfigForJson]
   implicit val frontRead = Json.reads[Front]
   implicit val configRead = Json.reads[ConfigUpdate]
-  implicit val collectionWrite = Json.writes[Config]
+  implicit val collectionWrite = Json.writes[ConfigForJson]
   implicit val frontWrite= Json.writes[Front]
   implicit val configWrite = Json.writes[ConfigUpdate]
 

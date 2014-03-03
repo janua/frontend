@@ -64,7 +64,7 @@ trait FrontJson extends ExecutionContexts {
       contentApiQuery = (json \ "apiQuery").asOpt[String],
       displayName     = (json \ "displayName").asOpt[String],
       href            = (json \ "href").asOpt[String],
-      groups          = (json \ "groups").asOpt[List[String]].getOrElse(Nil),
+      groups          = (json \ "groups").asOpt[List[String]],
       `type`          = (json \ "type").asOpt[String],
       uneditable      = None
     )

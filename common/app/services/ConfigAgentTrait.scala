@@ -53,7 +53,7 @@ trait ConfigAgentTrait extends ExecutionContexts {
         (collectionJson \ "apiQuery").asOpt[String],
         (collectionJson \ "displayName").asOpt[String].filter(_.nonEmpty),
         (collectionJson \ "href").asOpt[String],
-        (collectionJson \ "groups").asOpt[Seq[String]] getOrElse Nil,
+        (collectionJson \ "groups").asOpt[Seq[String]],
         (collectionJson \ "type").asOpt[String],
         (collectionJson \ "uneditable").asOpt[Boolean]
       )

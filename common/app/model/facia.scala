@@ -2,20 +2,37 @@ package model
 
 import org.joda.time.DateTime
 
+trait ConfigFields {
+  val contentApiQuery: Option[String]
+  val displayName: Option[String]
+  val href: Option[String]
+  val groups: Option[Seq[String]]
+  val `type`: Option[String]
+  val uneditable: Option[Boolean]
+}
+
+case class ConfigForJson(contentApiQuery: Option[String],
+                        displayName: Option[String],
+                        href: Option[String],
+                        groups: Option[Seq[String]],
+                        `type`: Option[String],
+                        uneditable: Option[Boolean]
+                         ) extends ConfigFields
+
 case class Config(
                    id: String,
-                   contentApiQuery: Option[String]  = None,
-                   displayName: Option[String]      = None,
-                   href: Option[String]             = None,
-                   groups: Seq[String]              = Nil,
-                   `type`: Option[String]           = None,
-                   uneditable: Option[Boolean]      = None
-                   ) {
+                   contentApiQuery: Option[String] = None,
+                   displayName: Option[String]     = None,
+                   href: Option[String]            = None,
+                   groups: Option[Seq[String]]     = None,
+                   `type`: Option[String]          = None,
+                   uneditable: Option[Boolean]     = None)
+  extends ConfigFields {
   def collectionType = `type`
 }
 
 object Config {
-  def fromId(id: String): Config = Config(id, None, None, None, Nil, None, None)
+  def fromId(id: String): Config = Config(id, None, None, None, None, None, None)
 }
 
 case class Collection(curated: Seq[Content],

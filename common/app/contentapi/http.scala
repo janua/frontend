@@ -3,13 +3,13 @@ package contentapi
 import com.gu.openplatform.contentapi.connection.{HttpResponse, Http}
 import scala.concurrent.Future
 import conf.Configuration
-import common.ExecutionContexts
+import common.{SimpleCountMetric, ExecutionContexts}
 import java.util.concurrent.TimeoutException
 import play.api.libs.ws.WS
 import com.gu.management.{CountMetric, TimingMetric}
 import common.ContentApiMetrics.ContentApi404Metric
 
-class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: CountMetric) extends Http[Future]
+class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCountMetric) extends Http[Future]
                                                                                               with ExecutionContexts {
 
   import System.currentTimeMillis
@@ -48,7 +48,7 @@ class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: CountMet
 trait DelegateHttp extends Http[Future] with ExecutionContexts {
 
   val httpTimingMetric: TimingMetric
-  val httpTimeoutMetric: CountMetric
+  val httpTimeoutMetric: SimpleCountMetric
 
   private var _http: Http[Future] = new WsHttp(httpTimingMetric, httpTimeoutMetric)
 

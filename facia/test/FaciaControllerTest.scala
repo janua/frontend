@@ -2,29 +2,28 @@ package test
 
 import play.api.test._
 import play.api.test.Helpers._
-import org.scalatest.Matchers
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
 import common.ExecutionContexts
 import controllers.FaciaController
+import conf.Switches
 
-class FaciaControllerTest extends FlatSpec with Matchers with BeforeAndAfterAll with ExecutionContexts {
+class FaciaControllerTest extends FlatSpec with Matchers with BeforeAndAfter with ExecutionContexts {
 
   val articleUrl = "/environment/2012/feb/22/capitalise-low-carbon-future"
   val callbackName = "aFunction"
 
   val responsiveRequest = FakeRequest().withHeaders("host" -> "www.theguardian.com")
 
-  object Front extends TestFront
-  object FaciaController extends FaciaController {
-    override val front = Front
+  before {
+    Switches.PressedFacia.switchOn()
   }
 
-  ignore should "200 when content type is front" in Fake {
+  "FaciaController" should "200 when content type is front" in Fake {
     val result = FaciaController.renderEditionFront("uk")(TestRequest())
     status(result) should be(200)
   }
 
-  ignore should "redirect base page to edition page if on www.theguardian.com" in Fake {
+  it should "redirect base page to edition page if on www.theguardian.com" in Fake {
 
     val result = FaciaController.editionRedirect("")(responsiveRequest.withHeaders("X-GU-Edition" -> "US"))
     status(result) should be(303)
@@ -36,17 +35,17 @@ class FaciaControllerTest extends FlatSpec with Matchers with BeforeAndAfterAll 
 
   }
 
-  ignore should "understand the editionalised network front" in Fake {
+  it should "understand the editionalised network front" in Fake {
     val result2 = FaciaController.renderEditionFront("uk")(TestRequest())
     status(result2) should be(200)
   }
 
-  ignore should "understand editionalised section fronts" in Fake {
+  it should "understand editionalised section fronts" in Fake {
     val result2 = FaciaController.renderEditionSectionFront("uk/culture")(TestRequest())
     status(result2) should be(200)
   }
 
-  ignore should "return JSONP when callback is supplied to front" in Fake {
+  it should "return JSONP when callback is supplied to front" in Fake {
     val fakeRequest = FakeRequest(GET, s"?callback=$callbackName")
       .withHeaders("host" -> "localhost:9000")
 
@@ -56,7 +55,7 @@ class FaciaControllerTest extends FlatSpec with Matchers with BeforeAndAfterAll 
     contentAsString(result) should startWith(s"""$callbackName({\"html\"""")
   }
 
-  ignore should "return JSON when .json format is supplied to front" in Fake {
+  it should "return JSON when .json format is supplied to front" in Fake {
     val fakeRequest = FakeRequest("GET", ".json")
       .withHeaders("Host" -> "localhost:9000")
       .withHeaders("Origin" -> "http://www.theorigin.com")
@@ -67,8 +66,8 @@ class FaciaControllerTest extends FlatSpec with Matchers with BeforeAndAfterAll 
     contentAsString(result) should startWith("{\"html\"")
   }
 
-  ignore should "200 when hitting the front" in Fake {
-    val result = FaciaController.renderEditionFront("uk")(TestRequest())
+  it should "200 when hitting the front" in Fake {
+    val result = FaciaController.renderEditionFront("/")(TestRequest())
     status(result) should be(200)
   }
 }

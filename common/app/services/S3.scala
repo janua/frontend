@@ -15,6 +15,9 @@ import javax.crypto.spec.SecretKeySpec
 import sun.misc.BASE64Encoder
 import com.amazonaws.auth.AWSSessionCredentials
 import controllers.Identity
+import java.util.zip.GZIPOutputStream
+import java.io._
+import scala.Some
 
 trait S3 extends Logging {
 
@@ -63,6 +66,28 @@ trait S3 extends Logging {
 
   def putPrivate(key: String, value: String, contentType: String) {
     put(key: String, value: String, contentType: String, Private)
+  }
+
+  def putPrivateGzipped(key: String, value: String, contentType: String) {
+    putGzipped(key: String, value: String, contentType: String, Private)
+  }
+
+  private def putGzipped(key: String, value: String, contentType: String, accessControlList: CannedAccessControlList) {
+    val metadata = new ObjectMetadata()
+    metadata.setCacheControl("no-cache,no-store")
+    metadata.setContentType(contentType)
+    metadata.setContentEncoding("gzip")
+
+    val valueAsBytes = value.getBytes("UTF-8")
+    val os = new ByteArrayOutputStream()
+    val gzippedStream = new GZIPOutputStream(os)
+    gzippedStream.write(valueAsBytes)
+    gzippedStream.flush()
+    gzippedStream.close()
+
+    val request = new PutObjectRequest(bucket, key, new ByteArrayInputStream(os.toByteArray), metadata).withCannedAcl(accessControlList)
+
+    client.putObject(request)
   }
 
   private def put(key: String, value: String, contentType: String, accessControlList: CannedAccessControlList) {
@@ -123,7 +148,7 @@ object S3FrontsApi extends S3 {
   def getCollectionIds(prefix: String): List[String] = getListing(prefix, "/collection.json")
 
   def putPressedJson(id: String, json: String) =
-    putPrivate(s"$location/pressed/$id/pressed.json", json, "application/json")
+    putPrivateGzipped(s"$location/pressed/$id/pressed.json", json, "application/json")
 }
 
 trait SecureS3Request extends implicits.Dates with Logging {

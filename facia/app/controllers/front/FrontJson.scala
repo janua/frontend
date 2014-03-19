@@ -18,6 +18,9 @@ trait FrontJson extends ExecutionContexts {
 
   def get(path: String): Future[Option[FaciaPage]] = {
     val response = SecureS3Request.urlGet(getAddressForPath(path)).get()
+    response.map{ r =>
+      r.getAHCResponse.getResponseBodyAsStream
+    }
     parseResponse(response)
   }
 

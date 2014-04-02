@@ -143,7 +143,7 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
       Future.successful(Nil)
     }
     else {
-      val results = collectionItems.foldLeft(Future[List[Content]](Nil)){(foldListFuture, collectionItem) =>
+      val results = collectionItems.foldRight(Future[List[Content]](Nil)){(collectionItem, foldListFuture) =>
         lazy val supportingAsContent: Future[List[Content]] = {
           lazy val supportingLinks: List[CollectionItem] = retrieveSupportingLinks(collectionItem)
           if (!hasParent) getArticles(supportingLinks, edition, hasParent=true) else Future.successful(Nil)
@@ -182,7 +182,7 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
           itemResponse
             .map(Content(_, supporting, collectionItem.metaData))
             .map(validateContent)
-            .map(_ +: contentList)
+            .map(_ :: contentList)
             .getOrElse(contentList)
         }
       }

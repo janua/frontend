@@ -1,7 +1,7 @@
 package services
 
 import conf.Configuration
-import common.Logging
+import common.{ExecutionContexts, Logging}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.model.CannedAccessControlList.{Private, PublicRead}
@@ -15,6 +15,7 @@ import javax.crypto.spec.SecretKeySpec
 import sun.misc.BASE64Encoder
 import com.amazonaws.auth.AWSSessionCredentials
 import controllers.Identity
+import scala.concurrent.Future
 
 trait S3 extends Logging {
 
@@ -79,7 +80,7 @@ trait S3 extends Logging {
 
 object S3 extends S3
 
-object S3FrontsApi extends S3 {
+object S3FrontsApi extends S3 with ExecutionContexts {
 
   override lazy val bucket = Configuration.aws.bucket
   lazy val stage = if (Play.isTest) "TEST" else Configuration.facia.stage.toUpperCase
@@ -88,7 +89,7 @@ object S3FrontsApi extends S3 {
 
   def getSchema = get(s"$location/schema.json")
   def getConfig(id: String) = get(s"$location/config/$id/config.json")
-  def getMasterConfig: Option[String] = get(s"$location/config/config.json")
+  def getMasterConfig: Future[String] = SecureS3Request.urlGet(s"$location/config/config.json").get().map(_.body)
   def getBlock(id: String) = get(s"$location/collection/$id/collection.json")
   def listConfigsIds: List[String] = getConfigIds(s"$location/config/")
   def listCollectionIds: List[String] = getCollectionIds(s"$location/collection/")

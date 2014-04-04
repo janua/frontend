@@ -44,14 +44,14 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     NoCache { Ok(Json.toJson(S3FrontsApi.listCollectionIds)) }
   }
 
-  def getConfig = AjaxExpiringAuthentication { request =>
+  def getConfig = AjaxExpiringAuthentication.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
-      S3FrontsApi.getMasterConfig map { json =>
-        Ok(json).as("application/json")
-      } getOrElse NotFound
+     S3FrontsApi.getMasterConfig map { json =>
+       NoCache {
+         Ok(json).as("application/json")
+       }
+     }
     }
-  }
 
   def updateConfig(): Action[AnyContent] = AjaxExpiringAuthentication { request =>
     FaciaToolMetrics.ApiUsageCount.increment()

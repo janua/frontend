@@ -25,7 +25,7 @@ object Seg {
 
 trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging {
 
-  case class InvalidContent(id: String) extends Throwable(s"Invalid Content: $id")
+  case class InvalidContent(id: String) extends Exception(s"Invalid Content: $id")
   val showFieldsQuery: String = FaciaDefaults.showFields
   val showFieldsWithBodyQuery: String = FaciaDefaults.showFieldsWithBody
 
@@ -54,6 +54,8 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
       collectionMeta <- getCollectionMeta(response).fallbackTo(Future.successful(CollectionMeta.empty))
       displayName    <- parseDisplayName(response).fallbackTo(Future.successful(None))
       href           <- parseHref(response).fallbackTo(Future.successful(None))
+
+
       contentApiList <- executeContentApiQuery(config.contentApiQuery, edition)
     } yield Collection(
       collectionList,
@@ -177,9 +179,10 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
           itemResponse <- content
           supporting <- supportingAsContent
         } yield {
+          itemResponse.foreach{content => content}
           itemResponse
             .map(Content(_, supporting, collectionItem.metaData))
-            .map(validateContent)
+            .flatMap(validateContent)
             .map(_ +: contentList)
             .getOrElse(contentList)
         }
@@ -211,7 +214,11 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
             curated           = Nil,
             editorsPicks      = Nil,
             mostViewed        = Nil,
-            contentApiResults = r.results.map(new ContentWithNoFields(_)).map(validateContent)
+            contentApiResults = {
+              if(r.results.isEmpty)
+                println(s"Results (Search) are empty for ${queryParamsWithEdition.mkString(",")}")
+              r.results.map(new ContentWithNoFields(_)).flatMap(validateContent)
+            }
           )
         }
       }
@@ -226,9 +233,21 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
         newSearch.response map { r =>
           Result(
             curated           = Nil,
-            editorsPicks      = r.editorsPicks.map(new ContentWithNoFields(_)).map(validateContent),
-            mostViewed        = r.mostViewed.map(new ContentWithNoFields(_)).map(validateContent),
-            contentApiResults = r.results.map(new ContentWithNoFields(_)).map(validateContent)
+            editorsPicks      = {
+              if(r.editorsPicks.isEmpty)
+                println(s"Editors picks is empty for $id")
+              r.editorsPicks.map(new ContentWithNoFields(_)).flatMap(validateContent)
+            },
+            mostViewed        = {
+              //if(r.mostViewed.isEmpty)
+              //  println(s"Most viewed is empty for $id")
+              r.mostViewed.map(new ContentWithNoFields(_)).flatMap(validateContent)
+            },
+            contentApiResults = {
+              if(r.editorsPicks.isEmpty)
+                println(s"Results are empty for $id")
+              r.results.map(new ContentWithNoFields(_)).flatMap(validateContent)
+            }
           )
         }
       }
@@ -238,15 +257,26 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
     newSearch
   } getOrElse Future.successful(Result(Nil, Nil, Nil, Nil))
 
-  def validateContent(content: Content): Content = {
+  private def validateContent(content: Content): Option[Content] = {
     Try {
       //These will throw if they don't exist because of unsafe Map.apply
       content.headline.isEmpty
       content.shortUrl.isEmpty
-      content
+      Some(content)
     }.getOrElse {
       FaciaToolMetrics.InvalidContentExceptionMetric.increment()
-      throw new InvalidContent(content.id)
+
+      try {
+        val id = content.id
+        val headline = Option(content.headline)
+        val shortUrl = Option(content.shortUrl)
+        log.error(s"Invalid Content: $id - $shortUrl - $headline")
+        println(s"Invalid Content: $id - $shortUrl - $headline")
+      } catch {
+        case e: Throwable => log.error("Could not even validate", e)
+      }
+
+      None
     }
   }
 

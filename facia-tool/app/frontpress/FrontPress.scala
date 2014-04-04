@@ -68,10 +68,12 @@ trait FrontPress extends Logging {
     val futureSequence = Future.sequence(collections)
     futureSequence.onFailure{case t: Throwable =>
       FrontPressFailure.increment()
+      println(s"Pressing failed for $id - ${t.toString}")
       log.warn(t.toString)
     }
     futureSequence.onSuccess{case _ =>
       FrontPressSuccess.increment()
+      println(s"Pressing success for $id")
       log.info(s"Successful press of $id")
     }
     futureSequence

@@ -17,8 +17,7 @@ trait ConfigAgentTrait extends ExecutionContexts {
   def refreshAndReturn(): Future[JsValue] =
     S3FrontsApi.getMasterConfig
       .map(Json.parse)
-      .map(json => configAgent.alter{_ => json})
-      .getOrElse(Future.successful(configAgent.get()))
+      .map{json => configAgent.alter{_ => json}; json}
 
   def getPathIds: List[String] = {
     val json = configAgent.get()

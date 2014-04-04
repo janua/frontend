@@ -3,9 +3,9 @@ package services
 import common.FaciaMetrics.S3AuthorizationError
 import common._
 import conf.{SwitchingContentApi => ContentApi, Configuration}
-import model.{Collection, Config, Content}
+import model.{ApiContentWithMeta, Collection, Config, Content}
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{Json, JsObject, JsValue}
 import play.api.libs.ws.Response
 import scala.concurrent.Future
 import contentapi.QueryDefaults
@@ -211,7 +211,7 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
             curated           = Nil,
             editorsPicks      = Nil,
             mostViewed        = Nil,
-            contentApiResults = r.results.map(Content(_)).map(validateContent)
+            contentApiResults = r.results.map(new ContentWithNoFields(_)).map(validateContent)
           )
         }
       }
@@ -226,9 +226,9 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
         newSearch.response map { r =>
           Result(
             curated           = Nil,
-            editorsPicks      = r.editorsPicks.map(Content(_)).map(validateContent),
-            mostViewed        = r.mostViewed.map(Content(_)).map(validateContent),
-            contentApiResults = r.results.map(Content(_)).map(validateContent)
+            editorsPicks      = r.editorsPicks.map(new ContentWithNoFields(_)).map(validateContent),
+            mostViewed        = r.mostViewed.map(new ContentWithNoFields(_)).map(validateContent),
+            contentApiResults = r.results.map(new ContentWithNoFields(_)).map(validateContent)
           )
         }
       }
@@ -250,4 +250,9 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
     }
   }
 
+}
+
+import com.gu.openplatform.contentapi.model.{Content => ApiContent, Element => ApiElement, Asset, Tag => ApiTag}
+class ContentWithNoFields(delegate: ApiContentWithMeta) extends Content(delegate) {
+  def this(d: ApiContent) = this(ApiContentWithMeta(d))
 }

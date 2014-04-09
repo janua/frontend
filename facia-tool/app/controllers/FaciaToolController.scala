@@ -44,12 +44,12 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     NoCache { Ok(Json.toJson(S3FrontsApi.listCollectionIds)) }
   }
 
-  def getConfig = AjaxExpiringAuthentication { request =>
+  def getConfig = AjaxExpiringAuthentication.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
-      S3FrontsApi.getMasterConfig map { json =>
-        Ok(json).as("application/json")
-      } getOrElse NotFound
+    S3FrontsApi.getMasterConfig map { response =>
+      NoCache {
+        Ok(response.body).as("application/json")
+      }
     }
   }
 
@@ -67,21 +67,23 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     }
   }
 
-  def readBlock(id: String) = AjaxExpiringAuthentication { request =>
+  def readBlock(id: String) = AjaxExpiringAuthentication.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
-      S3FrontsApi.getBlock(id) map { json =>
-        Ok(json).as("application/json")
-      } getOrElse NotFound
+    S3FrontsApi.getBlock(id) map { response =>
+      NoCache {
+        Ok(response.body).as("application/json")
+      }
     }
   }
 
   def publishCollection(id: String) = AjaxExpiringAuthentication { request =>
     val identity = Identity(request).get
     FaciaToolMetrics.DraftPublishCount.increment()
-    val block = FaciaApi.publishBlock(id, identity)
-    block.foreach{ b =>
-      FaciaApi.archive(id, b, JsString("publish"), identity)
+    for {
+      blockOption <- FaciaApi.publishBlock(id, identity)
+      block <- blockOption
+    } {
+      FaciaApi.archive(id, block, JsString("publish"), identity)
       pressCollectionId(id)
     }
     notifyContentApi(id)
@@ -90,9 +92,12 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
 
   def discardCollection(id: String) = AjaxExpiringAuthentication { request =>
     val identity = Identity(request).get
-    val block = FaciaApi.discardBlock(id, identity)
-    block.foreach { b =>
-      FaciaApi.archive(id, b, JsString("discard"), identity)
+    for {
+      blockOption <- FaciaApi.discardBlock(id, identity)
+    } yield for {
+      block <- blockOption
+    } {
+      FaciaApi.archive(id, block, JsString("discard"), identity)
     }
     NoCache(Ok)
   }
@@ -112,29 +117,31 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     }
   }
 
-  def collectionEdits(): Action[AnyContent] = AjaxExpiringAuthentication { request =>
+  def collectionEdits(): Action[AnyContent] = AjaxExpiringAuthentication.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
       request.body.asJson flatMap (_.asOpt[Map[String, UpdateList]]) map {
         case update: Map[String, UpdateList] => {
           val identity: Identity = Identity(request).get
-          val updatedCollections: Map[String, Block] = update.collect {
-            case ("update", updateList) =>
-              UpdateActions.updateCollectionList(updateList.id, updateList, identity).map(updateList.id -> _)
-            case ("remove", updateList) =>
-              UpdateActions.updateCollectionFilter(updateList.id, updateList, identity).map(updateList.id -> _)
-          }.flatten.toMap
+          val updatedCollections: Future[Map[String, Block]] =
+            Future.traverse(update) {
+                case ("update", updateList) =>
+                  UpdateActions.updateCollectionList(updateList.id, updateList, identity).map(_.map(updateList.id -> _))
+                case ("remove", updateList) =>
+                  UpdateActions.updateCollectionFilter(updateList.id, updateList, identity).map(_.map(updateList.id -> _))
+              } //This collect turns into an Iterable[Future[Option[(String, Block)]]]
+              .map(_.flatten)
+              .map(_.toMap)
 
-          pressCollectionIds(updatedCollections.keySet)
-
-          if (updatedCollections.nonEmpty)
-            Ok(Json.toJson(updatedCollections)).as("application/json")
-          else
-            NotFound
+          updatedCollections.map { m =>
+            pressCollectionIds(m.keySet)
+            if (m.nonEmpty)
+              Ok(Json.toJson(m)).as("application/json")
+            else
+              NotFound
+          }
         }
-        case _ => NotFound
-      } getOrElse NotFound
-    }
+        case _ => Future.successful(NotFound)
+      } getOrElse Future.successful(NotFound)
   }
 
   def updateCollection(id: String) = AjaxExpiringAuthentication { request =>

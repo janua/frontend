@@ -12,13 +12,17 @@ trait ConfigAgentTrait extends ExecutionContexts {
   implicit val alterTimeout: Timeout = Configuration.faciatool.configBeforePressTimeout.millis
   private val configAgent = AkkaAgent[JsValue](JsNull)
 
-  def refresh() = S3FrontsApi.getMasterConfig map {s => configAgent.send(Json.parse(s))}
+  def refresh() = S3FrontsApi.getMasterConfig
+    .filter(_.status == 200)
+    .map(_.body)
+    .map {s => configAgent.send(Json.parse(s))}
 
   def refreshAndReturn(): Future[JsValue] =
     S3FrontsApi.getMasterConfig
+      .filter(_.status == 200)
+      .map(_.body)
       .map(Json.parse)
-      .map(json => configAgent.alter{_ => json})
-      .getOrElse(Future.successful(configAgent.get()))
+      .flatMap(json => configAgent.alter{_ => json})
 
   def getPathIds: List[String] = {
     val json = configAgent.get()

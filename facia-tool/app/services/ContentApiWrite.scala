@@ -39,44 +39,49 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
     .map(_ + s"/collections/$id")
 
   def writeToContentapi(config: Config): Future[Response] = {
-    (for {
-      username      <- Configuration.contentApi.write.username
-      password      <- Configuration.contentApi.write.password
-      url           <- getCollectionUrlForWrite(config.id)
-      contentApiPut <- generateContentApiPut(config)
-    } yield
-    {
-      val response = WS
-        .url(url).withAuth(username, password, Realm.AuthScheme.NONE)
-        .put(Json.toJson(contentApiPut))
+    generateContentApiPut(config).flatMap { contentApiPutOption =>
+      (for {
+          contentApiPut <- contentApiPutOption
+          username <- Configuration.contentApi.write.username
+          password <- Configuration.contentApi.write.password
+          url <- getCollectionUrlForWrite(config.id)
+        } yield {
+          val response = WS
+            .url(url).withAuth(username, password, Realm.AuthScheme.NONE)
+            .put(Json.toJson(contentApiPut))
 
-      response.onSuccess{case r =>
-        r.status match {
-          case 202 => ContentApiPutSuccess.increment()
-          case _   => ContentApiPutFailure.increment()
-        }
-        log.info(s"Successful Put for ${config.id} to content api with status ${r.status}: ${r.body}")
-      }
-      response.onFailure{case e =>
-      ContentApiPutFailure.increment()
-        log.warn(s"Failure to put ${config.id} to content api with exception ${e.toString}")
-      }
-      response
-    }) getOrElse Future.failed(new Throwable(s"${config.id} does not exist"))
+          response.onSuccess {
+            case r =>
+              r.status match {
+                case 202 => ContentApiPutSuccess.increment()
+                case _ => ContentApiPutFailure.increment()
+              }
+              log.info(s"Successful Put for ${config.id} to content api with status ${r.status}: ${r.body}")
+          }
+          response.onFailure {
+            case e =>
+              ContentApiPutFailure.increment()
+              log.warn(s"Failure to put ${config.id} to content api with exception ${e.toString}")
+          }
+          response
+        }) getOrElse Future.failed(new Throwable(s"${config.id} does not exist"))
+    }
   }
 
-  private def generateContentApiPut(config: Config): Option[ContentApiPut] = {
-    FaciaApi.getBlock(config.id) map { block =>
-
-      ContentApiPut(
-        config.collectionType.getOrElse("news"),
-        config.displayName,
-        config.groups,
-        generateItems(block.live),
-        config.contentApiQuery,
-        block.lastUpdated,
-        block.updatedEmail
-      )
+  private def generateContentApiPut(config: Config): Future[Option[ContentApiPut]] = {
+    FaciaApi.getBlock(config.id).map { blockOption =>
+      blockOption.map {
+        block =>
+          ContentApiPut(
+            config.collectionType.getOrElse("news"),
+            config.displayName,
+            config.groups,
+            generateItems(block.live),
+            config.contentApiQuery,
+            block.lastUpdated,
+            block.updatedEmail
+          )
+      }
     }
   }
 

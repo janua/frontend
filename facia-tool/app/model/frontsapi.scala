@@ -5,8 +5,10 @@ import tools.FaciaApi
 import controllers.Identity
 import org.joda.time.DateTime
 import scala.util.{Success, Failure, Try}
-import common.Logging
+import common.{ExecutionContexts, Logging}
 import conf.Configuration
+import scala.concurrent.Future
+import play.api.libs.concurrent.Akka
 
 case class Config(
   fronts: Map[String, Front],
@@ -51,7 +53,7 @@ case class CollectionMetaUpdate(
   href: Option[String]
 )
 
-trait UpdateActions extends Logging {
+trait UpdateActions extends Logging with ExecutionContexts {
 
   val collectionCap: Int = Configuration.facia.collectionCap
   val itemMetaWhitelistFields: Seq[String] = Seq("headline", "trailText", "group", "supporting", "imageAdjust", "isBreaking", "updatedAt")
@@ -59,7 +61,7 @@ trait UpdateActions extends Logging {
   implicit val collectionMetaWrites = Json.writes[CollectionMetaUpdate]
   implicit val updateListWrite = Json.writes[UpdateList]
 
-  def getBlock(id: String): Option[Block] = FaciaApi.getBlock(id)
+  def getBlock(id: String): Future[Option[Block]] = FaciaApi.getBlock(id)
 
   def insertIntoLive(update: UpdateList, block: Block): Block =
     if (update.live) {
@@ -112,30 +114,34 @@ trait UpdateActions extends Logging {
     FaciaApi.putMasterConfig(config, identity)
   }
 
-  def updateCollectionList(id: String, update: UpdateList, identity: Identity): Option[Block] = {
+  def updateCollectionList(id: String, update: UpdateList, identity: Identity): Future[Option[Block]] = {
     lazy val updateJson = Json.toJson(update)
-    getBlock(id)
-    .map(insertIntoLive(update, _))
-    .map(insertIntoDraft(update, _))
-    .map(capCollection)
-    .map(putBlock(id, _, identity, updateJson))
-    .map(archiveBlock(id, _, updateJson, identity))
-    .orElse(createBlock(id, identity, update))
+    for (blockOption <- getBlock(id)) yield {
+      blockOption.map(insertIntoLive(update, _))
+        .map(insertIntoDraft(update, _))
+        .map(capCollection)
+        .map(putBlock(id, _, identity, updateJson))
+        .map(archiveBlock(id, _, updateJson, identity))
+        .orElse(createBlock(id, identity, update))
+    }
   }
 
-  def updateCollectionFilter(id: String, update: UpdateList, identity: Identity): Option[Block] = {
+  def updateCollectionFilter(id: String, update: UpdateList, identity: Identity): Future[Option[Block]] = {
     lazy val updateJson = Json.toJson(update)
-    getBlock(id)
-      .map(deleteFromLive(update, _))
-      .map(deleteFromDraft(update, _))
-      .map(putBlock(id, _, identity, updateJson))
-      .map(archiveBlock(id, _, updateJson, identity))
+    for (blockOption <- getBlock(id)) yield {
+      blockOption.map(deleteFromLive(update, _))
+        .map(deleteFromDraft(update, _))
+        .map(putBlock(id, _, identity, updateJson))
+        .map(archiveBlock(id, _, updateJson, identity))
+    }
   }
 
-  def updateCollectionMeta(id: String, update: CollectionMetaUpdate, identity: Identity): Option[Block] =
-    getBlock(id)
-      .map(updateCollectionMeta(_, update, identity))
-      .map(putBlock(id, _, identity, Json.toJson(update)))
+  def updateCollectionMeta(id: String, update: CollectionMetaUpdate, identity: Identity): Future[Option[Block]] =
+    for (blockOption <- getBlock(id)) yield {
+      blockOption
+        .map(updateCollectionMeta(_, update, identity))
+        .map(putBlock(id, _, identity, Json.toJson(update)))
+    }
 
   private def updateList(update: UpdateList, blocks: List[Trail]): List[Trail] = {
     val listWithoutItem = blocks.filterNot(_.id == update.item)

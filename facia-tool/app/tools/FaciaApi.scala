@@ -6,22 +6,26 @@ import play.api.libs.json.{JsValue, Json}
 import services.S3FrontsApi
 import controllers.Identity
 import scala.util.Try
+import scala.concurrent.Future
+import common.ExecutionContexts
+import play.api.libs.concurrent.Akka
 
 trait FaciaApiRead {
   def getSchema: Option[String]
-  def getBlock(id: String): Option[Block]
+  def getBlock(id: String): Future[Option[Block]]
   def getBlocksSince(since: DateTime): Seq[Block]
   def getBlocksSince(since: String): Seq[Block] = getBlocksSince(DateTime.parse(since))
 }
 
 trait FaciaApiWrite {
   def putBlock(id: String, block: Block, identity: Identity): Block
-  def publishBlock(id: String, identity: Identity): Option[Block]
-  def discardBlock(id: String, identity: Identity): Option[Block]
+  def publishBlock(id: String, identity: Identity): Future[Option[Block]]
+  def discardBlock(id: String, identity: Identity): Future[Option[Block]]
   def archive(id: String, block: Block, update: JsValue, identity: Identity) : Unit
 }
 
-object FaciaApi extends FaciaApiRead with FaciaApiWrite {
+object FaciaApi extends FaciaApiRead with FaciaApiWrite with ExecutionContexts {
+
   implicit val collectionRead = Json.reads[Collection]
   implicit val frontRead = Json.reads[Front]
   implicit val configRead = Json.reads[Config]
@@ -35,10 +39,10 @@ object FaciaApi extends FaciaApiRead with FaciaApiWrite {
   implicit val blockWrite = Json.writes[Block]
 
   def getSchema = S3FrontsApi.getSchema
-  def getBlock(id: String) = for {
+  def getBlock(id: String): Future[Option[Block]] = for {
     blockJson <- S3FrontsApi.getBlock(id)
-    block <- Json.parse(blockJson).asOpt[Block]
-  } yield block
+    if blockJson.status == 200
+  } yield Json.parse(blockJson.body).asOpt[Block]
 
   def getBlocksSince(since: DateTime) = ???
 
@@ -48,16 +52,22 @@ object FaciaApi extends FaciaApiRead with FaciaApiWrite {
     newBlock
   }
 
-  def publishBlock(id: String, identity: Identity): Option[Block] =
-    getBlock(id)
-      .filter(_.draft.isDefined)
-      .map(updateIdentity(_, identity))
-      .map { block => putBlock(id, block.copy(live = block.draft.get, draft = None), identity)}
+  def publishBlock(id: String, identity: Identity): Future[Option[Block]] =
+    for (blockOption <- getBlock(id)) yield {
+      blockOption.filter(_.draft.isDefined)
+        .map(updateIdentity(_, identity))
+        .map {
+        block => putBlock(id, block.copy(live = block.draft.get, draft = None), identity)
+      }
+    }
 
-  def discardBlock(id: String, identity: Identity): Option[Block] =
-    getBlock(id)
-      .map (updateIdentity(_, identity))
-      .map { block => putBlock(id, block.copy(draft = None), identity)}
+  def discardBlock(id: String, identity: Identity): Future[Option[Block]] =
+    for (blockOption <- getBlock(id)) yield {
+      blockOption.map(updateIdentity(_, identity))
+        .map {
+        block => putBlock(id, block.copy(draft = None), identity)
+      }
+    }
 
   def archive(id: String, block: Block, update: JsValue, identity: Identity): Unit = {
     val newBlock: Block = block.copy(diff = Some(update))

@@ -43,7 +43,9 @@ trait ParseCollection extends ExecutionContexts with QueryDefaults with Logging 
     val s3BucketLocation: String = s"${S3FrontsApi.location}/collection/$id/collection.json"
     log.info(s"loading running order configuration from: ${Configuration.frontend.store}/$s3BucketLocation")
     val request = SecureS3Request.urlGet(s3BucketLocation)
-    request.withRequestTimeout(2000).get()
+    val r = request.withRequestTimeout(2000).get()
+    r.foreach{ rr => println(rr.getAHCResponse.getHeaders.toString)}
+    r
   }
 
   def getCollection(id: String, config: Config, edition: Edition, isWarmedUp: Boolean): Future[Collection] = {

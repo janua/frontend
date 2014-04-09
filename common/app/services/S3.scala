@@ -9,12 +9,13 @@ import com.amazonaws.util.StringInputStream
 import scala.io.Source
 import org.joda.time.DateTime
 import play.Play
-import play.api.libs.ws.WS
+import play.api.libs.ws.{Response, WS}
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import sun.misc.BASE64Encoder
 import com.amazonaws.auth.AWSSessionCredentials
 import controllers.Identity
+import scala.concurrent.Future
 
 trait S3 extends Logging {
 
@@ -88,8 +89,8 @@ object S3FrontsApi extends S3 {
 
   def getSchema = get(s"$location/schema.json")
   def getConfig(id: String) = get(s"$location/config/$id/config.json")
-  def getMasterConfig: Option[String] = get(s"$location/config/config.json")
-  def getBlock(id: String) = get(s"$location/collection/$id/collection.json")
+  def getMasterConfig: Future[Response] = SecureS3Request.urlGet(s"$location/config/config.json").get()
+  def getBlock(id: String): Future[Response] = SecureS3Request.urlGet(s"$location/collection/$id/collection.json").get()
   def listConfigsIds: List[String] = getConfigIds(s"$location/config/")
   def listCollectionIds: List[String] = getCollectionIds(s"$location/collection/")
   def putBlock(id: String, json: String) =

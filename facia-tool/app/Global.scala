@@ -34,7 +34,7 @@ object Global extends FaciaToolLifecycle with GlobalSettings with CloudWatchAppl
   )
 
   override def onLoadConfig(config: Configuration, path: File, classloader: ClassLoader, mode: Mode.Mode): Configuration = {
-    val newConfig: Configuration = if (mode == Mode.Dev) config ++ devConfig else config
+    val newConfig: Configuration = config ++ devConfig
     super.onLoadConfig(newConfig, path, classloader, mode)
   }
 

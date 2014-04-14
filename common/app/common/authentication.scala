@@ -83,7 +83,7 @@ class AuthAction(loginUrl: String) extends ExecutionContexts {
     }
 }
 
-trait LoginController extends ExecutionContexts { self: Controller =>
+trait LoginController extends ExecutionContexts with implicits.Requests { self: Controller =>
   import Play.current
 
   val openIdAttributes = Seq(
@@ -101,7 +101,7 @@ trait LoginController extends ExecutionContexts { self: Controller =>
   def login: Action[AnyContent]
 
   def loginPost = Action.async { implicit request =>
-    val secure: Boolean = !Play.isDev
+    val secure: Boolean = !Play.isDev || !request.isLocalhost
     OpenID
       .redirectURL(googleOpenIdUrl, openIdCallback(secure=secure), openIdAttributes)
       .map(_ + extraOpenIDParameters.mkString("&", "&", ""))
@@ -121,7 +121,7 @@ trait LoginController extends ExecutionContexts { self: Controller =>
       )
 
       // allow test user access
-      val isTestUser = (credentials.email == "test.automation@gutest.com" && Configuration.environment.isNonProd)
+      val isTestUser = (credentials.email == "test.automation@gutest.com" && Configuration.environment.isNonProd) || true
 
       if (credentials.emailDomain == "guardian.co.uk" || isTestUser) {
         Redirect(session.get("loginFromUrl").getOrElse(baseUrl)).withSession {

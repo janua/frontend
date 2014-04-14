@@ -30,5 +30,11 @@ trait Requests {
     lazy val hasParameters: Boolean = !r.queryString.isEmpty
 
     lazy val isHealthcheck: Boolean = r.headers.keys.exists(_ equalsIgnoreCase  "X-Gu-Management-Healthcheck")
+
+    lazy val isLocalhost: Boolean = {
+      println(r.domain)
+      println(r.host)
+      r.domain == "localhost" && r.host.split(":").tail.lastOption.exists(_.startsWith("900"))
+    }
   }
 }

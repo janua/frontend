@@ -264,19 +264,24 @@ private object ArticleSchemas {
   }
 }
 
-class Snap(snapId: String, s: String) extends Trail with MetaData {
+class Snap(snapId: String, snapHeadline: String) extends Trail with MetaData {
 
+  //We set this to snapId as TemplateDeduping uses this ID to dedupe
+  override def url: String = snapId
+  //Sorting is done via id in FaciaAgent
+  def id: String = snapId
   def webPublicationDate: DateTime = DateTime.now
+  def headline: String = snapHeadline
+
+  //Trail implementations
   def shortUrl: String = ""
   override def linkText: String = ""
-  def headline: String = s
   def trailText: Option[String] = None
-  def section: String = ""
   def sectionName: String = ""
   def isLive: Boolean = true
-  override def url: String = s
 
-  def id: String = snapId
+  //Meta implementations
+  def section: String = ""
   def webTitle: String = ""
   def analyticsName: String = ""
   override def webUrl: String = ""

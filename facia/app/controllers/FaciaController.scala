@@ -50,7 +50,7 @@ class FaciaController extends Controller with Logging with ExecutionContexts wit
       FrontJson.get(path).map(_.map{ faciaPage =>
         Cached(frontPage) {
           if (request.isRss)
-            Ok(TrailsToRss(frontPage, faciaPage.collections.map(_._2).flatMap(_.items).toSeq.distinctBy(_.id)))
+            Ok(TrailsToRss(frontPage, faciaPage.collections.map(_._2).flatMap(_.items).toSeq.distinctBy(_.url)))
               .as("text/xml; charset=utf-8")
           else if (request.isJson)
             JsonFront(frontPage, faciaPage)

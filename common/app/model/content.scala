@@ -159,7 +159,7 @@ class Content protected (val apiContent: ApiContentWithMeta) extends Trail with 
   override lazy val group: Option[String] = apiContent.metaData.get("group").flatMap(_.asOpt[String])
   override lazy val imageAdjust: String = apiContent.metaData.get("imageAdjust").flatMap(_.asOpt[String]).getOrElse("default")
   override lazy val isBreaking: Boolean = apiContent.metaData.get("isBreaking").flatMap(_.asOpt[Boolean]).getOrElse(false)
-  override lazy val supporting: List[Content] = apiContent.supporting
+  override lazy val supporting: List[Trail] = apiContent.supporting
 }
 
 object Content {
@@ -176,7 +176,7 @@ object Content {
     }
   }
 
-  def apply(delegate: ApiContent, supporting: List[Content], metaData: Option[Map[String, JsValue]]): Content = {
+  def apply(delegate: ApiContent, supporting: List[Trail], metaData: Option[Map[String, JsValue]]): Content = {
     metaData match {
       case Some(meta) => apply(ApiContentWithMeta(delegate, supporting, meta))
       case _ => apply(ApiContentWithMeta(delegate))
@@ -444,4 +444,4 @@ class ImageContent(content: ApiContentWithMeta) extends Content(content) {
   ) ++ mainPicture.flatMap(_.largestImage.map( "twitter:image:src" -> _.path ))
 }
 
-case class ApiContentWithMeta(delegate: ApiContent, supporting: List[Content] = Nil, metaData: Map[String, JsValue] = Map.empty)
+case class ApiContentWithMeta(delegate: ApiContent, supporting: List[Trail] = Nil, metaData: Map[String, JsValue] = Map.empty)

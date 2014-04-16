@@ -1,3 +1,3 @@
 package model
 
-case class MostPopular(heading: String, section: String, trails: Seq[Content])
+case class MostPopular(heading: String, section: String, trails: Seq[Trail])

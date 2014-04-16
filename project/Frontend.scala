@@ -74,7 +74,9 @@ object Frontend extends Build with Prototypes {
       "com.gu" %% "pa-client" % paVersion
     )
   )
-  val faciaTool = application("facia-tool").dependsOn(commonWithTests)
+  val faciaTool = application("facia-tool")
+    .dependsOn(commonWithTests)
+    .dependsOn(RootProject( uri("git://github.com/janua/content-api-client.git") ))
 
   val identityLibVersion = "3.21"
   val identity = application("identity").dependsOn(commonWithTests).aggregate(common).settings(

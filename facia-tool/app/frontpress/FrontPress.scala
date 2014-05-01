@@ -54,6 +54,10 @@ trait FrontPress extends Logging {
     lazy val frontConfig: FaciaToolConfigAgent.FrontConfig = FaciaToolConfigAgent.getFrontConfig(id)
     lazy val webTitle: JsObject = frontConfig.webTitle.map(w => Json.obj(("webTitle", w))).getOrElse(JsObject.apply(Seq.empty))
     lazy val keyword: JsObject =  frontConfig.keyword.map(k => Json.obj(("keyword", k))).getOrElse(JsObject.apply(Seq.empty))
+    val seoData: SeoData= SeoData(
+      id,
+
+    )
     retrieveFrontByPath(id)
       .map(_.map{case (config, collection) =>
         Json.obj(

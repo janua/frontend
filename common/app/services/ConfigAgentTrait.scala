@@ -7,6 +7,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import akka.util.Timeout
 import conf.{ContentApi, Configuration}
+import com.gu.openplatform.contentapi.model.ItemResponse
 
 trait ConfigAgentTrait extends ExecutionContexts with Logging {
   implicit val alterTimeout: Timeout = Configuration.faciatool.configBeforePressTimeout.millis
@@ -87,10 +88,11 @@ trait ConfigAgentTrait extends ExecutionContexts with Logging {
 
   def getSeoData(path: String): Future[SeoData] = {
     lazy val seoData = getSeoDataFromConfig(path)
-    getSectionOrTagWebTitle(path).fallbackTo(Future.successful(None)).map { maybeWebTitle: Option[String] =>
-        val webTitle = maybeWebTitle.orElse(seoData.webTitle)
-        seoData.copy(
-          section     = maybeWebTitle.orElse(seoData.section),
+    getSectionOrTagWebTitle(path).fallbackTo(Future.successful(None)).map { maybeItemResponse: Option[ItemResponse] =>
+      val webTitle: Option[String] = maybeItemResponse.flatMap{itemResponse => itemResponse.tag.map(_.webTitle).orElse(itemResponse.section.map(_.webTitle))}.orElse(seoData.webTitle)
+      val section: Option[String]  = maybeItemResponse.flatMap{itemResponse => itemResponse.tag.flatMap(_.sectionId).orElse(itemResponse.section.map(_.id))}.orElse(seoData.section)
+      seoData.copy(
+          section     = section,
           webTitle    = webTitle,
           title       = seoData.title.orElse(webTitle.map(SeoData.titleFromWebTitle)),
           description = seoData.description.orElse(webTitle.map(SeoData.descriptionFromWebTitle))
@@ -98,15 +100,14 @@ trait ConfigAgentTrait extends ExecutionContexts with Logging {
       }
     }
 
-  private def getSectionOrTagWebTitle(id: String): Future[Option[String]] =
+  private def getSectionOrTagWebTitle(id: String): Future[Option[ItemResponse]] =
     ContentApi
       .item(id, Edition.defaultEdition)
       .showEditorsPicks(false)
       .pageSize(0)
       .response
-      .map { response =>
-        response.tag.map(_.webTitle).orElse(response.section.map(_.webTitle))
-      }
+      .map(Option.apply)
+      .fallbackTo(Future.successful(None))
 
 
 }

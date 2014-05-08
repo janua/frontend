@@ -72,7 +72,7 @@ trait ConfigAgentTrait extends ExecutionContexts with Logging {
 
   def contentsAsJsonString: String = Json.prettyPrint(configAgent.get)
 
-  private def getSeoDataFromConfig(path: String): Option[SeoData] = {
+  private def getSeoDataFromConfig(path: String): SeoData = {
     val json = configAgent.get()
     (json \ "fronts" \ path).asOpt[JsValue].map { frontJson =>
       SeoData(
@@ -83,24 +83,20 @@ trait ConfigAgentTrait extends ExecutionContexts with Logging {
         description  = (frontJson \ "description").asOpt[String].filter(_.nonEmpty)
       )
     }
-  }
+  }.getOrElse(SeoData.fromPath(path))
 
   def getSeoData(path: String): Future[SeoData] = {
-    lazy val seoDataFromPath: SeoData = SeoData.fromPath(path)
-    (for {
-      seoData <- getSeoDataFromConfig(path)
-    } yield {
-      getSectionOrTagWebTitle(path).fallbackTo(Future.successful(None)).map { maybeWebTitle: Option[String] =>
-        val webTitle = maybeWebTitle.orElse(seoDataFromPath.webTitle)
+    lazy val seoData = getSeoDataFromConfig(path)
+    getSectionOrTagWebTitle(path).fallbackTo(Future.successful(None)).map { maybeWebTitle: Option[String] =>
+        val webTitle = maybeWebTitle.orElse(seoData.webTitle)
         seoData.copy(
-          section     = seoData.section.orElse(maybeWebTitle.orElse(seoDataFromPath.section)),
-          webTitle    = seoData.webTitle.orElse(maybeWebTitle.orElse(seoDataFromPath.webTitle)),
-          title       = seoData.title.orElse(webTitle.map(SeoData.titleFromWebTitle)).orElse(seoDataFromPath.title),
-          description = seoData.description.orElse(webTitle.map(SeoData.descriptionFromWebTitle)).orElse(seoDataFromPath.description)
+          section     = maybeWebTitle.orElse(seoData.section),
+          webTitle    = webTitle,
+          title       = seoData.title.orElse(webTitle.map(SeoData.titleFromWebTitle)),
+          description = seoData.description.orElse(webTitle.map(SeoData.descriptionFromWebTitle))
         )
       }
-    }).getOrElse(Future.successful(seoDataFromPath))
-  }
+    }
 
   private def getSectionOrTagWebTitle(id: String): Future[Option[String]] =
     ContentApi

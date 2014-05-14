@@ -83,7 +83,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
           .filter(_ => Switches.FaciaToolDraftContent.isSwitchedOn)
           .getOrElse(contentApiLiveHost)
 
-    lazy val key: Option[String] = configuration.getStringProperty("content.api.key")
+    lazy val elasticSearchHost = configuration.getMandatoryStringProperty("content.api.elastic.host")
+    lazy val key = configuration.getStringStringProperty("content_api_key")
     lazy val timeout: Int = configuration.getIntegerProperty("content.api.timeout.millis").getOrElse(2000)
 
     lazy val previewAuth: Option[Auth] = for {

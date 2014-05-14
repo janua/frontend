@@ -21,6 +21,7 @@ frontend-applications.properties
 !.scss-lint.yml
 !.editorconfig
 !.bowerrc
+!.travis.yml
 
 log
 logs

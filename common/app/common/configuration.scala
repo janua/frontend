@@ -40,7 +40,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
       case _ => ""
     }
 
-    private val properties = Properties(installVars)
+    val properties = Properties(installVars)
 
     def apply(key: String, default: String) = properties.getOrElse(key, default).toLowerCase
 

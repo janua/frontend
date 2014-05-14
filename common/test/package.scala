@@ -43,18 +43,6 @@ trait TestSettings {
 
     val originalHttp = http
 
-    verify(
-      Configuration.contentApi.elasticSearchHost,
-      "37f3bee67d016a9fec7959aa5bc5e53fa7fdc688f987c0dea6fa0f6af6979079",
-      "YOU ARE NOT USING THE CORRECT ELASTIC SEARCH CONTENT API HOST"
-    )
-
-    verify(
-      Configuration.contentApi.key,
-      "a4eb3e728596c7d6ba43e3885c80afcb16bc24d22fc0215409392bac242bed96",
-      "YOU ARE NOT USING THE CORRECT CONTENT API KEY"
-    )
-
     override def GET(url: String, headers: scala.Iterable[scala.Tuple2[java.lang.String, java.lang.String]]) = {
       recorder.load(url, headers.toMap) {
         originalHttp.GET(url, headers)

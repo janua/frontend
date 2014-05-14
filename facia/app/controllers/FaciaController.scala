@@ -56,7 +56,7 @@ trait FaciaController extends Controller with Logging with ExecutionContexts wit
   }
 
   def renderFront(path: String) = {
-    log.info(s"Serving Path: $path")
+    log.info(s"Serving Path for: $path")
     if (!ConfigAgent.getPathIds.contains(path))
       applicationsRedirect(path)
     else

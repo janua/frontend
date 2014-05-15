@@ -2,11 +2,11 @@ language: scala
 scala:
 - 2.10.3
 env:
+  global:
   - IMAGES_PATH=http://i.guim.co.uk
   - DISCUSSION_APIROOT=http://discussion.guardianapis.com/discussion-api
   - ASSETS_PATH=http://assets.guim.co.uk/
   - PA_API_KEY=
-  global:
   - secure: Pqq6B4cGwLUumv+3eIkSXXr1fZYWpRoIhPd8IumSdWGTzA69rx/wH14mCLFVPF2KZI66yCvTtEyH1bpeFkpky2JUcGgp26jG8qAD64ViyqDL074K23mcktUtmcEJL6jqAeQRI7CoXPyDOBnkN31/Mtc07rQPXHFSL0WbLpCCaw8=
   - secure: MoWB5mlij0gh2A4OabzmOnO5fQuZBY1O0oFISiqIzm8WG1UIKgbE6fwgrJB3znsSOpv94Tcjd0uGYz9y8J7UQeIt1HHzEGos1kNqqaQCM1Ule4m8S/ehFueP7/cEugsyo4sgedHmDSlSdM4j5HC+gfeJyTWUtqGlaWXFcUFcYgY=
   - secure: DzFAov0wA9azIrAtNpnrZBFefAMXOX7DnGa8eRL0b3lRH69sTQBX3enYYolKOecQBhQMsOAIc4gfZLZ6kU7LkCCg1cw+7mrLNIy8fLLLWPLMYGpR0+QrFxnay+WyMrVZ+T1gwdHVJENTg/NyN2pa9Kcysr61F9NCaQeBGnXewnE=

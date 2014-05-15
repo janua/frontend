@@ -23,6 +23,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
   private implicit class OptionalString2MandatoryString(conf: com.gu.conf.Configuration) {
     def getMandatoryStringProperty(property: String) = configuration.getStringProperty(property)
+      .orElse(sys.env.get(property))
+      .orElse(sys.env.get(property.replace('.', '_').toUpperCase))
       .getOrElse(throw new BadConfigurationException(s"$property not configured"))
   }
 

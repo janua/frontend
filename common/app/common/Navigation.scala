@@ -15,7 +15,11 @@ case class NavItem(name: SectionLink, links: Seq[SectionLink] = Nil, current: Bo
   def currentFor(page: MetaData): Boolean = name.currentFor(page) ||
     links.exists(_.currentFor(page)) || exactFor(page)
 
-  def exactFor(page: MetaData): Boolean = page.section == name.href.dropWhile(_ == '/') || page.url == name.href
+  def exactFor(page: MetaData): Boolean = {
+    println(s"page.section: ${page.section}")
+    println(s"name.href: ${name.href}")
+    page.section == name.href.dropWhile(_ == '/') || page.url == name.href
+  }
 }
 
 trait Navigation  {

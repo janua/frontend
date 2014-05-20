@@ -46,7 +46,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
     def apply(key: String, default: String) = properties.getOrElse(key, default).toLowerCase
 
-    val stage = apply("STAGE", "unknown")
+    val stage = apply("STAGE", "DEV")
 
     lazy val projectName = Play.application.configuration.getString("guardian.projectName").getOrElse("frontend")
     lazy val secure = Play.application.configuration.getBoolean("guardian.secure").getOrElse(false)

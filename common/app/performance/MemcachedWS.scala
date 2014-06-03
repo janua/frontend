@@ -18,6 +18,8 @@ case class CacheMiss(response: Response) extends CacheResponse
 case class StaleWrapper(insertedAt: DateTime, response: Response)
 
 object MemcachedWS extends ExecutionContexts with Dates {
+  import shade.memcached.MemcachedCodecs.AnyRefBinaryCodec
+
   lazy val host = Configuration.memcached.host.head
   lazy val memcached = Memcached(MemcachedConf(host), actorSystem.scheduler, memcachedExecutionContext)
 
@@ -38,7 +40,7 @@ object MemcachedWS extends ExecutionContexts with Dates {
       responseFuture
     }
 
-    def get() = {
+    def get(): Future[CacheResponse] = {
       memcached.get[StaleWrapper](key) flatMap {
         case Some(StaleWrapper(insertedAt, response)) if insertedAt.plus(staleAfter.toJoda).isBefore(DateTime.now()) =>
           triggerRequest()
@@ -48,7 +50,7 @@ object MemcachedWS extends ExecutionContexts with Dates {
           Future.successful(CacheHit(response))
 
         case None => triggerRequest().map(CacheMiss.apply)
-      }
+      } recoverWith { case _ => triggerRequest().map(CacheMiss) }
     }
   }
 
@@ -60,3 +62,4 @@ object MemcachedWS extends ExecutionContexts with Dates {
     ) = MemcachedWSRequest(request, key, staleAfter, doNotServeAfter)
   }
 }
+

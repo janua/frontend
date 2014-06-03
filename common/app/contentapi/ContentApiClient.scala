@@ -85,6 +85,10 @@ trait ApiQueryDefaults extends QueryDefaults with implicits.Collections with Log
 trait ContentApiClient extends FutureAsyncApi with ApiQueryDefaults with DelegateHttp
 with Logging {
 
+  lazy val httpTimingMetric = ContentApiMetrics.ElasticHttpTimingMetric
+  lazy val httpTimeoutMetric = ContentApiMetrics.ElasticHttpTimeoutCountMetric
+  override val targetUrl = contentApi.elasticSearchHost
+
   apiKey = Some(contentApi.key)
 
   override def fetch(url: String, parameters: Map[String, String]) = {
@@ -100,10 +104,4 @@ with Logging {
   }
 
   private def isTagQuery(url: String) = url.endsWith("/tags")
-}
-
-class ElasticSearchContentApiClient extends ContentApiClient {
-  lazy val httpTimingMetric = ContentApiMetrics.ElasticHttpTimingMetric
-  lazy val httpTimeoutMetric = ContentApiMetrics.ElasticHttpTimeoutCountMetric
-  override val targetUrl = contentApi.elasticSearchHost
 }

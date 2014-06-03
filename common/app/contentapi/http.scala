@@ -6,17 +6,26 @@ import conf.Configuration
 import conf.Configuration.contentApi.previewAuth
 import common.{SimpleCountMetric, FrontendTimingMetric, ExecutionContexts}
 import java.util.concurrent.TimeoutException
-import play.api.libs.ws.WS
+import play.api.libs.ws.{Response, WS}
 import com.gu.management.TimingMetric
 import common.ContentApiMetrics.ContentApi404Metric
 import java.net.InetAddress
 import scala.util.Try
 import com.ning.http.client.Realm.AuthScheme
+import java.lang.System._
+import com.gu.openplatform.contentapi.connection.HttpResponse
+import common.SimpleCountMetric
+import performance.MemcachedWS._
+import play.api.libs.ws.WS.WSRequestHolder
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
+import performance.{CacheMiss, CacheStale, CacheHit}
 
-class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCountMetric) extends Http[Future]
-                                                                                              with ExecutionContexts {
+trait MyFirstWsHttp extends Http[Future] with ExecutionContexts {
+  val httpTimingMetric: TimingMetric
+  val httpTimeoutMetric: SimpleCountMetric
 
-  import System.currentTimeMillis
+  def makeRequest(url: String, request: WSRequestHolder): Future[Response]
 
   override def GET(url: String, headers: Iterable[(String, String)]) = {
 
@@ -29,7 +38,7 @@ class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCo
 
     val baseRequest = WS.url(urlWithDebugInfo)
     val request = previewAuth.fold(baseRequest)(auth => baseRequest.withAuth(auth.user, auth.password, AuthScheme.BASIC))
-    val response = request.withHeaders(headers.toSeq: _*).withRequestTimeout(contentApiTimeout).get()
+    val response = makeRequest(url, request.withHeaders(headers.toSeq: _*).withRequestTimeout(contentApiTimeout))
 
     // record metrics
     response.onSuccess {
@@ -38,19 +47,27 @@ class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCo
     }
 
     response.onFailure {
-      case e: Throwable if isTimeout(e) => httpTimeoutMetric.increment()
+      case e: TimeoutException => httpTimeoutMetric.increment()
     }
 
-    response
-  }.map {
-    r => HttpResponse(r.body, r.status, r.statusText)
+    response map { r => HttpResponse(r.body, r.status, r.statusText) }
   }
+}
 
+class WsHttp(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCountMetric) extends MyFirstWsHttp {
+  override def makeRequest(url: String, request: WSRequestHolder): Future[Response] = request.get()
+}
 
-  private def isTimeout(e: Throwable): Boolean = e match {
-    case t: TimeoutException => true
-    case _  => false
-  }
+class WsHttpMemcached(val httpTimingMetric: TimingMetric, val httpTimeoutMetric: SimpleCountMetric) extends MyFirstWsHttp {
+  private val cachePrefix: String = "content-api:"
+  private val staleAfter: Duration = 1.minutes
+  private val doNotServeAfter: Duration = 1.hour
+  override def makeRequest(url: String, request: WSRequestHolder): Future[Response] =
+    request.withMemcachingOnKey((cachePrefix + url).take(200), staleAfter, doNotServeAfter).get().map {
+      case CacheHit(response) => response
+      case CacheStale(response) => response
+      case CacheMiss(response) => response
+    }
 }
 
 // allows us to inject a test Http

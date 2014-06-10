@@ -66,18 +66,18 @@ object ArchiveController extends Controller with Logging with ExecutionContexts 
      * Beware of creating redirect loops!
      */
 
-    isEncoded(path).map(url => successful(Redirect(s"http://$url", 301)))
-    .getOrElse(lookupPath(path)
+
+    lookupPath(path)
       .map{ _.orElse(redirectGallery(path))
-        .orElse(lowercase(path))
-        .getOrElse{
-          log.info(s"Not Found (404): $path")
-          logGoogleBot(request)
-          // TODO do some analysis on the results of this and then set a more appropriate cache header
-          NoCache(NotFound(views.html.notFound()))
-        }
-      }
-    )
+      .orElse(lowercase(path))
+      .orElse{isEncoded(path).map(url => Redirect(s"http://$url", 301))}
+      .getOrElse{
+      log.info(s"Not Found (404): $path")
+      logGoogleBot(request)
+      // TODO do some analysis on the results of this and then set a more appropriate cache header
+      NoCache(NotFound(views.html.notFound()))
+    }
+    }
   }
 
   private def logDestination(path: String, msg: String, destination: String) {

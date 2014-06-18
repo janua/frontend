@@ -1,7 +1,7 @@
 package model
 
 import common._
-import conf.ContentApi
+import conf.LiveContentApi
 import pa._
 import org.joda.time.DateTime
 
@@ -44,7 +44,7 @@ object TeamMap extends ExecutionContexts with Logging {
     ("45938", "Airdrie"),
     ("125", "QOS FC"),
     ("17635", "Annan"),
-    ("128", "East Stirling"),
+    ("128", "Stirling Albion"),
     ("13732", "Harrogate"),
     ("79", "Halifax"),
     ("136", "Boston"),
@@ -107,7 +107,7 @@ object TeamMap extends ExecutionContexts with Logging {
 
   def refresh(page: Int = 1) { //pages are 1 based
     log.info(s"Refreshing team tag mappings - page $page")
-    ContentApi.tags
+    LiveContentApi.tags
       .page(page)
       .pageSize(50)
       .referenceType("pa-football-team")

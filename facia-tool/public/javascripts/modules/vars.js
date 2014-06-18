@@ -1,28 +1,31 @@
 /* global _: true */
-define(['knockout'], function(ko) {
+define([
+    'knockout',
+    'config'
+], function(
+    ko,
+    pageConfig
+){
     var CONST = {
         editions: ['uk', 'us', 'au'],
 
         types: [
-            'news',
-            'news/most-popular',
-            'news/people',
-            'news/section',
-            'news/special',
-            'news/sport',
-            'features',
-            'features/multimedia',
-            'features/section',
-            'comment',
-            'comment/comment-and-debate',
-            'comment/section'
+            {name: 'news', groups: ['standard', 'big', 'very big', 'huge']},
+            {name: 'news/auto'},
+            {name: 'news/most-popular'},
+            {name: 'news/people'},
+            {name: 'news/special'},
+            {name: 'features'},
+            {name: 'features/auto'},
+            {name: 'features/multimedia'},
+            {name: 'comment/comment-and-debate'}
         ],
 
         detectPressFailureMs: 10000,
 
-        maxFronts: 100,
+        maxFronts: 200,
 
-        groups: ['standard,big,very big,huge'],
+        imageCdnDomain: 'guim.co.uk',
 
         viewer: 'http://s3-eu-west-1.amazonaws.com/facia/responsive-viewer.html',
 
@@ -37,7 +40,7 @@ define(['knockout'], function(ko) {
 
         collectionsPollMs:     10000,
         latestArticlesPollMs:  20000,
-        configSettingsPollMs:  30000,
+        configSettingsPollMs:  5000,
         cacheExpiryMs:         60000,
         sparksRefreshMs:       300000,
         pubTimeRefreshMs:      30000,
@@ -71,6 +74,7 @@ define(['knockout'], function(ko) {
         model: undefined,
         sparksBase:      sparksBaseUrl(CONST.sparksParams),
         sparksBaseFront: sparksBaseUrl(CONST.sparksFrontParams),
+        priority: pageConfig.priority === 'editorial' ? undefined : pageConfig.priority,
         state: {
             config: {},
             liveMode: ko.observable(false),
@@ -79,5 +83,3 @@ define(['knockout'], function(ko) {
         }
     };
 });
-
-

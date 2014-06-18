@@ -1,6 +1,6 @@
 package test
 
-import conf.{ContentApi, Configuration}
+import conf.{LiveContentApi, Configuration}
 import java.net.URLEncoder
 import play.api.test._
 import play.api.test.Helpers._
@@ -50,7 +50,7 @@ trait TestSettings {
     }
   }
 
-  ContentApi.http = toRecorderHttp(ContentApi.http)
+  LiveContentApi.http = toRecorderHttp(LiveContentApi.http)
 }
 
 /**

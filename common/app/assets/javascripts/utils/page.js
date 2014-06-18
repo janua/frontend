@@ -28,6 +28,7 @@ function(
         assign(match, {
             date: config.webPublicationDateAsUrlPart(),
             teams: teams,
+            isLive: config.page.isLive,
             pageType: find([
                 ['minbymin', config.page.isLiveBlog],
                 ['report', config.hasTone('Match reports')],
@@ -57,9 +58,13 @@ function(
         }, no);
     }
 
+    function isFootballStatsPage(yes, no) {
+        return isit(config.page.hasOwnProperty('footballMatch'), yes, no);
+    }
+
     function belowArticleVisible(yes, no) {
         var el = $('.js-after-article')[0],
-            vis = el.offsetWidth > 0 && el.offsetHeight > 0;
+            vis = el ? window.getComputedStyle(el).getPropertyValue('display') !== 'none' : false;
 
         return isit(vis, yes, no, el);
     }
@@ -69,6 +74,7 @@ function(
         isCompetition: isCompetition,
         isClockwatch: isClockwatch,
         isLiveClockwatch: isLiveClockwatch,
+        isFootballStatsPage: isFootballStatsPage,
         belowArticleVisible: belowArticleVisible
     };
 

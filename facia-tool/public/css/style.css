@@ -53,11 +53,6 @@ a:hover {
     overflow-y: scroll;
 }
 
-.u-cf:before,
-.u-cf:after{content:"";display:table}
-.u-cf:after{clear:both}
-.u-cf{zoom:1}
-
 .logo {
     position: fixed;
     top: 8px;
@@ -72,6 +67,7 @@ a:hover {
     line-height: 30px;
     color: #000;
     font-weight: normal;
+    text-transform: capitalize;
 }
 
 .message {
@@ -98,6 +94,17 @@ a:hover {
 .login-form {
     float: left;
     margin: 13px 10px 0 0;
+}
+
+.front-priorities {
+    clear: both;
+    padding: 20px 0 0 20px;
+}
+
+.front-priorities--priority {
+    display: block;
+    font-size: 20px;
+    padding: 10px 0 0 0;
 }
 
 .left-col {
@@ -399,6 +406,10 @@ a:hover {
     padding: 0 25px 0 0;
 }
 
+.article__image-src {
+    overflow: hidden;
+}
+
 .misc__overrides {
     margin: 0 0 0 6px;
 }
@@ -409,30 +420,21 @@ a:hover {
 }
 
 .image__overrides {
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
     position: absolute;
-    bottom: 0px;
-    height: 34px;
+    bottom: 4px;
     font-size: 12px;
-    line-height: 14px;
-    color: #666666;
-    padding: 16px 0 0 4px;
+    font-weight: bold;
+    line-height: 12px;
+    color: #ffffff;
+    padding: 0 0 0 3px;
+}
+
+.image__overrides * {
+    text-shadow: 0px 0px 2px #666666;
 }
 
 .supporting .image__overrides {
     display: none;
-}
-
-.image__overrides a,
-.image__overrides span {
-    display: block;
-    color: #FFFFFF;
-    text-shadow: 0px 0px 2px #666666;
-}
-
-.image__overrides .selected {
-    font-weight: bold;
 }
 
 .supporting-message {
@@ -770,6 +772,7 @@ button {
 
 .instructions {
     font-size: 12px;
+    line-height: 14px;
     color: #999999;
 }
 
@@ -806,6 +809,10 @@ button {
     padding: 0 10px 0 10px;
 }
 
+.cnf-front__collections {
+    margin-top: 10px;
+}
+
 .cnf-collections {
     margin: 10px 0 0 0;
 }
@@ -836,9 +843,11 @@ button {
 }
 
 .cnf-collection__index {
-    color: #dbd8c9;
+    color: #666666;
     display: inline-block;
     width: 15px;
+    font-size: 12px;
+    line-height: 14px;
 }
 
 .cnf-collection__name {
@@ -889,6 +898,13 @@ button {
     margin: 1px 0 0 0;
 }
 
+.cnf-form__value {
+    float: left;
+    font-size: 12px;
+    color: #666666;
+    margin: 1px 0 0 6px;
+}
+
 .cnf-form input,
 .cnf-form textarea,
 .cnf-form select{
@@ -906,6 +922,19 @@ button {
     line-height: 14px;
     width: 300px;
     margin: 0 0 2px 0;
+}
+
+.cnf-form select {
+    padding-left: 1px;
+}
+
+.cnf-form select.is-placeholder,
+.cnf-form select option:first-child {
+    color: #999999;
+}
+
+.cnf-form input[type="checkbox"] {
+    margin-left: 4px;
 }
 
 .cnf-form .tools {

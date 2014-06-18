@@ -27,6 +27,10 @@ object Edition {
     editions.Au
   )
 
+  lazy val editionFronts = Edition.all.map {e => "/" + e.id.toLowerCase}
+
+  def isEditionFront(request: RequestHeader): Boolean = editionFronts.contains(request.path)
+
   def editionId(request: RequestHeader): String = {
     // override for Ajax calls
     val editionFromParameter = request.getQueryString("_edition").map(_.toUpperCase)

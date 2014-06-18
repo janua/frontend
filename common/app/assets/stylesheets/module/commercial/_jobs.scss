@@ -4,10 +4,6 @@
 
 /* remove top margin on the footer to make component sit on top of it as per design */
 
-.l-footer {
-    margin-top: 0 !important;
-}
-
 .commercial--jobs {
     .commercial__head {
         background-color: transparent;
@@ -34,22 +30,24 @@
         @include mq(tablet) {
             position: absolute;
             @include rem((
-                top: 10px,
+                top: $comercial-comp-baseline,
                 right: $gs-gutter/2
             ));
         }
     }
     .commercial__body {
         @include rem((
-            padding: 10px 0
+            padding: $comercial-comp-baseline 0
         ));
     }
     .commercial--jobs__sectors {
         overflow: hidden;
         @include box-sizing(border-box);
-        @include rem((
-            padding-right: $gs-gutter/2
-        ));
+        @include mq(tablet) {
+            @include rem((
+                padding-right: $gs-gutter/2
+            ));
+        }
     }
     .commercial--jobs__sector {
         width: 50%;
@@ -197,11 +195,6 @@
             width: 25%;
             float: left;
         }
-        .commercial--jobs__sectors {
-            @include rem((
-                width: gs-span(6) + $gs-gutter/2
-            ));
-        }
         .commercial--jobs__jobs {
             @include rem((
                 width: gs-span(3)
@@ -224,7 +217,7 @@
         .commercial__home-link {
             @include rem((
                 left: $gs-gutter/2,
-                bottom: 10px
+                bottom: $comercial-comp-baseline
             ));
             top: auto;
             right: auto;
@@ -264,16 +257,14 @@
                 margin-right: $gs-gutter/2
             ));
         }
+
+        .has-page-skin & .commercial--jobs__job:nth-child(n+2) {
+            display: none;
+        }
     }
 }
 /* article */
 .facia-container--layout-article .commercial--jobs {
-    .commercial__body {
-        padding: 0;
-        @include rem((
-            padding: $gs-gutter/2
-        ));
-    }
     @include mq(tablet) {
         .commercial--jobs__sectors {
             float: left;
@@ -282,7 +273,7 @@
         .commercial--jobs__job {
             float: left;
             width: 33%;
-        }        
+        }
     }
     @include mq(rightCol) {
         .commercial__head {
@@ -291,8 +282,8 @@
         }
         .commercial__home-link {
             @include rem((
-                left: $gs-gutter/2,
-                bottom: 10px
+                left: $gs-gutter,
+                bottom: $comercial-comp-baseline
             ));
             top: auto;
             right: auto;

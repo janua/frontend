@@ -35,9 +35,11 @@
 }
 
 .football-matches__date {
-    color: $c-neutral2-contrasted;
-    float: right;
-    font-weight: normal;
+    color: $c-neutral1;
+    display: block;
+    @include rem((
+        margin-top: $gs-baseline/2
+    ));
 }
 
 .football-match__report {
@@ -111,17 +113,15 @@
 }
 
 .football-teams__battleline {
-    @include rem((
-        top: 0
-    ));
-    color: $c-neutral2;
-    left: 0;
     position: absolute;
-    text-align: center;
+    top: 0;
+    left: 0;
     width: 100%;
+    text-align: center;
+    color: $c-neutral2;
 
     &:after {
-        content: "\2013";
+        content: '\2013';
     }
 }
 
@@ -134,13 +134,19 @@
 .football-match--fixture {
     .football-teams__battleline {
         &:after {
-            content: "v";
+            content: 'v';
         }
     }
 }
 
 .js-on .football-matches tr {
     cursor: pointer;
+}
+
+.article__secondary-column {
+    .football-match:nth-of-type(n+13) {
+        display: none;
+    }
 }
 
 /* Footnotes */

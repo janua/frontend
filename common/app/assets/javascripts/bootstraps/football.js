@@ -7,6 +7,7 @@ define([
     'common/utils/config',
     'common/utils/page',
     'common/utils/mediator',
+    'common/utils/detect',
     'common/modules/ui/rhc',
     'common/modules/charts/table-doughnut',
     'common/modules/sport/football/match-list-live',
@@ -22,6 +23,7 @@ define([
     config,
     page,
     mediator,
+    detect,
     rhc,
     Doughnut,
     MatchListLive,
@@ -29,21 +31,24 @@ define([
     ScoreBoard,
     football
 ) {
-    context = context();
 
     function renderNav(match, callback) {
-        return (new MatchInfo(match, config.page.pageId)).fetch().then(function(resp) {
-            var $nav = $.create(resp.nav).first().each(function(nav) {
-                if (match.id || $('.tabs__tab', nav).length > 2) {
-                    $('.after-header', context).append(nav);
-                }
-            });
+        var matchInfo;
+        return (matchInfo = new MatchInfo(match, config.page.pageId)).fetch().then(function(resp) {
+            var $nav;
+            if (resp.nav && resp.nav.trim().length > 0) {
+                $nav = $.create(resp.nav).first().each(function (nav) {
+                    if (match.id || $('.tabs__tab', nav).length > 2) {
+                        $('.js-football-tabs', context).append(nav);
+                    }
+                });
+            }
 
             if (callback) {
-                callback(resp, $nav);
+                callback(resp, $nav, matchInfo.endpoint);
             } // The promise chain is broken as Reqwest doesn't allow for creating more than 1 argument.
         }, function() {
-            $('.score__container', context).remove();
+            $('.score-container', context).remove();
             $('.js-score', context).removeClass('u-h');
         });
     }
@@ -63,7 +68,7 @@ define([
                         extras.forEach(function(extra, i) {
                             if (dropdownTemplate) {
                                 $.create(dropdownTemplate).each(function (dropdown) {
-                                    if(config.page.isLiveBlog) { $(dropdown).addClass('dropdown--live'); }
+                                    if(config.page.isLiveBlog) { $(dropdown).addClass('dropdown--key-events'); }
                                     $('.dropdown__label', dropdown).append(extra.name);
                                     $('.dropdown__content', dropdown).append(extra.content);
                                     $('.dropdown__button', dropdown)
@@ -90,6 +95,24 @@ define([
         }
     }
 
+    function renderTable(competition, extras, template) {
+        extras[2] = { ready: false };
+        $.create('<div class="js-football-table" data-link-name="football-table-embed"></div>').each(function(container) {
+            football.tableFor(competition).fetch(container).then(function() {
+                extras[2] = $('.table__container', container).length > 0 ? {
+                    name: 'Table',
+                    importance: 3,
+                    content: container,
+                    ready: true
+                } : undefined;
+                renderExtras(extras, template);
+            }, function() {
+                delete extras[2];
+                renderExtras(extras, template);
+            });
+        });
+    }
+
     function loading(elem, message, link) {
         bonzo(elem).append(bonzo.create(
             '<div class="loading">'+
@@ -109,16 +132,17 @@ define([
         var extras = [],
             dropdownTemplate;
 
+        context = context();
+
         page.isMatch(function(match) {
             extras[0] = { ready: false };
-            extras[1] = { ready: false };
             if (match.pageType === 'stats') {
                 renderNav(match);
             } else {
                 var $h = $('.js-score', context),
                     scoreBoard = new ScoreBoard(),
                     scoreContainer = bonzo.create(
-                        '<div class="score__container">'+
+                        '<div class="score-container">'+
                             '<div class="score__loading'+ (match.pageType !== 'report' ? ' score__loading--live':'') +'">'+
                                 '<div class="loading__text">Fetching the scores…</div>'+
                                 '<div class="is-updating"></div>'+
@@ -126,34 +150,30 @@ define([
                         '</div>'
                     )[0];
 
-                $h.before(scoreContainer);
-                if (match.pageType !== 'report') {
-                    $h.addClass('u-h');
+                if (match.pageType === 'report') {
+                    $h.after(scoreContainer);
+                } else {
+                    $h.addClass('u-h').before(scoreContainer);
                 }
 
-                renderNav(match, function(resp, $nav) {
+                renderNav(match, function(resp, $nav, endpoint) {
                     dropdownTemplate = resp.dropdown;
                     scoreContainer.innerHTML = '';
-                    scoreBoard.template = match.pageType === 'report' ? resp.scoreSummary : resp.matchSummary;
+                    scoreBoard.template = resp.matchSummary;
 
-                    // only show scores on liveblogs or started matches
                     if(!/^\s+$/.test(scoreBoard.template)) {
-                        scoreBoard.render(scoreContainer);
+                        scoreBoard.endpoint = endpoint;
+                        scoreBoard.updateEvery = /desktop|wide/.test(detect.getBreakpoint()) ? 30 : 60;
+                        scoreBoard.autoupdated = match.isLive;
 
-                        if (match.pageType === 'report') {
-                            $('.tab--min-by-min a', $nav).first().each(function(el) {
-                                bonzo(scoreBoard.elem).addClass('u-fauxlink');
-                                bean.on(scoreBoard.elem, 'click', function() {
-                                    window.location = el.getAttribute('href');
-                                });
-                            });
-                        }
+                        scoreBoard.render(scoreContainer);
+                        scoreBoard.setState(match.pageType);
                     } else {
                         $h.removeClass('u-h');
                     }
 
                     // match stats
-                    if (resp.hasStarted) {
+                    if (resp.hasStarted && $nav) {
                         var statsUrl = $('.tab--stats a', $nav).attr('href').replace(/^.*\/\/[^\/]+/, '');
 
                         $.create('<div class="match-stats__container"></div>').each(function(container) {
@@ -175,8 +195,14 @@ define([
                         renderExtras(extras, dropdownTemplate);
                     }
 
-                    // match day
+                    // Group table & Match day
                     page.isCompetition(function(competition) {
+                        extras[1] = { ready: false };
+                        // Group table
+                        if (resp.group !== '') {
+                            renderTable(competition +'/'+ resp.group, extras, dropdownTemplate);
+                        }
+
                         $.create('<div class="js-football-match-day" data-link-name="football-match-day-embed"></div>').each(function (container) {
                             football.matchDayFor(competition, resp.matchDate).fetch(container).then(function() {
                                 extras[1] = {
@@ -197,22 +223,7 @@ define([
         });
 
         page.isCompetition(function(competition) {
-            extras[2] = { ready: false };
-
-            $.create('<div class="js-football-table" data-link-name="football-table-embed"></div>').each(function(container) {
-                football.tableFor(competition).fetch(container).then(function() {
-                    extras[2] = $('.table__container', container).length > 0 ? {
-                        name: 'Table',
-                        importance: 3,
-                        content: container,
-                        ready: true
-                    } : undefined;
-                    renderExtras(extras, dropdownTemplate);
-                }, function() {
-                    delete extras[2];
-                    renderExtras(extras, dropdownTemplate);
-                });
-            });
+            renderTable(competition, extras, dropdownTemplate);
         });
 
         page.isLiveClockwatch(function() {
@@ -240,13 +251,13 @@ define([
             });
         });
 
-        // Binding
-        bean.on(context, 'click', '.table tr[data-link-to]', function(e) {
-            if (!e.target.getAttribute('href')) {
-                window.location = this.getAttribute('data-link-to');
-            }
+        page.isFootballStatsPage(function() {
+            $('.js-chart').each(function(el) {
+                new Doughnut().render(el);
+            });
         });
 
+        // Binding
         bean.on(context, 'click', '.js-show-more', function(e) {
             e.preventDefault();
             var el = e.currentTarget;
@@ -271,11 +282,20 @@ define([
             window.location = this.value;
         });
 
+        if(!config.page.isFootballWorldCup2014) {
+            bean.on(context, 'click', '.table tr[data-link-to]', function (e) {
+                if (!e.target.getAttribute('href')) {
+                    window.location = this.getAttribute('data-link-to');
+                }
+            });
+        }
+
         // World Cup content
         // config.switches.worldCupWallchartEmbed
         // Remove this content below when you remove the switch as it's specific to World Cup 2014
         if (config.page.isFootballWorldCup2014) {
             $('a').attr('target', '_top');
+
             (function() {
                 var t, h, i, resize;
 

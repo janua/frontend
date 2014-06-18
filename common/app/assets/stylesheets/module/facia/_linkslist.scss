@@ -18,7 +18,7 @@
     }
 
     &:before {
-        content: "";
+        content: '';
         display: block;
         position: absolute;
         top: 0;
@@ -27,6 +27,7 @@
         height: 2px;
         width: 100%;
         background: $c-newsAccent;
+        z-index: 1;
     }
 
     &.tone-feature:before {
@@ -34,6 +35,9 @@
     }
     &.tone-comment:before {
         background: $c-commentAccent;
+    }
+    &.tone-media:before {
+        background: $c-mediaDefault;
     }
 
     &.show-more--hidden {

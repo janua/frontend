@@ -7,6 +7,14 @@
 
     @include mq(tablet) {
         background: $c-neutral8;
+        border-bottom: 2px solid $c-brandBlue;
+    }
+    @include mq(wide) {
+        .has-page-skin & .gs-container {
+            @include rem((
+                width: gs-span(12) + ($gs-gutter*2)
+            ));
+        }
     }
 }
 
@@ -32,7 +40,7 @@
         ));
 
         &:after {
-            content: "beta";
+            content: 'beta';
             position: absolute;
             top: 48px;
             left: 128px;

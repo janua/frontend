@@ -1,21 +1,21 @@
 define([
-    'common/$',
-    'common/common',
     'common/modules/component',
-    'bonzo',
-    'bean',
+    'common/$',
     'lodash/objects/assign',
     'common/utils/detect',
-    'common/modules/onward/slot-controller'
+    'common/modules/adverts/dfp',
+    'common/modules/article/spacefinder',
+    'common/utils/deferToLoad',
+    'common/modules/experiments/ab'
 ], function (
-    $,
-    common,
     Component,
-    bonzo,
-    bean,
+    $,
     extend,
     detect,
-    SlotController
+    dfp,
+    spacefinder,
+    deferToLoad,
+    ab
 ) {
 
     function ArticleBodyAdverts(config) {
@@ -25,55 +25,61 @@ define([
 
     Component.define(ArticleBodyAdverts);
 
-    ArticleBodyAdverts.prototype.inlineSlots = [];
+    ArticleBodyAdverts.prototype.ads = [];
 
-    ArticleBodyAdverts.prototype.config = {
-        inlineAdTemplate: '<div class="ad-slot--dfp ad-slot--inline" data-name="%dfp_slot%" data-mobile="300,50" data-mobilelandscape="300,50|320,50" data-tabletportrait="300,250"><div id="dfp-ad--%dfp_slot%" class="ad-slot__container"></div></div>'
-    };
-
-    ArticleBodyAdverts.prototype.generateInlineAdSlot = function(dfpName) {
-        var template = this.config.inlineAdTemplate;
-
-        return bonzo(bonzo.create(template.replace(/%dfp_slot%/g, dfpName)));
-    };
-
-    ArticleBodyAdverts.prototype.getNewSlot = function(type) {
-        var slot = SlotController.getSlot(type);
-
-        this.inlineSlots.push(slot);
-
-        return bonzo(slot);
-    };
+    ArticleBodyAdverts.prototype.config = {};
 
     ArticleBodyAdverts.prototype.destroy = function() {
-        this.inlineSlots.forEach(function(slot) {
-            SlotController.releaseSlot(slot);
+        this.ads.forEach(function($ad) {
+            $ad.remove();
         });
+    };
 
-        this.inlineSlots = [];
+    ArticleBodyAdverts.prototype.generateAdElement = function() {
+        var adIndex = this.ads.length + 1,
+            $ad = $.create(dfp.createAdSlot('inline' + adIndex, 'inline'));
+        if (['articles', 'fronts-and-articles'].indexOf(ab.getTestVariant('LargerMobileMpu')) > -1 && adIndex === 1) {
+            $ad
+                .removeAttr('data-mobilelandscape')
+                .removeAttr('data-tabletportrait')
+                .data('mobile', '300,250');
+        }
+        this.ads.push($ad);
+        return $ad;
+    };
+
+    ArticleBodyAdverts.prototype.insertAdAtP = function(para) {
+        if (para) {
+            this.generateAdElement().insertBefore(para);
+        }
     };
 
     ArticleBodyAdverts.prototype.init = function() {
-        var breakpoint  = detect.getBreakpoint();
+        var boundInit = function(){
+            var breakpoint  = detect.getBreakpoint();
 
-        if((/wide|desktop/).test(breakpoint)) {
-            this.getNewSlot('adRight').html(this.generateInlineAdSlot('inline1'));
-        }
+            var rules = {
+                minAbove: 250,
+                minBelow: 300,
+                selectors: {
+                    ' > h2': {minAbove: breakpoint === 'mobile' ? 20 : 0, minBelow: 250},
+                    ' > *:not(p):not(h2)': {minAbove: 25, minBelow: 250},
+                    ' .ad-slot': {minAbove: 500, minBelow: 500}
+                }
+            };
 
-        if((/tablet/).test(breakpoint)) {
-            this.getNewSlot('adRight').html(this.generateInlineAdSlot('inline1'));
-            // display second inline ad if there's no right hand ad (we show right hand column at >= 900px)
-            if(window.innerWidth < 900) {
-                this.getNewSlot('adRight').html(this.generateInlineAdSlot('inline2'));
+            if((/wide|desktop|tablet/).test(breakpoint)) {
+                this.insertAdAtP(spacefinder.getParaWithSpace(rules));
+                if(window.innerWidth < 900) {
+                    this.insertAdAtP(spacefinder.getParaWithSpace(rules));
+                }
+            } else if(breakpoint === 'mobile') {
+                this.insertAdAtP(spacefinder.getParaWithSpace(rules));
+                this.insertAdAtP(spacefinder.getParaWithSpace(rules));
             }
-        }
-
-        if((/mobile/).test(breakpoint)) {
-            this.getNewSlot('adBlock').html(this.generateInlineAdSlot('inline1'));
-            this.getNewSlot('adBlock').html(this.generateInlineAdSlot('inline2'));
-        }
+        };
+        deferToLoad(boundInit.bind(this));
     };
 
     return ArticleBodyAdverts;
-
 });

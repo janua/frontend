@@ -15,7 +15,7 @@ define([
     'models/config/front',
     'models/config/collection'
 ], function(
-    config,
+    pageConfig,
     ko,
     vars,
     authedAjax,
@@ -36,6 +36,8 @@ define([
 
         model.switches = ko.observable();
 
+        model.navSections = [].concat(pageConfig.navSections);
+
         model.collections = ko.observableArray();
 
         model.fronts = ko.observableArray();
@@ -44,9 +46,7 @@ define([
 
         model.pending = ko.observable();
 
-        model.types =  [''].concat(vars.CONST.types);
-
-        model.groups = [''].concat(vars.CONST.groups);
+        model.types =  _.pluck(vars.CONST.types, 'name');
 
         model.clipboard = new Group({
             parentType: 'Clipboard',
@@ -54,17 +54,11 @@ define([
             keepCopy:  true
         });
 
-        model.orphans = ko.computed(function() {
-            return _.filter(model.collections(), function(collection) {
-                return collection.parents().length === 0;
-            });
-        }, this);
-
         model.createFront = function() {
             var front;
 
             if (vars.model.fronts().length <= vars.CONST.maxFronts) {
-                front = new Front();
+                front = new Front({priority: vars.priority});
                 front.setOpen(true);
                 model.pinnedFront(front);
                 model.fronts.unshift(front);
@@ -97,13 +91,7 @@ define([
                     data: JSON.stringify(serialized)
                 })
                 .then(function() {
-                    bootstrap({
-                        force: true,
-                        openFronts: _.reduce(model.fronts(), function(openFronts, front) {
-                            openFronts[front.id()] = front.state.isOpen();
-                            return openFronts;
-                        }, {})
-                    })
+                    bootstrap({ force: true })
                     .done(function() {
                         model.pending(false);
                         if (affectedCollections) {
@@ -157,7 +145,7 @@ define([
                            _.reduce(collection.meta, function(acc, val, key) {
                                 var v = _.isFunction(val) ? val() : val;
                                 if(v) {
-                                    acc[key] = (key === 'groups' ? v.split(',') : v);
+                                    acc[key] = v;
                                 }
                                 return acc;
                             }, {});
@@ -167,9 +155,20 @@ define([
             };
         }
 
-        function bootstrap(opts) {
-            opts.openFronts = opts.openFronts|| {};
+        function containerUsage() {
+            return _.reduce(model.collections(), function(m, col) {
+                var type = col.meta.type();
 
+                if (type) {
+                    m[type] = _.uniq((m[type] || []).concat(
+                        _.map(col.parents(), function(front) { return front.id(); })
+                    ));
+                }
+                return m;
+            }, {});
+        }
+
+        function bootstrap(opts) {
             return fetchSettings(function (config, switches) {
                 if (switches['facia-tool-configuration-disable']) {
                     terminate('The configuration tool has been switched off.', '/');
@@ -194,13 +193,23 @@ define([
                         .unshift(model.pinnedFront() ? model.pinnedFront().id() : undefined)
                         .filter(function(id) { return id; })
                         .map(function(id) {
-                            var front = new Front(cloneWithKey(config.fronts[id], id));
+                            var newFront = new Front(cloneWithKey(config.fronts[id], id)),
+                                oldFront = findFirstById(model.fronts, id);
 
-                            front.state.isOpen(opts.openFronts[id]);
-                            return front;
+                            if (oldFront) {
+                                newFront.state.isOpen(oldFront.state.isOpen());
+                                newFront.state.isOpenProps(oldFront.state.isOpenProps());
+                            }
+
+                            return newFront;
                         })
                        .value()
                     );
+
+                    window.console.log('CONTAINER USAGE\n');
+                    _.each(containerUsage(), function(fronts, type) {
+                        window.console.log(type + ': ' + fronts.join(',') + '\n');
+                    });
                 }
             }, opts.pollingMs, opts.terminateOnFail);
         }

@@ -9,13 +9,15 @@ define([
     bean,
     context
 ) {
-    context = context();
     var s = {
         container: '.dropdown',
         button: '.dropdown__button',
         content: '.dropdown__content'
     };
     function init() {
+
+        context = context();
+
         function ancestor(el, c) {
             if (!el.parentNode || bonzo(el.parentNode).hasClass(c.substring(1))) {
                 return el.parentNode;

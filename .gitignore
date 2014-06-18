@@ -18,6 +18,7 @@ frontend-applications.properties
 *.log
 
 .*
+!.jshintrc
 !.scss-lint.yml
 !.editorconfig
 !.bowerrc
@@ -36,6 +37,7 @@ RUNNING_PID
 *.sublime-*
 
 local.sbt
+build.sbt
 
 node_modules
 screenshots
@@ -50,12 +52,8 @@ developer.properties
 
 *-spec-runner.html
 
-static/requirejs
-static/abtests.json
+static
 
-common/app/assets/stylesheets/theme/_commercial-icons-sprite.scss
-common/app/assets/stylesheets/theme/_commercial-icons-svg.scss
-common/app/assets/stylesheets/theme/_global-icons-sprite.scss
-common/app/assets/stylesheets/theme/_global-icons-svg.scss
+common/app/assets/stylesheets/icons/*
 
 ivy-sbt

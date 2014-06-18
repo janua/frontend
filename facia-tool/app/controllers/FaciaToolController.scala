@@ -1,5 +1,6 @@
 package controllers
 
+import util.SanitizeInput
 import frontsapi.model._
 import frontsapi.model.UpdateList
 import jobs.FrontPressJob
@@ -29,14 +30,19 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
   implicit val trailWrite = Json.writes[Trail]
   implicit val blockWrite = Json.writes[Block]
 
-  def collectionsEditor() = ExpiringAuthentication { request =>
+  def priorities() = ExpiringAuthentication { request =>
     val identity = Identity(request).get
-    Cached(60) { Ok(views.html.collections(Configuration.environment.stage, Option(identity))) }
+    Cached(60) { Ok(views.html.priority(Configuration.environment.stage, "", Option(identity))) }
   }
 
-  def configEditor() = ExpiringAuthentication { request =>
+  def collectionEditor(priority: String) = ExpiringAuthentication { request =>
     val identity = Identity(request).get
-    Cached(60) { Ok(views.html.config(Configuration.environment.stage, Option(identity))) }
+    Cached(60) { Ok(views.html.collections(Configuration.environment.stage, priority, Option(identity))) }
+  }
+
+  def configEditor(priority: String) = ExpiringAuthentication { request =>
+    val identity = Identity(request).get
+    Cached(60) { Ok(views.html.config(Configuration.environment.stage, priority, Option(identity))) }
   }
 
   def listCollections = AjaxExpiringAuthentication { request =>
@@ -57,7 +63,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     FaciaToolMetrics.ApiUsageCount.increment()
     val configJson: Option[JsValue] = request.body.asJson
     NoCache {
-      configJson flatMap(_.asOpt[Config]) map {
+      configJson.flatMap(_.asOpt[Config]).map(SanitizeInput.fromConfigSeo).map {
         case update: Config => {
 
           //Only update if it is a valid Config object

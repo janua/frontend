@@ -3,17 +3,31 @@ define([
     'common/utils/storage',
     'common/utils/mediator',
     'common/modules/analytics/mvt-cookie',
-    'common/modules/experiments/searchText'
+    'common/modules/experiments/tests/hide-supporting-links',
+    'common/modules/experiments/tests/across-the-guardian',
+    'common/modules/experiments/tests/display-socially-referred-burners',
+    'common/modules/experiments/tests/sentry',
+    'common/modules/experiments/tests/larger-mobile-mpu'
 ], function (
     common,
     store,
     mediator,
     mvtCookie,
-    ABHeaderSearchText
+    ABHideSupportingLinks,
+    ABAcrossTheGuardian,
+    ABSociallyReferredContent,
+    ABSentry,
+    ABLargerMobileMpu
     ) {
 
-    var TESTS = [new ABHeaderSearchText()];
-    var participationsKey = 'gu.ab.participations';
+    var TESTS = [
+            new ABHideSupportingLinks(),
+            new ABAcrossTheGuardian(),
+            new ABSociallyReferredContent(),
+            new ABSentry(),
+            new ABLargerMobileMpu()
+        ],
+        participationsKey = 'gu.ab.participations';
 
     function getParticipations() {
         return store.local.get(participationsKey) || {};

@@ -13,7 +13,7 @@ define([
     bean,
     ajax,
     queryString,
-    DFP
+    dfp
     ) {
 
     function Video(config) {
@@ -61,7 +61,6 @@ define([
             bean.off(self.video, 'ended error');
             bean.off(self.video, 'click.ct touchstart.ct');
 
-            bean.fire(self.video, 'play:content');
             self.video.src = source;
             self.video.play();
 
@@ -76,7 +75,6 @@ define([
         // Prevent different size ads from making the video jump around
         this.video.style.height = this.video.offsetHeight+'px';
 
-        bean.fire(this.video, 'play:advert');
         this.video.src = this.vastData.file;
         this.video.play();
 
@@ -179,8 +177,6 @@ define([
 
         var self = this;
 
-        this.video.advertWasRequested = true;
-
         ajax({
             url: url,
             method: 'get',
@@ -208,11 +204,9 @@ define([
             'clickTrackUrl': 'ClickTracking'
         };
 
-        var dfpAds = new DFP(config);
+        var adUnit = dfp.buildAdUnit({ page: config });
 
-        var adUnit = dfpAds.buildAdUnit.bind(this)();
-
-        var custParams = queryString.generateQueryString(dfpAds.buildPageTargetting.bind(this)());
+        var custParams = queryString.generateQueryString(dfp.buildPageTargeting({ page: config }));
         var encodedCustParams = encodeURIComponent(custParams);
 
         var timestamp = new Date().getTime();

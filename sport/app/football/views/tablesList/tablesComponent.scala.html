@@ -1,9 +1,13 @@
 @(competition: model.Competition, group: Group, highlightTeamId: Option[String] = None, multiGroup: Boolean = false)(implicit request: RequestHeader)
 @if(!multiGroup) {
-<div class="c-football-table table--hide-from-importance-1">
+<div data-component="football-table-embed" class="c-football-table table--hide-from-importance-1">
     @tableView(competition, group,
         highlightTeamId = highlightTeamId,
-        heading = Option(competition.fullName),
+        heading = if (competition.url == "/football/world-cup-2014" && Switches.WorldCupWallchartEmbedSwitch.isSwitchedOn) {
+            group.round.name.orElse(Some(competition.fullName))
+        } else {
+            Some(competition.fullName)
+        },
         linkToCompetition = true
     )
 </div>

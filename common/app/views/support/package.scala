@@ -1,13 +1,13 @@
 package views.support
 
 import common._
-import conf.Switches.{ ShowAllArticleEmbedsSwitch, ArticleSlotsSwitch, TagLinkingSwitch }
+import conf.Switches.{ ShowAllArticleEmbedsSwitch, TagLinkingSwitch }
 import model._
 
 import java.net.URLEncoder._
 import org.apache.commons.lang.StringEscapeUtils
 import org.jboss.dna.common.text.Inflector
-import org.joda.time.DateTime
+import org.joda.time.{DateMidnight, DateTime}
 import org.joda.time.format.DateTimeFormat
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{ Element, Document }
@@ -68,20 +68,16 @@ case class NewsContainer(showMore: Boolean = true) extends Container {
   val containerType = "news"
   val tone = "news"
 }
-case class SportContainer(showMore: Boolean = true) extends Container {
-  val containerType = "sport"
-  val tone = "news"
-}
-case class CommentContainer(showMore: Boolean = true) extends Container {
-  val containerType = "comment"
-  val tone = "comment"
-}
 case class CommentAndDebateContainer(showMore: Boolean = true) extends Container {
   val containerType = "commentanddebate"
   val tone = "comment"
 }
 case class FeaturesContainer(showMore: Boolean = true) extends Container {
   val containerType = "features"
+  val tone = "feature"
+}
+case class FeaturesAutoContainer(showMore: Boolean = true) extends Container {
+  val containerType = "featuresauto"
   val tone = "feature"
 }
 case class PopularContainer(showMore: Boolean = true) extends Container {
@@ -96,17 +92,19 @@ case class SpecialContainer(showMore: Boolean = true) extends Container {
   val containerType = "special"
   val tone = "news"
 }
-case class SectionContainer(showMore: Boolean = true, tone: String = "news") extends Container {
-  val containerType = "section"
-}
 case class MultimediaContainer(showMore: Boolean = true) extends Container {
   val containerType = "multimedia"
-  val tone = "comment"
+  val tone = "media"
 }
 case class SeriesContainer(showMore: Boolean = true) extends Container {
   val containerType = "series"
   val tone = "news"
 }
+case class MostReferredContainer(showMore: Boolean = true) extends Container {
+  val containerType = "most-referred"
+  val tone = "news"
+}
+
 
 /**
  * Encapsulates previous and next urls
@@ -224,8 +222,19 @@ case class VideoEmbedCleaner(contentVideos: Seq[VideoElement]) extends HtmlClean
       val mediaId = element.attr("data-media-id")
       val asset = findVideoFromId(mediaId)
 
+      element.getElementsByTag("source").remove()
+
+      val sourceHTML: String = getVideoAssets(mediaId).map { videoAsset =>
+        (videoAsset.url, videoAsset.mimeType) match {
+          case (Some(url), Some(mimeType)) => s"""<source src="${url}" type="${mimeType}"></source>"""
+          case _ =>
+        }
+      }.mkString("")
+
+      element.append(sourceHTML)
+
       // add the poster url
-      asset.flatMap(_.image).flatMap(Item620.bestFor).map(_.toString()).foreach{ url =>
+      asset.flatMap(_.image).flatMap(Item640.bestFor).map(_.toString()).foreach{ url =>
         element.attr("poster", url)
       }
 
@@ -244,14 +253,14 @@ case class VideoEmbedCleaner(contentVideos: Seq[VideoElement]) extends HtmlClean
     document
   }
 
-  def findVideoFromId(id:String): Option[VideoAsset] = {
-    contentVideos.filter(_.id == id).flatMap(_.videoAssets).find(_.mimeType == Some("video/mp4"))
-  }
+  def getVideoAssets(id:String): Seq[VideoAsset] = contentVideos.filter(_.id == id).flatMap(_.videoAssets)
+
+  def findVideoFromId(id:String): Option[VideoAsset] = getVideoAssets(id).find(_.mimeType == Some("video/mp4"))
 }
 
 case class PictureCleaner(contentImages: Seq[ImageElement]) extends HtmlCleaner with implicits.Numbers {
 
-  def clean(body: Document): Document = {
+  def cleanStandardPictures(body: Document): Document = {
     body.getElementsByTag("figure").foreach { fig =>
       if(!fig.hasClass("element-comment") && !fig.hasClass("element-witness")) {
         fig.attr("itemprop", "associatedMedia")
@@ -263,11 +272,11 @@ case class PictureCleaner(contentImages: Seq[ImageElement]) extends HtmlCleaner 
           fig.addClass("img")
           img.attr("itemprop", "contentURL")
 
-          asset.foreach { image =>
+          asset.map { image =>
             image.url.map(url => img.attr("src", ImgSrc(url, Item620).toString))
             img.attr("width", s"${image.width}")
 
-            //otherwsie we mess with aspect ratio
+            //otherwise we mess with aspect ratio
             img.removeAttr("height")
 
             fig.addClass(image.width match {
@@ -296,8 +305,30 @@ case class PictureCleaner(contentImages: Seq[ImageElement]) extends HtmlCleaner 
     body
   }
 
+  def cleanShowcasePictures(body: Document): Document = {
+    for {
+      element <- body.getElementsByClass("element--showcase")
+      asset <- findContainerFromId(element.attr("data-media-id"))
+      imagerSrc <- ImgSrc.imager(asset, Showcase)
+      imgElement <- element.getElementsByTag("img")
+    } {
+      imgElement.wrap(s"""<div class="js-image-upgrade" data-src="$imagerSrc"></div>""")
+      imgElement.addClass("responsive-img")
+    }
+
+    body
+  }
+
+  def clean(body: Document): Document = {
+    cleanShowcasePictures(cleanStandardPictures(body))
+  }
+
   def findImageFromId(id:String): Option[ImageAsset] = {
-    contentImages.find(_.id == id).flatMap(Item620.elementFor)
+    findContainerFromId(id).flatMap(Item620.elementFor)
+  }
+
+  def findContainerFromId(id:String): Option[ImageContainer] = {
+    contentImages.find(_.id == id)
   }
 }
 
@@ -415,80 +446,6 @@ object TweetCleaner extends HtmlCleaner {
         element.appendChild(userEl).appendChild(date).appendChild(body)
       }
     }
-    document
-  }
-}
-
-case class InlineSlotGenerator(articleWordCount: Int) extends HtmlCleaner {
-
-  private def isBlock(element: Element): Boolean = {
-      (element.hasClass("img") && !element.hasClass("img--inline")) ||
-       element.hasClass("embed-video-wrapper") ||
-       element.hasClass("gu-video-wrapper") ||
-       element.tagName == "video" ||
-       element.tagName == "figure"
-  }
-
-  private def getPreviousElement(element: Element): Element = {
-    if (element.previousElementSibling != null && element.previousElementSibling.tagName == "br") {
-      getPreviousElement(element.previousElementSibling)
-    } else {
-      element.previousElementSibling
-    }
-  }
-
-  private def insertSlot(paragraph: Element, document: Document) {
-    val prev = getPreviousElement(paragraph)
-    val slot = document.createElement("div")
-    paragraph.before(slot)
-
-    if (isBlock(prev)) {
-      slot.attr("class", "slot slot--block")
-    } else if (prev.tagName == "h2") {
-      slot.attr("class", "slot slot--posth2")
-      val mobileSlot = document.createElement("div")
-      mobileSlot.attr("class", "slot slot--preh2")
-      prev.before(mobileSlot)
-    } else {
-      slot.attr("class", "slot slot--text")
-    }
-  }
-
-  override def clean(document: Document): Document = {
-
-    if (ArticleSlotsSwitch.isSwitchedOn && articleWordCount > 350) {
-
-      var lastInline = -200
-
-      var offset = 0
-      val scaling = ((articleWordCount - 350) / 1500.0f) * 400.0f
-      val spacing = 850 + scaling.toInt.max(400)
-      val minFollowingText = 750
-      val children = document.select("body > *")
-
-      children.zipWithIndex.foreach { case (element, index) =>
-
-        if (element.attr("class").split(" ").contains("img--inline")) {
-          lastInline = offset
-        }
-        else if (element.tagName == "p" && lastInline + spacing < offset && !element.hasClass("img")) {
-
-          val followingTextLen = children.slice(index, children.length).takeWhile(_.tagName == "p").map(_.text.length).reduce(_ + _)
-
-          if (followingTextLen > minFollowingText) {
-            insertSlot(element, document)
-            lastInline = offset
-          }
-        }
-
-        if (element.tagName.in(Set("p","h2"))) offset += element.text.length
-      }
-
-      document.select("body .slot").zipWithIndex.foreach { case (slot, index) =>
-        slot.attr("data-link-name", s"inline slot | $index")
-      }
-    }
-
     document
   }
 }
@@ -707,6 +664,8 @@ object Format {
     date.toString(DateTimeFormat.forPattern(pattern).withZone(timezone))
   }
 
+  def apply(date: DateMidnight, pattern: String)(implicit request: RequestHeader): String = this(date.toDateTime, pattern)(request)
+
   def apply(a: Int): String = new DecimalFormat("#,###").format(a)
 }
 
@@ -746,45 +705,6 @@ object TableEmbedComplimentaryToP extends HtmlCleaner {
     }
     document
   }
-}
-
-object VisualTone {
-
-  val Comment = "comment"
-  val News = "news"
-  val Feature = "feature"
-  val Live = "live"
-
-  private val liveMappings = Seq(
-    "tone/minutebyminute"
-  )
-
-  private val commentMappings = Seq(
-    "tone/comment",
-    "tone/letters",
-    "tone/profiles",
-    "tone/editorials"
-  )
-
-  private val featureMappings = Seq(
-    "tone/features",
-    "tone/recipes",
-    "tone/interview",
-    "tone/performances",
-    "tone/extract",
-    "tone/reviews",
-    "tone/albumreview",
-    "tone/livereview",
-    "tone/childrens-user-reviews"
-  )
-
-
-  // tones are all considered to be 'News' it is the default so we do not list news tones explicitly
-  def apply(tags: Tags) = if(isLive(tags.tones)) Live else if(isComment(tags.tones)) Comment else if(isFeature(tags.tones)) Feature else News
-
-  private def isLive(tones: Seq[Tag]) = tones.exists(t => liveMappings.contains(t.id))
-  private def isComment(tones: Seq[Tag]) = tones.exists(t => commentMappings.contains(t.id))
-  private def isFeature(tones: Seq[Tag]) = tones.exists(t => featureMappings.contains(t.id))
 }
 
 object RenderOtherStatus {
@@ -831,7 +751,7 @@ object GetClasses {
               forceHasImage: Boolean = false): String = {
     val baseClasses: Seq[String] = Seq(
       "item",
-      s"tone-${VisualTone(trail)}"
+      s"tone-${trail.visualTone}"
     )
     val f: Seq[(Trail, Boolean, Boolean) => String] = Seq(
       (trail: Trail, firstContainer: Boolean, forceHasImage: Boolean) => trail match {
@@ -861,7 +781,7 @@ object GetClasses {
   def forFromage(trail: Trail, imageAdjust: String): String = {
     val baseClasses: Seq[String] = Seq(
       "fromage",
-      s"tone-${VisualTone(trail)}",
+      s"tone-${trail.visualTone}",
       "tone-accent-border"
     )
     val f: Seq[(Trail, String) => String] = Seq(
@@ -882,9 +802,42 @@ object GetClasses {
     RenderClasses(classes:_*)
   }
 
+  def forSaucisson(trail: Trail): String = {
+    val baseClasses: Seq[String] = Seq(
+      "saucisson",
+      s"tone-${trail.visualTone}",
+      "tone-accent-border"
+    )
+    val f: Seq[(Trail) => String] = Seq(
+      (trail: Trail) =>
+        if (trail.isLive) "item--live" else ""
+    )
+    val classes = f.foldLeft(baseClasses){case (cl, fun) => cl :+ fun(trail)} ++ makeSnapClasses(trail)
+    RenderClasses(classes:_*)
+  }
+
   def makeSnapClasses(trail: Trail): Seq[String] = trail match {
     case snap: Snap => "facia-snap" +: snap.snapCss.map(t => Seq(s"facia-snap--$t")).getOrElse(Seq("facia-snap--default"))
     case _  => Nil
+  }
+
+  def forContainer(container: Container, config: Config, index: Int, hasTitle: Boolean, extraClasses: Seq[String] = Nil): String = {
+    val baseClasses = Seq(
+      "container",
+      s"container--${container.containerType}"
+    ) ++ extraClasses
+    val f: Seq[(Container, Config, Int, Boolean) => String] = Seq(
+      (container: Container, config: Config, index: Int, hasTitle: Boolean) =>
+        if (config.isSponsored) "container--sponsored" else "",
+      (container: Container, config: Config, index: Int, hasTitle: Boolean) =>
+        if (config.isAdvertisementFeature && !config.isSponsored) "container--advertisement-feature" else "",
+      (container: Container, config: Config, index: Int, hasTitle: Boolean) =>
+        if (index == 0) "container--first" else "",
+      (container: Container, config: Config, index: Int, hasTitle: Boolean) =>
+        if (index > 0 && hasTitle) "js-container--toggle" else ""
+    )
+    val classes = f.foldLeft(baseClasses){case (cl, fun) => cl :+ fun(container, config, index, hasTitle)}
+    RenderClasses(classes:_*)
   }
 
 }

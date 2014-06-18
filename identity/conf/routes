@@ -19,15 +19,16 @@ GET         /user/id/:id                            @controllers.PublicProfileCo
 GET         /user/:vanityUrl                        @controllers.PublicProfileController.renderProfileFromVanityUrl(vanityUrl: String)
 GET         /public/edit                            @controllers.EditProfileController.displayPublicProfileForm
 GET         /account/edit                           @controllers.EditProfileController.displayAccountForm
+GET         /membership/edit                        @controllers.EditProfileController.displayMembershipForm
 POST        /public/edit                            @controllers.EditProfileController.submitPublicProfileForm
 POST        /account/edit                           @controllers.EditProfileController.submitAccountForm
 GET         /verify-email/:token                    @controllers.EmailVerificationController.verify(token: String)
 GET         /verify-email                           @controllers.EmailVerificationController.resendEmailValidationEmail()
 
-GET         /ethical-awards/complete                @controllers.EthicalAwardsController.complete
-GET         /ethical-awards/:formReference          @controllers.EthicalAwardsController.ethicalAwardsForm(formReference: String)
 GET         /form/complete                          @controllers.FormstackController.complete
 GET         /form/:formReference                    @controllers.FormstackController.formstackForm(formReference: String, composer: Boolean = false)
 GET         /form/embed/:formReference              @controllers.FormstackController.formstackForm(formReference: String, composer: Boolean = true)
 
 GET         /et/subscribe/:subDefId                 @controllers.ExactTargetController.subscribe(subDefId: String, returnUrl: String)
+
+GET         /membership.json                        @controllers.EditProfileController.renderMembershipTab

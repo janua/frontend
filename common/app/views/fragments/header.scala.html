@@ -1,5 +1,5 @@
 @(page: model.MetaData)(implicit request: RequestHeader)
-@import conf.Switches.{SearchSwitch, ReleaseMessageSwitch, IdentityProfileNavigationSwitch}
+@import conf.Switches._
 @import common.{LinkTo, Navigation, Edition}
 
 @*<!--
@@ -7,20 +7,22 @@ Identity pages use identityHeader.scala.html, be sure
 to apply any necessary changes to non-shared code there too.
 -->*@
 
-<header id="header" class="l-header u-cf" role="banner" data-link-name="global navigation: header" itemscope itemtype="http://schema.org/Organization">
+<header id="header" class="l-header u-cf" role="banner" data-link-name="global navigation: header">
     <div class="l-header-pre">
         <div class="l-header-pre__inner gs-container u-cf">
             <div class="top-nav">
-                <div class="top-nav__item top-nav__item--mobile-only">
-                    <a href="#footer-nav" data-link-name="Sections" data-toggle="nav-popup--sections"
-                       class="control control--sections">
-                        <span class="u-h">Sections</span>
-                        <span class="control__icon">
-                            <i class="i i-menu"></i>
-                            <i class="i i-menu-active"></i>
-                        </span>
-                    </a>
-                </div>
+                @if(NewNavigationSwitch.isSwitchedOff){
+                    <div class="top-nav__item top-nav__item--mobile-only">
+                        <a href="#footer-nav" data-link-name="Sections" data-toggle="nav-popup--sections"
+                           class="control control--sections">
+                            <span class="u-h">Sections</span>
+                            <span class="control__icon">
+                                <i class="i i-menu"></i>
+                                <i class="i i-menu-active"></i>
+                            </span>
+                        </a>
+                    </div>
+                }
                 @if(SearchSwitch.isSwitchedOn) {
                     <div class="top-nav__item top-nav__item--search" data-component="search">
                         <a href="https://www.google.co.uk/advanced_search?q=site:www.theguardian.com" data-is-ajax data-link-name="Search icon"
@@ -89,12 +91,14 @@ to apply any necessary changes to non-shared code there too.
     </div>
     <div class="l-header-main">
         <div class="gs-container">
-            <meta itemprop="logo" content="http://static-secure.guim.co.uk/icons/social/og/gu-logo-fallback.png" />
-            <a href="@LinkTo{/}" data-link-name="site logo" id="logo" class="guardian-logo-wrapper" itemprop="url" data-component="logo">
-                <span class="u-h">The Guardian</span>
-                <i class="i i-guardian-logo-160 mobile-only"></i>
-                <i class="i i-guardian-logo-big hide-on-mobile"></i>
-            </a>
+            <span itemscope itemtype="http://schema.org/Organization">
+                <meta itemprop="logo" content="https://static-secure.guim.co.uk/icons/social/og/gu-logo-fallback.png" />
+                <a href="@LinkTo{/}" data-link-name="site logo" id="logo" class="guardian-logo-wrapper" itemprop="url" data-component="logo">
+                    <span class="u-h" itemprop="name">The Guardian</span>
+                    <i class="i i-guardian-logo-160 mobile-only"></i>
+                    <i class="i i-guardian-logo-big hide-on-mobile"></i>
+                </a>
+            </span>
 
             @if(IdentityProfileNavigationSwitch.isSwitchedOn) {
                 <div class="nav-popup--profile nav-popup--small js-profile-nav-popup nav-popup is-off"></div>
@@ -102,29 +106,26 @@ to apply any necessary changes to non-shared code there too.
             @if(SearchSwitch.isSwitchedOn) {
                 <div class="nav-popup--search nav-popup--small nav-popup is-off"><div class="js-search-placeholder"></div></div>
             }
-
-            <div class="nav-popup--sections nav-popup nav-popup--small is-off" data-component="navigation">
-                @fragments.sections(page, false)
-            </div>
+            @if(NewNavigationSwitch.isSwitchedOff){
+                <div class="nav-popup--sections nav-popup nav-popup--small is-off" data-component="navigation">
+                    @fragments.sections(page, false)
+                </div>
+            }
         </div>
     </div>
-    @defining(Edition(request).navigation) { navigation =>
-        @defining(Navigation.topLevelItem(navigation, page)) { topLevelSelected =>
-            @*
-            * See here for more info on Breadcrumbs
-            * https://support.google.com/webmasters/answer/185417?hl=en
-            *@
-            <div itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+    @if(NewNavigationSwitch.isSwitchedOn){
+        @fragments.newNavigation(page)
+    }else{
+        @defining(Edition(request).navigation) { navigation =>
+            @defining(Navigation.topLevelItem(navigation, page)) { topLevelSelected =>
                 @* Top level nav *@
                 <div class="nav-container u-cf" data-component="navigation">
                     <div class="gs-container">
                         <ul class="nav nav--global" data-link-name="Sections">
                             @navigation.map { nav =>
                                 <li class="nav__item @if(topLevelSelected.exists(_ == nav)) {is-active}">
-                                    <a href="@LinkTo {@nav.name.href}" @if(topLevelSelected.exists(_ == nav)) { itemprop="url" } data-link-name="@nav.name.href" class="nav__link">
-                                        <span @if(topLevelSelected.exists(_ == nav)){ itemprop="title" }>
-                                            @Html(nav.name.title)
-                                        </span>
+                                    <a href="@LinkTo {@nav.name.href}"  data-link-name="@nav.name.href" class="nav__link">
+                                        @Html(nav.name.title)
                                     </a>
                                 </li>
                             }
@@ -133,19 +134,14 @@ to apply any necessary changes to non-shared code there too.
                 </div>
                 @* Secondary nav *@
                 @Navigation.localNav(navigation, page).map { localNav =>
-                    @defining(localNav.find(_.currentFor(page))){ currentSublink =>
-                        <div class="localnav-container u-cf" data-component="navigation"
-                             @currentSublink.map{ s => itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb" }>
+                    @defining(localNav.searchForCurrentSublink(page)){ currentSublink =>
+                        <div class="localnav-container u-cf" data-component="navigation">
                             <div class="gs-container">
                                 <ul class="nav nav--local" data-link-name="Local Navigation">
-                                    @localNav.map { nav =>
+                                    @localNav.links.map { nav =>
                                         <li class="nav__item @currentSublink.filter(_.href == nav.href).map{ current => is-active }">
-                                            <a href="@LinkTo{@nav.href}" class="nav__link"
-                                                data-link-name="@nav.href"
-                                                @if(currentSublink.exists(_ == nav)) { itemprop="url" }>
-                                                <span @if(currentSublink.exists(_ == nav)) { itemprop="title" }>
-                                                    @Html(nav.title)
-                                                </span>
+                                            <a href="@LinkTo{@nav.href}" class="nav__link" data-link-name="@nav.href">
+                                                @Html(nav.title)
                                             </a>
                                         </li>
                                     }
@@ -154,7 +150,7 @@ to apply any necessary changes to non-shared code there too.
                         </div>
                     }
                 }
-            </div>
+            }
         }
     }
 </header>

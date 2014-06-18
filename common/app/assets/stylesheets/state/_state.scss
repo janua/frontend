@@ -1,4 +1,4 @@
-@charset "utf-8";
+@charset 'UTF-8';
 
 .js-on .js-hidden,
 .js-off .js-visible {
@@ -44,7 +44,6 @@
 }
 
 //These should be refactored to is-shut/is-open
-.trailblock .panel,
 .rolled-out {
     height: auto;
     margin-bottom: 0;

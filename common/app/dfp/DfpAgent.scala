@@ -1,55 +1,96 @@
 package dfp
 
 import common._
-import conf.Configuration.commercial.dfpDataKey
-import play.api.Play.current
-import model.{Section, Tag, Content}
+import java.net.URLDecoder
+import model.{Config, Content, Section, Tag}
 import play.api.libs.json.Json._
-import play.api.{Play, Application, GlobalSettings}
+import play.api.{Application, GlobalSettings}
 import scala.io.Codec.UTF8
 import services.S3
+import conf.Configuration
+import Configuration.commercial.{dfpAdvertisementFeatureTagsDataKey, dfpSponsoredTagsDataKey, dfpPageSkinnedAdUnitsKey, dfpAdUnitRoot}
+import akka.agent.Agent
 
-object DfpAgent extends ExecutionContexts with Logging {
+trait DfpAgent {
 
-  private lazy val targetedKeywordsAgent = AkkaAgent[Seq[String]](Nil)
+  protected def sponsoredTags: Seq[String]
+  protected def advertisementFeatureTags: Seq[String]
+  protected def pageskinnedAdUnits: Seq[String]
 
-  def targetedKeywords: Seq[String] = {
-    if (Play.isTest) {
-      Seq("live-better")
-    } else {
-      targetedKeywordsAgent get()
+  private def lastPart(keywordId: String): String =  keywordId.split('/').last
+
+  private def containerSponsoredTags(config: Config, p: String => Boolean): Option[String] = {
+    config.contentApiQuery.flatMap { encodedQuery =>
+      val query = URLDecoder.decode(encodedQuery, "utf-8")
+      val tokens = query.split( """\?|&|=|\(|\)|\||\,""").map(_.replaceFirst(".*/", ""))
+      tokens find p
     }
   }
 
-  def normalise(name: String) = name.toLowerCase.replaceAll("[+\\s]+", "-")
-
-  def isSponsored(content: Content): Boolean = isSponsored(content.keywords)
-
-  def isSponsored(section: Section): Boolean = targetedKeywords contains normalise(section.webTitle)
-
-  def isSponsored(tags: Seq[Tag]): Boolean = {
-    val normalisedTags = tags.map(tag => normalise(tag.name))
-    (normalisedTags intersect targetedKeywords).nonEmpty
+  private def isSponsoredContainer(config: Config, p: String => Boolean): Boolean = {
+    containerSponsoredTags(config, p).isDefined
   }
+
+  def isSponsored(tags: Seq[Tag]): Boolean = tags.exists(keyword => isSponsored(keyword.id))
+  def isSponsored(tagId: String): Boolean = sponsoredTags contains lastPart(tagId)
+  def isSponsored(config: Config): Boolean = isSponsoredContainer(config, isSponsored)
+
+  def isAdvertisementFeature(tags: Seq[Tag]): Boolean = tags.exists(keyword => isAdvertisementFeature(keyword.id))
+  def isAdvertisementFeature(tagId: String): Boolean = advertisementFeatureTags contains lastPart(tagId)
+  def isAdvertisementFeature(config: Config): Boolean = isSponsoredContainer(config, isAdvertisementFeature)
+
+  def sponsorshipTag(config: Config): Option[String] = {
+    containerSponsoredTags(config, isSponsored) orElse {
+      containerSponsoredTags(config, isAdvertisementFeature)
+    }
+  }
+
+  def isPageSkinned(adUnitWithoutRoot: String) = {
+    val adUnitWithRoot: String = s"$dfpAdUnitRoot/$adUnitWithoutRoot"
+    pageskinnedAdUnits contains adUnitWithRoot
+  }
+}
+
+
+object DfpAgent extends DfpAgent with ExecutionContexts {
+
+  private lazy val sponsoredTagsAgent = AkkaAgent[Seq[String]](Nil)
+  private lazy val advertisementFeatureTagsAgent = AkkaAgent[Seq[String]](Nil)
+  private lazy val pageskinnedAdUnitAgent = AkkaAgent[Seq[String]](Nil)
+
+  protected def sponsoredTags: Seq[String] = sponsoredTagsAgent get()
+
+  protected def advertisementFeatureTags: Seq[String] = advertisementFeatureTagsAgent get()
+
+  protected def pageskinnedAdUnits: Seq[String] = pageskinnedAdUnitAgent get()
 
   def refresh() {
-    def fetchTargetedKeywords() = {
-      val json = S3.get(dfpDataKey)(UTF8) map parse
-      val currKeywords = json map (_.as[Seq[String]]) getOrElse Nil
 
-      val removedKeywords = targetedKeywords filterNot (currKeywords.contains(_))
-      if (removedKeywords.nonEmpty) log.info(s"Removed DFP keywords: $removedKeywords")
-      val newKeywords = currKeywords filterNot (targetedKeywords.contains(_))
-      if (newKeywords.nonEmpty) log.info(s"New DFP keywords loaded: $newKeywords")
-
-      currKeywords
+    def grabListFromStore(key: String): Seq[String] = {
+      val json = S3.get(key)(UTF8) map parse
+      json.fold(Seq[String]())(_.as[Seq[String]])
     }
 
-    targetedKeywordsAgent sendOff (current => fetchTargetedKeywords())
+    def update(agent: Agent[Seq[String]], key: String) = {
+      agent sendOff { oldData =>
+        val freshData = grabListFromStore(key)
+        if (freshData.nonEmpty) {
+          freshData
+        } else {
+          oldData
+        }
+      }
+    }
+
+    update(sponsoredTagsAgent, dfpSponsoredTagsDataKey)
+    update(advertisementFeatureTagsAgent, dfpAdvertisementFeatureTagsDataKey)
+    update(pageskinnedAdUnitAgent, dfpPageSkinnedAdUnitsKey)
   }
 
   def stop() {
-    targetedKeywordsAgent close()
+    sponsoredTagsAgent close()
+    advertisementFeatureTagsAgent close()
+    pageskinnedAdUnitAgent close()
   }
 }
 

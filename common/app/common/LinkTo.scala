@@ -6,6 +6,8 @@ import conf.Configuration
 import model.{Snap, Trail, MetaData}
 import org.jsoup.Jsoup
 import scala.collection.JavaConversions._
+import conf.Configuration.environment
+
 
 /*
  * Builds absolute links to the core site (www.theguardian.com)
@@ -99,4 +101,25 @@ object ClassicLink {
 
   private def specialLiveBlog(request: RequestHeader) = request.path.contains("-sp-")
 }
+
+class CanonicalLink {
+
+  lazy val scheme = if (environment.secure) "https" else "http"
+
+  val significantParams: Seq[String] = Seq(
+    "index",
+    "page"
+  )
+
+  def apply(implicit request: RequestHeader): String = {
+    val queryString = {
+      val q = significantParams.flatMap(key => request.getQueryString(key).map(value => s"$key=${value.urlEncoded}"))
+        .sorted.mkString("&")
+      if (q.isEmpty) "" else s"?$q"
+    }
+    s"$scheme://${request.host}${request.path}$queryString"
+  }
+}
+
+object CanonicalLink extends CanonicalLink
 

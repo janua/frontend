@@ -1,22 +1,12 @@
 @(jobs: Seq[model.commercial.jobs.Job])(implicit request: RequestHeader)
 
-@if(play.Play.isDev()) {
-    <link rel="stylesheet" href="@Static("stylesheets/head.default.css")" />
-    <link rel="stylesheet" href="@Static("stylesheets/global.css")" />
-    <style>
-        .i { background-image: url(@Static("images/global/sprite.png")); }
-    </style>
-}
-
-<link rel="stylesheet" href="@Static("stylesheets/commercial.css")" />
-
 @defining("http://jobs.theguardian.com", "0_2", "2014-04-30") { case (jobsHost, version, date) =>
     <div class="commercial commercial--jobs">
         <div class="facia-container__inner">
             <div class="commercial__head container__title">
                 <h2 class="commercial__title"><a href="@AdLink{@jobsHost/}"
                     data-link-name="merchandising-jobs-v@{version}_@{date}-low-browse-all-jobs">Guardian <span class="commercial__title__last-word">jobs</span></a></h2>
-                <a href="@AdLink{@jobsHost/jobs}"
+                <a href="@AdLink{@jobsHost/}"
                     class="commercial__home-link"
                     data-link-name="merchandising-jobs-v@{version}_@{date}-low-browse-all-jobs">
                     Browse all jobs

@@ -11,12 +11,10 @@
 
 .from-content-api {
     word-wrap: break-word;
+    position: relative;
 }
 .from-content-api,
 .from-content-api .block-elements {
-
-    color: $c-neutral1;
-
     > p,
     ul,
     ol,
@@ -42,7 +40,7 @@
         counter-reset: li;
     }
     > ol > li:before {
-        content: counter(li)".";
+        content: counter(li)'.';
         counter-increment: li;
         @include fs-header(1);
         margin-right: 4px;
@@ -136,7 +134,7 @@
 }
 
 .from-content-api ul > li,
-.article__standfirst ul > li {
+.content__standfirst ul > li {
     @include faux-bullet-point($right-space: 4px);
 
     > p:first-child { // this stops line breaking for the following bullet point format: <ul><li><p>text</p></li></ul>
@@ -265,7 +263,7 @@ p + video {
         @include fs-headline(2);
         padding: ($gs-baseline/3)*2 0;
         text-align: left;
-        border-top: 1px solid #B3B3B4;
+        border-top: 1px solid #b3b3b4;
     }
     th,
     td {
@@ -278,7 +276,6 @@ p + video {
     }
     th {
         font-weight: 600;
-        color: $c-neutral1;
     }
     tbody tr:nth-child(odd) td {
         background-color: darken($c-neutral8, 4%);

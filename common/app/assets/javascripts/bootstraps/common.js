@@ -17,12 +17,13 @@ define([
     //Modules
     'common/utils/storage',
     'common/utils/detect',
-    'common/modules/onward/popular',
+    'common/modules/onward/most-popular-factory',
     'common/modules/onward/related',
     'common/modules/onward/onward-content',
     'common/modules/ui/images',
     'common/modules/navigation/profile',
     'common/modules/navigation/sections',
+    'common/modules/navigation/newNavigation',
     'common/modules/navigation/search',
     'common/modules/ui/tabs',
     'common/modules/ui/toggles',
@@ -35,7 +36,6 @@ define([
     'common/modules/analytics/omnitureMedia',
     'common/modules/analytics/livestats',
     'common/modules/experiments/ab',
-    'common/modules/adverts/video',
     'common/modules/discussion/comment-count',
     'common/modules/gallery/lightbox',
     'common/modules/onward/history',
@@ -45,6 +45,7 @@ define([
     'common/modules/adverts/article-body-adverts',
     'common/modules/adverts/article-aside-adverts',
     'common/modules/adverts/slice-adverts',
+    'common/modules/adverts/front-commercial-components',
     'common/modules/adverts/dfp',
     'common/modules/analytics/commercial/tags/container',
     'common/modules/analytics/foresee-survey',
@@ -52,7 +53,11 @@ define([
     'common/modules/analytics/register',
     'common/modules/commercial/loader',
     'common/modules/onward/tonal',
-    'common/modules/identity/api'
+    'common/modules/identity/api',
+    'common/modules/onward/more-tags',
+    'common/modules/ui/smartAppBanner',
+    'common/modules/ui/surveyBanner',
+    'common/modules/adverts/badges'
 ], function (
     $,
     mediator,
@@ -69,12 +74,13 @@ define([
 
     storage,
     detect,
-    popular,
+    MostPopularFactory,
     Related,
     Onward,
     images,
     Profile,
     Sections,
+    NewNavigation,
     Search,
 
     Tabs,
@@ -88,7 +94,6 @@ define([
     OmnitureMedia,
     liveStats,
     ab,
-    VideoAdvert,
     CommentCount,
     LightboxGallery,
     History,
@@ -98,14 +103,19 @@ define([
     ArticleBodyAdverts,
     ArticleAsideAdverts,
     SliceAdverts,
-    DFP,
+    frontCommercialComponents,
+    dfp,
     TagContainer,
     Foresee,
     GeoMostPopular,
     register,
     CommercialLoader,
     TonalComponent,
-    id
+    id,
+    MoreTags,
+    smartAppBanner,
+    surveyBanner,
+    badges
 ) {
 
     var modules = {
@@ -133,15 +143,17 @@ define([
             search.init(header);
         },
 
+        initialiseNewNavigation: function (config) {
+            NewNavigation.init(config);
+        },
+
         transcludeRelated: function (config, context) {
             var r = new Related();
             r.renderRelatedComponent(config, context);
         },
 
-        transcludePopular: function () {
-            mediator.on('page:common:ready', function(config, context) {
-                popular(config, context);
-            });
+        transcludePopular: function (config) {
+            new MostPopularFactory(config);
         },
 
         transcludeOnwardContent: function(config, context){
@@ -166,9 +178,8 @@ define([
             toggles.init(document);
             mediator.on('page:common:ready', function() {
                 toggles.reset();
+                Dropdowns.init();
             });
-
-            Dropdowns.init();
         },
 
         showRelativeDates: function () {
@@ -237,10 +248,7 @@ define([
                 Array.prototype.forEach.call(context.getElementsByTagName('video'), function(video){
                     if (!bonzo(video).hasClass('tracking-applied')) {
                         bonzo(video).addClass('tracking-applied');
-                        new OmnitureMedia({
-                            el: video,
-                            config: config
-                        }).init();
+                        new OmnitureMedia(video).init();
                     }
                 });
             });
@@ -284,34 +292,19 @@ define([
 
                 new SliceAdverts(config).init();
 
+                frontCommercialComponents.init(config);
+
+                badges.init();
+
                 var options = {};
 
                 if (!config.switches.standardAdverts) {
-                    options.dfpSelector = '.ad-slot--commercial-component';
+                    options.adSlotSelector = '.ad-slot--commercial-component';
                 } else if (!config.switches.commercialComponents) {
-                    options.dfpSelector = '.ad-slot--dfp:not(.ad-slot--commercial-component)';
+                    options.adSlotSelector = '.ad-slot--dfp:not(.ad-slot--commercial-component)';
                 }
-
-                new DFP(extend(config, options)).init();
+                dfp.init(extend(config, options));
             }
-        },
-
-        loadVideoAdverts: function() {
-            mediator.on('page:common:ready', function(config, context) {
-                if (config.switches.videoAdverts && !config.page.blockVideoAds) {
-                    Array.prototype.forEach.call(context.querySelectorAll('video'), function(el) {
-                        var support = detect.getVideoFormatSupport();
-                        new VideoAdvert({
-                            el: el,
-                            support: support,
-                            config: config,
-                            context: context
-                        }).init(config.page);
-                    });
-                } else {
-                    mediator.emit('video:ads:finished', config, context);
-                }
-            });
         },
 
         cleanupCookies: function() {
@@ -480,8 +473,14 @@ define([
                 var commercialComponent = new RegExp('^#' + data[0] + '=(.*)$').exec(window.location.hash),
                     slot = qwery('[data-name="' + data[1] + '"]').shift();
                 if (commercialComponent && slot) {
-                    new CommercialLoader({ config: config })
-                        .init(commercialComponent[1], slot);
+                    bonzo(slot).removeClass('ad-slot--dfp');
+                    var loader = new CommercialLoader({ config: config }),
+                        postLoadEvents = {};
+                        postLoadEvents[commercialComponent[1]] = function() {
+                            bonzo(slot).css('display', 'block');
+                        };
+                    loader.postLoadEvents = postLoadEvents;
+                    loader.init(commercialComponent[1], slot);
                 }
             });
         },
@@ -489,10 +488,25 @@ define([
         repositionComments: function() {
             mediator.on('page:common:ready', function() {
                 if(!id.isUserLoggedIn()) {
-                    $('.js-comments').insertBefore(qwery('.js-popular'));
-                    $('.discussion').addClass('discussion--lowered');
+                    $('.js-comments').appendTo(qwery('.js-repositioned-comments'));
                 }
             });
+        },
+
+        showMoreTagsLink: function() {
+            new MoreTags().init();
+        },
+
+        showSmartBanner: function(config) {
+            if(config.switches.smartBanner) {
+                smartAppBanner.init();
+            }
+        },
+
+        showSurveyBanner: function(config) {
+            if(config.switches.surveyBanner) {
+                surveyBanner.init();
+            }
         }
     };
 
@@ -506,11 +520,12 @@ define([
                 modules.loadAnalytics(config, context);
                 modules.cleanupCookies(context);
                 modules.runAbTests(config, context);
+                modules.transcludePopular(config);
+                modules.loadCommercialComponent(config, context);
                 modules.loadAdverts(config);
                 modules.transcludeRelated(config, context);
                 modules.transcludeOnwardContent(config, context);
                 modules.initRightHandComponent(config, context);
-                modules.loadCommercialComponent(config, context);
             }
             mediator.emit('page:common:deferred:loaded', config, context);
         });
@@ -524,11 +539,13 @@ define([
             modules.checkIframe();
             modules.upgradeImages();
             modules.showTabs();
-            modules.initialiseNavigation(config);
+            if(config.switches.newNavigation){
+                modules.initialiseNewNavigation(config);
+            } else {
+                modules.initialiseNavigation(config);
+            }
             modules.showToggles();
             modules.showRelativeDates();
-            modules.transcludePopular();
-            modules.loadVideoAdverts(config);
             modules.initClickstream();
             modules.transcludeCommentCounts();
             modules.initLightboxGalleries();
@@ -542,6 +559,9 @@ define([
             modules.runForseeSurvey(config);
             modules.startRegister(config);
             modules.repositionComments();
+            modules.showMoreTagsLink();
+            modules.showSmartBanner(config);
+            modules.showSurveyBanner(config);
         }
         mediator.emit('page:common:ready', config, context);
     };

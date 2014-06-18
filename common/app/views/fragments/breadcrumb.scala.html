@@ -1,0 +1,15 @@
+@(content: model.Content)(implicit request: RequestHeader)
+@import common.{Navigation, LinkTo, Edition, Breadcrumbs, BreadcrumbItem}
+
+<ul class="breadcrumb-list inline-list">
+    @defining(Breadcrumbs.items(Edition(request).navigation, content)) { breadcrumbs =>
+      @breadcrumbs.map { breadcrumb =>
+          <li class="breadcrumb-list__item inline-list__item">
+              <div class="breadcrumb-keyword" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+                  <a itemprop="url" href="@LinkTo{@breadcrumb.href}" data-link-name="@breadcrumb.href"><span itemprop="title">@Html(breadcrumb.title)</span></a>
+              </div>
+          </li>
+      }
+    }
+</ul>
+

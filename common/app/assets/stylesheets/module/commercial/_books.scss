@@ -2,11 +2,11 @@
    Books components
    ========================================================================== */
 
-$c-commercial-books-dark: #630D4C;
+$c-commercial-books-dark: #630d4c;
 
 .commercial--books {
     @include rem((
-        padding: 10px 0
+        padding: $comercial-comp-baseline 0
     ));
     .commercial__branding,
     .commercial__head {
@@ -35,12 +35,6 @@ $c-commercial-books-dark: #630D4C;
     .commercial__title {
         margin: 0;
     }
-    .commercial__relevance-title {
-        @include fs-bodyHeading(3);
-        @include rem((
-            margin-bottom: $gs-baseline/2
-        ));
-    }
     .i-bookshop-logo--bookshop {
         @include rem((
             margin-left: -5px
@@ -68,27 +62,31 @@ $c-commercial-books-dark: #630D4C;
     .highitem {
         @include box-sizing(border-box);
         @include rem((
-            padding: 0 0 10px
+            padding: 0 0 $comercial-comp-baseline
         ));
     }
     .lineitem {
         @include rem((
-            padding: 10px 0
+            padding: $comercial-comp-baseline 0
         ));        
     }
     .lineitem:first-child {
         padding-top: 0;
     }
-
     .lineitem__meta {
         color: $c-neutral1;
         @include fs-textsans(1);
+    }
+    .highitem .commercial--books__buy-now-button {
+        @include rem((
+            margin-right: -($gs-gutter/2)
+        ));
     }
     .commercial--books__price {
         @include rem((
             margin-top: $gs-baseline/2
         ));
-        margin-bottom: 0
+        margin-bottom: 0;
     }
     .commercial--books__price__rrp,
     .commercial--books__price__our {
@@ -105,12 +103,10 @@ $c-commercial-books-dark: #630D4C;
         border: 0;
         color: #ffffff;
         text-align: center;
-        position: absolute;
-        right: 0;
+        float: right;
         @include f-header;
         @include font-size(12, 20);
         @include rem((
-            top: 10px,
             padding: 0 $gs-gutter/2,
             min-width: gs-span(1)
         ));
@@ -156,11 +152,9 @@ $c-commercial-books-dark: #630D4C;
             display: inline;
         }
         .commercial--books__buy-now-button {
-            position: static;
-            right: auto;
-            top: auto;
+            float: none;
             @include rem((
-                margin-top: 10px
+                margin-top: $comercial-comp-baseline
             ));
         }
     }
@@ -172,6 +166,9 @@ $c-commercial-books-dark: #630D4C;
                 display: block;
             }
         }
+        .commercial__head {
+            float: left;
+        }
     }
     @include mq(wide) {
         .commercial__head {
@@ -181,11 +178,19 @@ $c-commercial-books-dark: #630D4C;
         }
     }
     &.commercial--low {
+        .lineitem__link {
+            float: none;
+        }
         .lineitem:first-child .lineitem__img {
             display: block;
         }
         
         @include mq(tablet) {
+            .commercial__body {
+                @include rem((
+                    padding-left: $gs-gutter/2
+                ));
+            }
             .commercial__home-link {
                 position: absolute;
             }
@@ -204,101 +209,24 @@ $c-commercial-books-dark: #630D4C;
         }
     }
     &.commercial--high {
-        .lineitem__title {
-            clear: none;
-        }
-        .commercial__head .commercial__search {
-            display: none;
-        }
-        .commercial__relevance-low {
-            .lineitem_link {
+        .highitem__details {
+            .lineitem__link {
                 width: 100%;
             }
+        }
+        .commercial__relevance-low {
             .lineitem__img {
                 @include rem((
                     width: 66px
                 ));
-                height: auto;
             }
-        }
-        .highitem__details {
-            @include rem((
-                padding-right: $gs-gutter/2
-            ));
         }
         @include mq(tablet) {
-            .lineitem {
-                border-left: 1px solid $c-neutral4;
-                width: 100%;
-                @include rem((
-                    min-height: $gs-baseline*13.5
-                ));
-                
-                &:nth-child(n+2) {
-                    display: none;
-                }
-            }
-            .highitem {
-                border-bottom: none;
-                padding-bottom: 0
-            }
             .lowitem__details {
                 @include rem((
                     margin-left: 76px
                 ));
             }
-            .commercial__search {
-                @include rem((
-                    margin-top: $gs-baseline
-                ));
-            }
-            .commercial__relevance-high {
-                width: 66%;
-                float: left;
-                
-                .lineitem__link {
-                    width: auto;
-                }
-            }
-            .commercial__relevance-low {
-                width: 33%;
-                float: right;
-                
-                .lineitem:first-child .lineitem__img {
-                    display: block;
-                }
-            }
-        }
-        @include mq(rightCol) {
-            .commercial__head {
-                float: left;
-                
-                .commercial__search {
-                    display: block;
-                }
-            }
-            .commercial__home-link {
-                position: absolute;
-            }
-            .commercial__relevance-high {
-                width: 66%;
-            }
-            .commercial__relevance-low {
-                width: 33%;
-            }
-            .commercial__foot {
-                display: none;
-            }
-        }
-        @include mq(leftCol) {
-            .commercial__relevance-high,
-            .commercial__relevance-low,
-            .lineitem {
-                width: 50%;
-            }
-            .lineitem:nth-child(n+2) {
-                display: block;
-            }           
         }
     }
 }
@@ -318,7 +246,22 @@ $c-commercial-books-dark: #630D4C;
             @include rem((
                 width: gs-span(2)
             ));
-            background: #ff0000;
+        }
+    }
+    @include mq($from: faciaLeftCol, $to: wide) {
+        .commercial__title {
+            line-height: 1;
+            @include rem((
+                margin-bottom: $comercial-comp-baseline
+            ));
+        }
+        .i-bookshop-logo--bookshop {
+            margin-left: 0;
+        }
+        .commercial__search {
+            @include rem((
+                margin-top: 40px
+            ));
         }
     }
     @include mq(wide) {
@@ -329,39 +272,42 @@ $c-commercial-books-dark: #630D4C;
             margin-right: 0;
         }
     }
-    @include mq(faciaLeftCol, $to: wide) {
-        .commercial__title {
-            line-height: 1;
-            @include rem((
-                margin-bottom: 10px
-            ));
-        }
-        .i-bookshop-logo--bookshop {
-            margin-left: 0;
-        }
-        .commercial__search {
-            @include rem((
-                margin-top: 40px
-            ));
-        }
-    }
 }
 
 /* article */
 .facia-container--layout-article .commercial--books {
-    .commercial__head {
-        @include mq(rightCol) {
+    @include mq(rightCol) {
+        .commercial__head {
+            float: left;
             width: 25%;
             @include rem((
-                padding-right: 8px
+                padding-right: $gs-gutter/2
             ));
+        }
+        .commercial__body {
+            padding-left: 0;
+        }
+    }
+    @include mq($from: rightCol, $to: leftCol) {
+        &.commercial--high .commercial__head {
+            @include rem((
+                padding-right: 16px
+            ));
+        }
+    }
+    @include mq(leftCol) {
+        .commercial__head {
+            padding-right: 0;
+        }
+        .commercial__relevance-low .lineitem {
+            width: 50%;
         }
     }
     @include mq(leftCol, $to: wide) {
         .commercial__title {
             line-height: 1;
             @include rem((
-                margin-bottom: 10px
+                margin-bottom: $comercial-comp-baseline
             ));
         }
         .i-bookshop-logo--bookshop {
@@ -373,5 +319,5 @@ $c-commercial-books-dark: #630D4C;
                 margin-top: 40px
             ));
         }
-    }
+    }    
 }

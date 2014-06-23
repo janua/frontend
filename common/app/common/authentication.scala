@@ -103,7 +103,7 @@ trait LoginController extends ExecutionContexts { self: Controller =>
   def loginPost = Action.async { implicit request =>
     val secure: Boolean = !Play.isDev
     OpenID
-      .redirectURL(googleOpenIdUrl, openIdCallback(secure=secure), openIdAttributes)
+      .redirectURL(googleOpenIdUrl, openIdCallback(false), openIdAttributes)
       .map(_ + extraOpenIDParameters.mkString("&", "&", ""))
       .map(Redirect(_))
       .recover {

@@ -5,6 +5,7 @@ import jobs.FrontPressJob
 import play.api._
 import play.api.mvc.WithFilters
 import services.ConfigAgentLifecycle
+import conf.{ Configuration => GuardianConfiguration }
 
 object Global extends WithFilters(Gzipper)
   with GlobalSettings

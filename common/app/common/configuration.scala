@@ -9,6 +9,7 @@ import java.io.{FileInputStream, File}
 import org.apache.commons.io.IOUtils
 import play.api.Play
 import play.api.Play.current
+import scala.util.Try
 
 class BadConfigurationException(property: String) extends RuntimeException(s"Property $property not configured")
 
@@ -37,6 +38,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     val secure = Play.application.configuration.getBoolean("guardian.secure").getOrElse(false)
 
     lazy val isNonProd = List("dev", "code", "gudev").contains(stage)
+    lazy val isDev = Try(stage.toLowerCase == "dev").getOrElse(false)
   }
 
   object switches {

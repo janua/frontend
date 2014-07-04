@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong
 import com.amazonaws.services.cloudwatch.model.Dimension
 import common.FaciaToolMetrics.InvalidContentExceptionMetric
 import scala.collection.JavaConversions._
+import org.joda.time.Period
 
 trait TimingMetricLogging extends Logging { self: TimingMetric =>
   override def measure[T](block: => T): T = {
@@ -359,11 +360,11 @@ object FaciaToolMetrics {
     "Number of times facia-tool cron job has successfully pressed"
   )
 
-  object FrontPressCronFailure extends SimpleCountMetric(
-    "facia-front-press",
+  object FrontPressCronFailure extends ConsecutiveErrorsHealthCheckCountMetric(
     "facia-front-press-cron-failure",
-    "Facia front press cron failure count",
-    "Number of times facia-tool cron job has had a failure in pressing"
+    Period.minutes(15),
+    errorThreshold = 15,
+    consecutivePeriodThreshold = 3
   )
 
   object InvalidContentExceptionMetric extends SimpleCountMetric(
@@ -399,7 +400,7 @@ object FaciaToolMetrics {
     DraftPublishCount, ContentApiPutSuccess, ContentApiPutFailure,
     FrontPressSuccess, FrontPressFailure, FrontPressCronSuccess,
     FrontPressLiveSuccess, FrontPressDraftFailure,
-    FrontPressCronFailure, InvalidContentExceptionMetric,
+    InvalidContentExceptionMetric,
     ContentApiSeoRequestSuccess, ContentApiSeoRequestFailure, MemcachedFallbackMetric
   ) ++ ContentApiMetrics.all ++ S3Metrics.all
 }

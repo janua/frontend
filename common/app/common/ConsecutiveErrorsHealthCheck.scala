@@ -5,6 +5,7 @@ import akka.agent.Agent
 import java.util.concurrent.atomic.AtomicLong
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.concurrent.Await
 
 trait ResettingCountMetric {
   val name: String
@@ -23,14 +24,19 @@ trait ConsecutiveErrorsHealthCheck extends implicits.Dates {
 
   case class HealthCheck(age: DateTime, errors: Int, consecutivePeriod: Int) {
     def isExpired: Boolean = age.isOlderThan(period)
-    def isHealthy: Boolean = errors <= errorThreshold
-    def addErrorsToHealthCheck(e: Int): HealthCheck = {
+    def isCurrentPeriodHealthy: Boolean = errors <= errorThreshold
+    def update: HealthCheck = {
       val newAge = if (isExpired) DateTime.now else age
-      val consecutivePeriodNumber = if (isHealthy && isExpired) 0 else consecutivePeriod + 1
+      val consecutivePeriodNumber = if (isCurrentPeriodHealthy && isExpired) consecutivePeriod - 1 else consecutivePeriod + 1
       this.copy(
-        errors = errors + e,
-        consecutivePeriod = consecutivePeriodNumber,
-        age = newAge
+        age = newAge,
+        consecutivePeriod = consecutivePeriodNumber
+      )
+    }
+    def addErrorsToHealthCheck(e: Int): HealthCheck = {
+      val x = update
+      x.copy(
+        errors = errors + e
       )
     }
     def increment(): HealthCheck = addErrorsToHealthCheck(1)
@@ -39,6 +45,8 @@ trait ConsecutiveErrorsHealthCheck extends implicits.Dates {
   def createHealthCheck: HealthCheck = HealthCheck(age = DateTime.now, errors = 0, consecutivePeriod = 0)
 
   def isHealthy: Boolean = {
+    Await.ready(healthCheckState.alter { healthCheck => healthCheck.update }, atMost=5.seconds)
+
     val healthCheck = healthCheckState.get()
     //println(s"Consecutive Period: ${healthCheck.consecutivePeriod} Threshold: $consecutivePeriodThreshold")
     healthCheck.consecutivePeriod <= consecutivePeriodThreshold

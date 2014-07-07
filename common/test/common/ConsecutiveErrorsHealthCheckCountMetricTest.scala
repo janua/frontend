@@ -16,7 +16,7 @@ class ConsecutiveErrorsHealthCheckCountMetricTest extends FlatSpec with Eventual
     running(FakeApplication()) {
       val localPatience: PatienceConfig = PatienceConfig(scaled(Span(3, Seconds)))
 
-      val metric = ConsecutiveErrorsHealthCheckCountMetric("test", periodInSeconds(2), 2, 1)
+      val metric = ConsecutiveErrorsHealthCheckCountMetric("test", periodInSeconds(1), 2, 1)
 
       metric.isHealthy should be(true)
 
@@ -28,9 +28,12 @@ class ConsecutiveErrorsHealthCheckCountMetricTest extends FlatSpec with Eventual
         metric.isHealthy should be(false)
       }(localPatience)
 
+
+      val slowPatience: PatienceConfig = PatienceConfig(scaled(Span(20, Seconds)), scaled(Span(1, Seconds)))
       eventually {
+        metric.increment()
         metric.isHealthy should be(true)
-      }(localPatience)
+      }(slowPatience)
     }
   }
 
@@ -44,20 +47,22 @@ class ConsecutiveErrorsHealthCheckCountMetricTest extends FlatSpec with Eventual
 
   it should "be healthy when it has expired but passed it's threshold" in {
     running(FakeApplication()) {
-      val localPatience: PatienceConfig = PatienceConfig(scaled(Span(3, Seconds)))
-      val metric = ConsecutiveErrorsHealthCheckCountMetric("test", periodInSeconds(2), 1, 1)
+      val localPatience: PatienceConfig = PatienceConfig(scaled(Span(6, Seconds)))
+      val metric = ConsecutiveErrorsHealthCheckCountMetric("test", periodInSeconds(2), 3, 1)
 
       metric.isHealthy should be (true) //Because consecutive won't go up unless incremented
 
       eventually {
         metric.increment()
         metric.isHealthy should be (false)
-      }
+      }(localPatience)
 
+
+      val slowPatience: PatienceConfig = PatienceConfig(scaled(Span(3, Seconds)), interval=scaled(Span(1, Seconds)))
       eventually {
         metric.increment()
         metric.isHealthy should be (true)
-      }(localPatience)
+      }(slowPatience)
     }
   }
 

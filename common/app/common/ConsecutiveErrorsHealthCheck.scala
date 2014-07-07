@@ -26,9 +26,19 @@ trait ConsecutiveErrorsHealthCheck extends implicits.Dates {
     def isHealthy: Boolean = errors <= errorThreshold
     def addErrorsToHealthCheck(e: Int): HealthCheck = {
       val newAge = if (isExpired) DateTime.now else age
-      val consecutivePeriodNumber = if (isHealthy && isExpired) 0 else consecutivePeriod + 1
+      val consecutivePeriodNumber =
+        if (isExpired && isHealthy)
+          0
+        else
+          if (isExpired)
+            consecutivePeriod + 1
+          else
+            consecutivePeriod
+
+
+      val newErrors = if (isExpired) 0 else errors + 1
       this.copy(
-        errors = errors + e,
+        errors = newErrors,
         consecutivePeriod = consecutivePeriodNumber,
         age = newAge
       )
@@ -40,7 +50,7 @@ trait ConsecutiveErrorsHealthCheck extends implicits.Dates {
 
   def isHealthy: Boolean = {
     val healthCheck = healthCheckState.get()
-    //println(s"Consecutive Period: ${healthCheck.consecutivePeriod} Threshold: $consecutivePeriodThreshold")
+    println(s"Consecutive Period: ${healthCheck.consecutivePeriod} Threshold: $consecutivePeriodThreshold")
     healthCheck.consecutivePeriod <= consecutivePeriodThreshold
   }
 }
@@ -53,7 +63,7 @@ case class ConsecutiveErrorsHealthCheckCountMetric(name: String, period: Period,
   def getCurrentCount: Long = currentCount.get()
   def getAndReset: Long = currentCount.getAndSet(0)
   override def increment(): Long = {
-    healthCheckState.alter { healthCheck => if (healthCheck.isExpired && healthCheck.consecutivePeriod == 0) createHealthCheck else healthCheck.increment() }
+    healthCheckState.alter { healthCheck => healthCheck.increment() }
     currentCount.incrementAndGet()
   }
 }

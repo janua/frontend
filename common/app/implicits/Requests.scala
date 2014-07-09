@@ -30,5 +30,7 @@ trait Requests {
     lazy val hasParameters: Boolean = !r.queryString.isEmpty
 
     lazy val isHealthcheck: Boolean = r.headers.keys.exists(_ equalsIgnoreCase  "X-Gu-Management-Healthcheck")
+
+    lazy val isXmlHttpRequest: Boolean = r.headers.get("X-Requested-With").exists(_ == "XMLHttpRequest")
   }
 }

@@ -1,12 +1,15 @@
 import common._
-import conf.{Gzipper, Management, Configuration => GuardianConfiguration}
+import conf.{Configuration => GuardianConfiguration}
+import conf.{Gzipper, Management}
+import controllers.routes
 import java.io.File
 import jobs.FrontPressJob
 import play.api._
 import play.api.mvc.WithFilters
 import services.ConfigAgentLifecycle
 
-object Global extends WithFilters(Gzipper)
+object Global extends WithFilters(new GoogleAuthFilters.AuthFilterWithExemptions(
+  LoginExemptions(Option(routes.Login.login()),Option(routes.Login.loginAction()),Option(routes.Login.oauth2Callback()))), Gzipper)
   with GlobalSettings
   with CloudWatchApplicationMetrics
   with ConfigAgentLifecycle {

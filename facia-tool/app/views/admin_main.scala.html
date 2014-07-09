@@ -1,4 +1,4 @@
-@(title: String, env: String, priority: Option[String] = None, isAuthed: Boolean = false, identity: Option[Identity] = None)(content: Html)
+@(title: String, env: String, priority: Option[String] = None, isAuthed: Boolean = false, identity: Option[UserIdentity] = None)(content: Html)
 
 <!DOCTYPE html>
 
@@ -68,7 +68,7 @@
             <a class="log-in-out" href="/logout">Logout</a>
             @content
         } else {
-            <form action="@routes.Login.loginPost()" method="post" class="login-form tools">
+            <form action="@routes.Login.loginAction()" method="get" class="login-form tools">
                 <input value="Log In" class="tool" type="submit" id="login-button">
             </form>
         }

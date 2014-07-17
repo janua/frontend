@@ -35,12 +35,12 @@ class AuthenticatedRequest(val identity: Identity, request: Request[AnyContent])
 
 trait AuthLogging {
   self: Logging =>
-  def log(msg: String, request: Request[AnyContent]) {
-    request match {
-      case auth: AuthenticatedRequest => log.info(auth.identity.email + ": " + msg)
-      case _ => throw new IllegalStateException("Expected an authenticated request")
-    }
-  }
+  def log(msg: String, request: Request[AnyContent]) {}//{
+//    request match {
+//      case auth: AuthenticatedRequest => log.info(auth.identity.email + ": " + msg)
+//      case _ => throw new IllegalStateException("Expected an authenticated request")
+//    }
+//  }
 }
 
 class ExpiringAuthAction(loginUrl: String) extends AuthAction(loginUrl) with implicits.Dates {

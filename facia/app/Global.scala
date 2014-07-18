@@ -15,15 +15,15 @@ with DfpAgentLifecycle
 with SurgingContentAgentLifecycle {
   override lazy val applicationName = Management.applicationName
 
-  override def applicationMetrics: Map[String, Double] = super.applicationMetrics ++ Map(
-    ("s3-authorization-error", S3Metrics.S3AuthorizationError.getAndReset.toDouble),
-    ("json-parsing-error", FaciaMetrics.JsonParsingErrorCount.getAndReset.toDouble),
-    ("elastic-content-api-calls", ContentApiMetrics.ElasticHttpTimingMetric.getAndReset.toDouble),
-    ("elastic-content-api-timeouts", ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble),
-    ("content-api-client-parse-exceptions", ContentApiMetrics.ContentApiJsonParseExceptionMetric.getAndReset.toDouble),
-    ("content-api-client-mapping-exceptions", ContentApiMetrics.ContentApiJsonMappingExceptionMetric.getAndReset.toDouble),
-    ("content-api-invalid-content-exceptions", FaciaToolMetrics.InvalidContentExceptionMetric.getAndReset.toDouble),
-    ("redirects-to-applications", FaciaMetrics.FaciaToApplicationRedirectMetric.getAndReset.toDouble)
+  override def applicationMetrics: Map[String, FrontendMetric] = super.applicationMetrics ++ Map(
+    ("s3-authorization-error", FrontendMetric(S3Metrics.S3AuthorizationError.getAndReset.toDouble)),
+    ("json-parsing-error", FrontendMetric(FaciaMetrics.JsonParsingErrorCount.getAndReset.toDouble)),
+    ("elastic-content-api-calls", FrontendMetric(ContentApiMetrics.ElasticHttpTimingMetric.getAndReset.toDouble)),
+    ("elastic-content-api-timeouts", FrontendMetric(ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble)),
+    ("content-api-client-parse-exceptions", FrontendMetric(ContentApiMetrics.ContentApiJsonParseExceptionMetric.getAndReset.toDouble)),
+    ("content-api-client-mapping-exceptions", FrontendMetric(ContentApiMetrics.ContentApiJsonMappingExceptionMetric.getAndReset.toDouble)),
+    ("content-api-invalid-content-exceptions", FrontendMetric(FaciaToolMetrics.InvalidContentExceptionMetric.getAndReset.toDouble)),
+    ("redirects-to-applications", FrontendMetric(FaciaMetrics.FaciaToApplicationRedirectMetric.getAndReset.toDouble))
   )
 
 }

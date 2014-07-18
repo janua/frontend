@@ -1,6 +1,6 @@
 package services
 
-import common.{SimpleCountMetric, Jobs}
+import common.{FrontendMetric, SimpleCountMetric, Jobs}
 import model.diagnostics.CloudWatch
 import play.api.{Application => PlayApp, GlobalSettings}
 
@@ -8,7 +8,7 @@ trait ArchiveMetrics extends GlobalSettings {
 
   private def report() {
     CloudWatch.put("ArchiveMetrics", Map(
-      Googlebot404Count.name -> Googlebot404Count.getAndReset
+      Googlebot404Count.name -> FrontendMetric(Googlebot404Count.getAndReset)
     ))
   }
 

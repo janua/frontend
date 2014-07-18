@@ -1,6 +1,6 @@
 package model.diagnostics.analytics
 
-import common.Logging
+import common.{FrontendMetric, Logging}
 import model.diagnostics.CloudWatch
 
 object UploadJob extends Logging {
@@ -9,7 +9,7 @@ object UploadJob extends Logging {
     log.info("Uploading count metrics")
 
     val metrics = Metric.metrics.map{ case (prefix, metric) =>
-      s"${metric.namespace}-${metric.name}" -> metric.count.getAndSet(0).toDouble
+      s"${metric.namespace}-${metric.name}" -> FrontendMetric(metric.count.getAndSet(0).toDouble)
     }
 
     // Cloudwatch will not take more than 20 metrics at a time

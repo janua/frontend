@@ -1,6 +1,6 @@
 package jobs
 
-import common.{ExecutionContexts, Logging}
+import common.{FrontendMetric, ExecutionContexts, Logging}
 import services.{OphanApi, CloudWatch}
 import scala.collection.JavaConversions._
 import scala.concurrent.Future.sequence
@@ -32,9 +32,9 @@ object AnalyticsSanityCheckJob extends ExecutionContexts with implicits.Futures 
 
     sequence(Seq(omniture, ophan)).foreach{ case (omniture :: ophan :: Nil) =>
       model.diagnostics.CloudWatch.put("Analytics", Map(
-        "omniture-percent-conversion" -> omniture,
-        "ophan-percent-conversion" -> ophan,
-        "omniture-ophan-correlation" -> omniture/ophan * 100
+        "omniture-percent-conversion" -> FrontendMetric(omniture),
+        "ophan-percent-conversion" -> FrontendMetric(ophan),
+        "omniture-ophan-correlation" -> FrontendMetric(omniture/ophan * 100)
       ))
     }
  }

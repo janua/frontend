@@ -583,6 +583,7 @@ class FrontendTimingMetric(
   override val getValue = () => totalTimeInMillis
 
   def getAndReset: Long = currentCount.getAndSet(0)
+  def getAndResetTime: Long = timeInMillis.getAndSet(0) / currentCount.getAndSet(0)
 }
 
 object PerformanceMetrics {
@@ -601,14 +602,29 @@ object PerformanceMetrics {
   )
 }
 
+sealed trait MetricUnit {
+  def getUnitString: String
+}
+
+object Milliseconds extends MetricUnit {
+  def getUnitString: String = "Milliseconds"
+}
+
+object Count extends MetricUnit {
+  def getUnitString: String = "Count"
+
+}
+
+case class FrontendMetric(value: Double, unit: MetricUnit = Count)
+
 trait CloudWatchApplicationMetrics extends GlobalSettings {
   import MemcachedMetrics._
   val applicationMetricsNamespace: String = "Application"
   val applicationDimension: Dimension = new Dimension().withName("ApplicationName").withValue(applicationName)
   def applicationName: String
-  def applicationMetrics: Map[String, Double] = Map(
-    (s"$applicationName-${FilterCacheHit.name}", FilterCacheHit.getAndReset),
-    (s"$applicationName-${FilterCacheMiss.name}", FilterCacheMiss.getAndReset)
+  def applicationMetrics: Map[String, FrontendMetric] = Map(
+    (s"$applicationName-${FilterCacheHit.name}", FrontendMetric(FilterCacheHit.getAndReset)),
+    (s"$applicationName-${FilterCacheMiss.name}", FrontendMetric(FilterCacheMiss.getAndReset))
   )
 
   def systemMetrics: Map[String, Double] = Map(
@@ -637,7 +653,7 @@ trait CloudWatchApplicationMetrics extends GlobalSettings {
   private def report() {
     val systemMetrics  = this.systemMetrics
     val applicationMetrics  = this.applicationMetrics
-    CloudWatch.put("ApplicationSystemMetrics", systemMetrics)
+    CloudWatch.put("ApplicationSystemMetrics", systemMetrics.mapValues(FrontendMetric(_)))
     for (metrics <- applicationMetrics.grouped(20))
       CloudWatch.putWithDimensions(applicationMetricsNamespace, metrics, Seq(applicationDimension))
   }

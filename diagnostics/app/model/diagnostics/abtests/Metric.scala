@@ -1,6 +1,6 @@
 package model.diagnostics.abtests
 
-import common.Logging
+import common.{FrontendMetric, Logging}
 import views.support.JavaScriptVariableName
 import conf.Switches.{all => AllSwitches}
 
@@ -33,12 +33,12 @@ object Metric extends Logging {
     }
   }
 
-  def viewsPerSession : Map[String, Double] = {
+  def viewsPerSession : Map[String, FrontendMetric] = {
     // Calculate the ratio of page views to sessions for test variants
     // that have data in both Maps.
     val variants = pageViews.keys.toList intersect sessions.keys.toList
 
-    variants.map( variant => { (variant, pageViews(variant).doubleValue / sessions(variant).doubleValue) } ).toMap
+    variants.map( variant => { (variant, FrontendMetric(pageViews(variant).doubleValue / sessions(variant).doubleValue)) } ).toMap
   }
 
   def reset() {

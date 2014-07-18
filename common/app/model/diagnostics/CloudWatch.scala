@@ -5,7 +5,7 @@ import com.amazonaws.handlers.AsyncHandler
 import conf.Configuration
 import com.amazonaws.services.cloudwatch.model._
 import scala.collection.JavaConversions._
-import common.Logging
+import common.{FrontendMetric, Logging}
 import Configuration._
 import services.AwsEndpoints
 
@@ -31,24 +31,24 @@ trait CloudWatch extends Logging {
     }
   }
 
-  def put(namespace: String, metrics: Map[String, Double], dimensions: Seq[Dimension]): Any = {
+  def put(namespace: String, metrics: Map[String, FrontendMetric], dimensions: Seq[Dimension]): Any = {
     val request = new PutMetricDataRequest().
       withNamespace(namespace).
       withMetricData(metrics.map{ case (name, count) =>
       new MetricDatum()
-        .withValue(count)
+        .withValue(count.value)
         .withMetricName(name)
-        .withUnit("Count")
+        .withUnit(count.unit.getUnitString)
         .withDimensions(dimensions)
     })
 
     cloudwatch.putMetricDataAsync(request, asyncHandler)
   }
 
-  def put(namespace: String, metrics: Map[String, Double]): Any =
+  def put(namespace: String, metrics: Map[String, FrontendMetric]): Any =
     put(namespace, metrics, Seq(stage))
 
-  def putWithDimensions(namespace: String, metrics: Map[String, Double], dimensions: Seq[Dimension]) =
+  def putWithDimensions(namespace: String, metrics: Map[String, FrontendMetric], dimensions: Seq[Dimension]) =
     put(namespace, metrics, Seq(stage) ++ dimensions)
 
 }

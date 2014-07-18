@@ -1,4 +1,4 @@
-import common.{ContentApiMetrics, FaciaMetrics, CloudWatchApplicationMetrics}
+import common.{FrontendMetric, ContentApiMetrics, CloudWatchApplicationMetrics}
 import conf.{Management, Filters}
 import dev.DevParametersLifecycle
 import dfp.DfpAgentLifecycle
@@ -13,8 +13,8 @@ object Global
   with SurgingContentAgentLifecycle {
   override lazy val applicationName = Management.applicationName
 
-  override def applicationMetrics: Map[String, Double] = super.applicationMetrics ++ Map(
-    ("elastic-content-api-calls", ContentApiMetrics.ElasticHttpTimingMetric.getAndReset.toDouble),
-    ("elastic-content-api-timeouts", ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble)
+  override def applicationMetrics: Map[String, FrontendMetric] = super.applicationMetrics ++ Map(
+    ("elastic-content-api-calls", FrontendMetric(ContentApiMetrics.ElasticHttpTimingMetric.getAndReset.toDouble)),
+    ("elastic-content-api-timeouts", FrontendMetric(ContentApiMetrics.ElasticHttpTimeoutCountMetric.getAndReset.toDouble))
   )
 }

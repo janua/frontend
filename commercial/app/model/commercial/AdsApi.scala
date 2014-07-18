@@ -1,7 +1,7 @@
 package model.commercial
 
 import com.ning.http.util.AsyncHttpProviderUtils
-import common.{ExecutionContexts, Logging}
+import common.{FrontendMetric, ExecutionContexts, Logging}
 import conf.Switch
 import model.diagnostics.CloudWatch
 import play.api.libs.json.{JsValue, Json}
@@ -30,7 +30,7 @@ trait AdsApi[F, T <: Ad] extends ExecutionContexts with Logging {
   private def recordLoad(duration: Long) {
     val feedName = adTypeName.toLowerCase.replaceAll("\\s+", "-")
     val key = s"$feedName-feed-load-time"
-    CloudWatch.put("Commercial", Map(s"$key" -> duration.toDouble))
+    CloudWatch.put("Commercial", Map(s"$key" -> FrontendMetric(duration.toDouble)))
   }
 
   def loadAds(): Future[Seq[T]] = doIfSwitchedOn {

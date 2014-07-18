@@ -5,7 +5,7 @@ import tools.Store
 import implicits.Dates
 import com.ning.http.util.AsyncHttpProviderUtils
 import model.diagnostics.CloudWatch
-import common.{ExecutionContexts, Logging}
+import common.{FrontendMetric, ExecutionContexts, Logging}
 import play.api.libs.ws.{Response, WS}
 import scala.concurrent.Future
 import conf.Configuration.commercial._
@@ -23,7 +23,7 @@ object TravelOffersCacheJob extends ExecutionContexts with Dates with Logging {
   private def recordLoad(duration: Long) {
     val feedName = adTypeName.toLowerCase.replaceAll("\\s+", "-")
     val key = s"$feedName-feed-load-time"
-    CloudWatch.put("Commercial", Map(s"$key" -> duration.toDouble))
+    CloudWatch.put("Commercial", Map(s"$key" -> FrontendMetric(duration.toDouble)))
   }
 
 

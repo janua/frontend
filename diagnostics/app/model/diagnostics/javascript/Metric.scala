@@ -1,6 +1,6 @@
 package model.diagnostics.javascript
 
-import common.Logging
+import common.{FrontendMetric, Logging}
 import java.util.concurrent.ConcurrentHashMap
 import com.google.common.util.concurrent.AtomicDouble
 import scala.collection.convert.Wrappers
@@ -16,10 +16,10 @@ object Metric extends Logging {
 
   // For the purpose of creating alarms we are more interested in increases in the average
   // number of errors over a minute.
-  def averages = {
+  def averages: Map[String, FrontendMetric] = {
     val snapshot = metrics.toMap
     val total = snapshot.values.map(_.doubleValue()).sum
-    snapshot.map(m => m._1 -> m._2.doubleValue() / total)
+    snapshot.map(m => m._1 -> FrontendMetric(m._2.doubleValue() / total))
   }
 
   def reset() = metrics.clear()

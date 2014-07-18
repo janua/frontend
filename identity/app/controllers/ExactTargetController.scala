@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import common.ExecutionContexts
+import common.{FrontendMetric, ExecutionContexts}
 import services.{IdRequestParser, ReturnUrlVerifier}
 import com.google.inject.{Inject, Singleton}
 import utils.SafeLogging
@@ -19,7 +19,7 @@ class ExactTargetController @Inject()(
                                        authAction: actions.AuthenticatedAction)
   extends Controller with ExecutionContexts with SafeLogging {
 
-  def cloudWatchCount(id: String) { CloudWatch.put("ExactTarget", Map(id -> 1d)) }
+  def cloudWatchCount(id: String) { CloudWatch.put("ExactTarget", Map(id -> FrontendMetric(1d))) }
 
   def subscribe(subscriptionDefId: String, returnUrl: String) = authAction.apply {
     implicit request =>

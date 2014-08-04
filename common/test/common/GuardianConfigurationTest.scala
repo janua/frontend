@@ -23,7 +23,7 @@ class GuardianConfigurationTest extends FlatSpec with Matchers {
 
     withClue("Look at comment in GuardianConfigurationTest.scala!") {
 
-      hash should be("3af5d12a2e3f761455428423b76c490b")
+      hash should be("f5afb0600f1466d28c3a3227bd0bf01a")
     }
   }
 }

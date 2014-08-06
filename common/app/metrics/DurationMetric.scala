@@ -15,14 +15,14 @@ case class DurationDataPoint(value: Long, time: Option[DateTime] = None) extends
 trait FrontendMetric {
   val name: String
   val metricUnit: StandardUnit
-  def getDataPoints: List[DurationDataPoint]
+  def getDataPointsAgent: Agent[List[DurationDataPoint]]
 }
 
 case class DurationMetric(name: String, metricUnit: StandardUnit) extends FrontendMetric {
 
-  private val dataPoints: Agent[List[DurationDataPoint]] = AkkaAgent(List[DurationDataPoint]())
+  val dataPoints: Agent[List[DurationDataPoint]] = AkkaAgent(List[DurationDataPoint]())
 
-  def getDataPoints: List[DurationDataPoint] = dataPoints.get()
+  def getDataPointsAgent: Agent[List[DurationDataPoint]] = dataPoints
 
   def record(dataPoint: DurationDataPoint) = dataPoints.alter(dataPoint :: _)
 

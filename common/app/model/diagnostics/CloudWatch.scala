@@ -57,24 +57,28 @@ trait CloudWatch extends Logging {
     putMetrics(metrics, List(stageDimension, applicationDimension))
 
   def putMetrics(metrics: List[FrontendMetric], dimensions: List[Dimension]): Unit = {
-    for {
-      metric <- metrics
-      dataPoints <- metric.getDataPoints.grouped(20)
-      dataPoint <- dataPoints
-    } {
-      val request = new PutMetricDataRequest()
-        .withNamespace("Application")
-        .withMetricData {
-        val metricDatum = new MetricDatum()
-          .withValue(dataPoint.value)
-          .withUnit(metric.metricUnit)
-          .withMetricName(metric.name)
-          .withDimensions(dimensions)
+    for (metric <- metrics) {
+      metric.getDataPointsAgent.alter { dataPoints =>
+        for {
+          dataPointsGrouped <- dataPoints.grouped(20)
+          dataPoint <- dataPointsGrouped
+        } {
+          val request = new PutMetricDataRequest()
+            .withNamespace("Application")
+            .withMetricData {
+            val metricDatum = new MetricDatum()
+              .withValue(dataPoint.value)
+              .withUnit(metric.metricUnit)
+              .withMetricName(metric.name)
+              .withDimensions(dimensions)
 
-        dataPoint.time.fold(metricDatum) { t => metricDatum.withTimestamp(t.toDate)}
+            dataPoint.time.fold(metricDatum) { t => metricDatum.withTimestamp(t.toDate)}
+          }
+
+          CloudWatch.cloudwatch.putMetricDataAsync(request, asyncHandler)
+        }
+        Nil
       }
-
-      CloudWatch.cloudwatch.putMetricDataAsync(request, asyncHandler)
     }
   }
 

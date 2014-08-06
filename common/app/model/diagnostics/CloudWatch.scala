@@ -60,24 +60,23 @@ trait CloudWatch extends Logging {
     for {
       metric <- metrics
       dataPoints <- metric.getDataPoints.grouped(20)
-      dataPoint <- dataPoints
     } {
-      val request = new PutMetricDataRequest()
-        .withNamespace("Application")
-        .withMetricData {
-        val metricDatum = new MetricDatum()
-          .withValue(dataPoint.value)
-          .withUnit(metric.metricUnit)
-          .withMetricName(metric.name)
-          .withDimensions(dimensions)
-
-        dataPoint.time.fold(metricDatum) { t => metricDatum.withTimestamp(t.toDate)}
+        val request = new PutMetricDataRequest()
+          .withNamespace("Application")
+          .withMetricData {
+            for (dataPoint <- dataPoints) yield {
+              val metricDatum = new MetricDatum()
+              .withValue(dataPoint.value)
+              .withUnit(metric.metricUnit)
+              .withMetricName(metric.name)
+              .withDimensions(dimensions)
+            dataPoint.time.fold(metricDatum) { t => metricDatum.withTimestamp(t.toDate)}
+          }
+        }
+        CloudWatch.cloudwatch.putMetricDataAsync(request, asyncHandler)
+        metric.dropDataPoints(dataPoints)
       }
-
-      CloudWatch.cloudwatch.putMetricDataAsync(request, asyncHandler)
     }
-  }
-
 }
 
 object CloudWatch extends CloudWatch

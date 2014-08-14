@@ -11,8 +11,6 @@
     .is-updating--dark { background-image: url(@Static("images/auto-update-activity-dark.gif")); }
     .tweet { background-image: url(@Static("images/twitter/bird.png")); }
     .svg .tweet { background-image: url(@Static("images/twitter/bird.svg")); }
-    .svg .stars, .svg .stars:after { background-image: url(@Static("images/star-sprite.svg")); }
-    .stars, .stars:after { background-image: url(@Static("images/star-sprite.png")); }
 </style>
 
 @*
@@ -22,7 +20,7 @@
 *@
 <!--[if (gt IE 9)|(IEMobile)]><!-->
 @if(play.Play.isDev()) {
-    <link rel="stylesheet" type="text/css" href="@Static("stylesheets/head" + projectName.map("." + _).getOrElse(".default") + ".css")" />
+    <link rel="stylesheet" data-reload="head@projectName.map("." + _).getOrElse(".default")" type="text/css" href="@Static("stylesheets/head" + projectName.map("." + _).getOrElse(".default") + ".css")" />
 } else {
     <style>
         @Html(Static.css.head(projectName))

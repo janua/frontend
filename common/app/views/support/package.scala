@@ -1,13 +1,13 @@
 package views.support
 
 import common._
-import conf.Switches.{ ShowAllArticleEmbedsSwitch, TagLinkingSwitch }
+import conf.Switches.ShowAllArticleEmbedsSwitch
 import model._
 
 import java.net.URLEncoder._
 import org.apache.commons.lang.StringEscapeUtils
 import org.jboss.dna.common.text.Inflector
-import org.joda.time.{DateMidnight, DateTime}
+import org.joda.time.{LocalDate, DateTime}
 import org.joda.time.format.DateTimeFormat
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{ Element, Document }
@@ -15,8 +15,8 @@ import org.jsoup.safety.{ Whitelist, Cleaner }
 import play.api.libs.json.Json._
 import play.api.libs.json.Writes
 import play.api.mvc.RequestHeader
-import play.api.mvc.SimpleResult
-import play.api.templates.Html
+import play.api.mvc.Result
+import play.twirl.api.Html
 import scala.collection.JavaConversions._
 import java.text.DecimalFormat
 import java.util.regex.Pattern
@@ -76,6 +76,10 @@ case class FeaturesContainer(showMore: Boolean = true) extends Container {
   val containerType = "features"
   val tone = "feature"
 }
+case class FeaturesVolumesContainer(showMore: Boolean = true) extends Container {
+  val containerType = "featuresvolumes"
+  val tone = "feature"
+}
 case class FeaturesAutoContainer(showMore: Boolean = true) extends Container {
   val containerType = "featuresauto"
   val tone = "feature"
@@ -103,6 +107,26 @@ case class SeriesContainer(showMore: Boolean = true) extends Container {
 case class MostReferredContainer(showMore: Boolean = true) extends Container {
   val containerType = "most-referred"
   val tone = "news"
+}
+case class HeadlineContainer(showMore: Boolean = true) extends Container {
+  val containerType = "headline"
+  val tone = "news"
+}
+case class PicksContainer(showMore: Boolean = true) extends Container {
+  val containerType = "picks"
+  val tone = "news"
+}
+case class CassouletContainer(showMore: Boolean = true) extends Container {
+  val containerType = "cassoulet"
+  val tone = "feature"
+}
+case class QuicheLorraineContainer(showMore: Boolean = true) extends Container {
+  val containerType = "quichelorraine"
+  val tone = "feature"
+}
+case class RacletteContainer(showMore: Boolean = true) extends Container {
+  val containerType = "raclette"
+  val tone = "feature"
 }
 
 
@@ -153,7 +177,7 @@ object RemoveOuterParaHtml {
 object JavaScriptValue {
   def apply(value: Any) = value match {
     case b: Boolean => b
-    case s => s""""${s.toString.replace(""""""", """\"""")}""""
+    case s => s""""${s.toString.trim.replace(""""""", """\"""")}""""
   }
 }
 
@@ -217,6 +241,12 @@ case class VideoEmbedCleaner(contentVideos: Seq[VideoElement]) extends HtmlClean
     }
 
     document.getElementsByClass("gu-video").foreach { element: Element =>
+
+      element
+        .removeClass("gu-video")
+        .addClass("js-gu-media gu-media gu-media--video gu-media--show-controls-at-start")
+        .wrap("<div class=\"gu-media-wrapper gu-media-wrapper--video u-responsive-ratio u-responsive-ratio--hd\"></div>")
+
       val flashMediaElement = conf.Static.apply("flash/flashmediaelement.swf").path
 
       val mediaId = element.attr("data-media-id")
@@ -247,7 +277,6 @@ case class VideoEmbedCleaner(contentVideos: Seq[VideoElement]) extends HtmlClean
                 Sorry, your browser is unable to play this video.
               </object>""")
 
-        element.wrap("<div class=\"gu-video-wrapper u-responsive-ratio u-responsive-ratio--hd\"></div>")
       })
     }
     document
@@ -357,7 +386,7 @@ object BulletCleaner {
   def apply(body: String): String = body.replace("•", """<span class="bullet">•</span>""")
 }
 
-case class InBodyLinkCleaner(dataLinkName: String)(implicit val edition: Edition) extends HtmlCleaner {
+case class InBodyLinkCleaner(dataLinkName: String)(implicit val edition: Edition, implicit val request: RequestHeader) extends HtmlCleaner {
   def clean(body: Document): Document = {
     val links = body.getElementsByAttribute("href")
 
@@ -450,7 +479,7 @@ object TweetCleaner extends HtmlCleaner {
   }
 }
 
-class TagLinker(article: Article)(implicit val edition: Edition) extends HtmlCleaner{
+class TagLinker(article: Article)(implicit val edition: Edition, implicit val request: RequestHeader) extends HtmlCleaner{
 
   private val group1 = "$1"
   private val group2 = "$2"
@@ -467,7 +496,7 @@ class TagLinker(article: Article)(implicit val edition: Edition) extends HtmlCle
 
   def clean(doc: Document): Document = {
 
-    if (TagLinkingSwitch.isSwitchedOn && article.showInRelated) {
+    if (article.showInRelated) {
 
       val paragraphs = doc.getElementsByTag("p")
 
@@ -541,12 +570,12 @@ case class DropCaps(isFeature: Boolean) extends HtmlCleaner {
 
   private def setDropCap(p: Element): String = {
     val html = p.html
-    val len = html.length
-    val span = if (html.length > 325) "drop-cap drop-cap--wide" else "drop-cap"
-    if ( html.matches("^[\"a-hj-zA-HJ-Z].*") && html.split("\\s+").head.length >= 3 )
-      s"""<span class="${span}"><span class="drop-cap__inner">${html.head}</span></span>${html.tail}"""
-    else
+    if ( html.length > 200 && html.matches("^[\"a-hj-zA-HJ-Z].*") && html.split("\\s+").head.length >= 3 ) {
+      val classes = if (html.length > 325) "drop-cap drop-cap--wide" else "drop-cap"
+      s"""<span class="${classes}"><span class="drop-cap__inner">${html.head}</span></span>${html.tail}"""
+    } else {
       html
+    }
   }
 
   override def clean(document: Document): Document = {
@@ -568,14 +597,14 @@ case class DropCaps(isFeature: Boolean) extends HtmlCleaner {
 // (results in spaces after author names before commas)
 // so don't add any, fool.
 object ContributorLinks {
-  def apply(text: String, tags: Seq[Tag]): Html = Html {
+  def apply(text: String, tags: Seq[Tag])(implicit request: RequestHeader): Html = Html {
     tags.foldLeft(text) {
       case (t, tag) =>
         t.replaceFirst(tag.name,
-          <span itemscope=" " itemtype="http://schema.org/Person" itemprop="author"><a rel="author" class="tone-colour" itemprop="url name" data-link-name="auto tag link" href={s"/${tag.id}"}>{tag.name}</a></span>.toString())
+          <span itemscope=" " itemtype="http://schema.org/Person" itemprop="author"><a rel="author" class="tone-colour" itemprop="url name" data-link-name="auto tag link" href={s"${LinkTo("/"+tag.id)}"}>{tag.name}</a></span>.toString())
     }
   }
-  def apply(html: Html, tags: Seq[Tag]): Html = apply(html.body, tags)
+  def apply(html: Html, tags: Seq[Tag])(implicit request: RequestHeader): Html = apply(html.body, tags)
 }
 
 object OmnitureAnalyticsData {
@@ -664,13 +693,13 @@ object Format {
     date.toString(DateTimeFormat.forPattern(pattern).withZone(timezone))
   }
 
-  def apply(date: DateMidnight, pattern: String)(implicit request: RequestHeader): String = this(date.toDateTime, pattern)(request)
+  def apply(date: LocalDate, pattern: String)(implicit request: RequestHeader): String = this(date.toDateTimeAtStartOfDay, pattern)(request)
 
   def apply(a: Int): String = new DecimalFormat("#,###").format(a)
 }
 
 object cleanTrailText {
-  def apply(text: String)(implicit edition: Edition): Html = {
+  def apply(text: String)(implicit edition: Edition, request: RequestHeader): Html = {
     withJsoup(RemoveOuterParaHtml(BulletCleaner(text)))(InBodyLinkCleaner("in trail text link"))
   }
 }
@@ -709,7 +738,7 @@ object TableEmbedComplimentaryToP extends HtmlCleaner {
 
 object RenderOtherStatus {
   def gonePage(implicit request: RequestHeader) = model.Page(request.path, "news", "This page has been removed", "GFE:Gone")
-  def apply(result: SimpleResult)(implicit request: RequestHeader) = result.header.status match {
+  def apply(result: Result)(implicit request: RequestHeader) = result.header.status match {
     case 404 => NoCache(NotFound)
     case 410 if request.isJson => Cached(60)(JsonComponent(gonePage, "status" -> "GONE"))
     case 410 => Cached(60)(Gone(views.html.expired(gonePage)))
@@ -740,6 +769,7 @@ object GetClasses {
       additionalClasses,
       "l-row__item",
       "facia-slice__item",
+      "u-faux-block-link",
       s"facia-slice__item--volume-${trail.group.getOrElse("0")}"
     )
     val classes = f.foldLeft(baseClasses){case (cl, fun) => cl :+ fun(trail)} ++ makeSnapClasses(trail)
@@ -782,6 +812,7 @@ object GetClasses {
     val baseClasses: Seq[String] = Seq(
       "fromage",
       s"tone-${trail.visualTone}",
+      "u-faux-block-link",
       "tone-accent-border"
     )
     val f: Seq[(Trail, String) => String] = Seq(
@@ -806,6 +837,7 @@ object GetClasses {
     val baseClasses: Seq[String] = Seq(
       "saucisson",
       s"tone-${trail.visualTone}",
+      "u-faux-block-link",
       "tone-accent-border"
     )
     val f: Seq[(Trail) => String] = Seq(

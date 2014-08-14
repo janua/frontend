@@ -49,7 +49,8 @@ $c-commercial-books-dark: #630d4c;
         color: $c-commercial-books-dark;
         bottom: 0;
     }
-    .commercial__home-link__cta {
+    .commercial__home-link__cta,
+    .commercial__home-link__pill {
         background-color: $c-commercial-books-dark;
     }
     .commercial__body {
@@ -75,7 +76,7 @@ $c-commercial-books-dark: #630d4c;
     }
     .lineitem__meta {
         color: $c-neutral1;
-        @include fs-textsans(1);
+        @include fs-textSans(1);
     }
     .highitem .commercial--books__buy-now-button {
         @include rem((
@@ -130,7 +131,7 @@ $c-commercial-books-dark: #630d4c;
         }        
         .lineitem {
             position: relative;
-            width: 33%;
+            width: percentage(1/3);
             @include rem((
                 padding: 0 $gs-gutter/2
             ));
@@ -248,7 +249,7 @@ $c-commercial-books-dark: #630d4c;
             ));
         }
     }
-    @include mq($from: faciaLeftCol, $to: wide) {
+    @include mq(faciaLeftCol, wide) {
         .commercial__title {
             line-height: 1;
             @include rem((
@@ -271,11 +272,29 @@ $c-commercial-books-dark: #630d4c;
             ));
             margin-right: 0;
         }
+        &.commercial--high {
+            .has-page-skin & {
+                .container__title {
+                    @include rem((
+                        margin-bottom: $gs-baseline
+                    ));
+                }
+                .commercial__home-link {
+                    width: auto;
+                    right: 0;
+                    left: auto;
+                    bottom: auto;
+                    @include rem((
+                        top: $gs-baseline
+                    ));
+                }
+            }
+        }
     }
 }
 
 /* article */
-.facia-container--layout-article .commercial--books {
+.facia-container--layout-content .commercial--books {
     @include mq(rightCol) {
         .commercial__head {
             float: left;
@@ -288,7 +307,7 @@ $c-commercial-books-dark: #630d4c;
             padding-left: 0;
         }
     }
-    @include mq($from: rightCol, $to: leftCol) {
+    @include mq(rightCol, leftCol) {
         &.commercial--high .commercial__head {
             @include rem((
                 padding-right: 16px

@@ -1,9 +1,7 @@
 define([
-    'common/common',
     'bean',
     'bonzo'
 ], function (
-    common,
     bean,
     bonzo
 ) {
@@ -22,7 +20,7 @@ define([
                     if (target) {
                         control.toggleTarget = target;
                         bonzo(control).addClass(readyClass);
-                        bean.add(control, 'click touchstart', function (e) {
+                        bean.add(control, 'click', function (e) {
                             e.preventDefault();
                             self.toggle(control, controls);
                         });

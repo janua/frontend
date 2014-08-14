@@ -12,43 +12,29 @@ trait OnwardJourneyLifecycle extends GlobalSettings {
 
       // fire every min
       Jobs.schedule("OnwardJourneyAgentsRefreshJob", "0 * * * * ?") {
-        LatestContentAgent.update()
         MostPopularAgent.refresh()
         MostPopularExpandableAgent.refresh()
         GeoMostPopularAgent.refresh()
+        MostViewedVideoAgent.refresh()
       }
 
       // fire every hour
       Jobs.schedule("OnwardJourneyAgentsRefreshHourlyJob", "0 0 * * * ?") {
         DayMostPopularAgent.refresh()
-        SociallyReferredContentAgent.update()
       }
 
       AkkaAsync {
-        LatestContentAgent.update()
         MostPopularAgent.refresh()
         MostPopularExpandableAgent.refresh()
         GeoMostPopularAgent.refresh()
-      }
-
-      AkkaAsync{
-        // kick off refresh now, as this happens hourly
+        MostViewedVideoAgent.refresh()
         DayMostPopularAgent.refresh()
-        SociallyReferredContentAgent.update()
       }
   }
 
   override def onStop(app: PlayApp) {
     Jobs.deschedule("OnwardJourneyAgentsRefreshJob")
     Jobs.deschedule("OnwardJourneyAgentsRefreshHourlyJob")
-
-    LatestContentAgent.stop()
-    MostPopularAgent.stop()
-    MostPopularExpandableAgent.stop()
-    GeoMostPopularAgent.stop()
-    DayMostPopularAgent.stop()
-    SociallyReferredContentAgent.stop()
-
     super.onStop(app)
   }
 }

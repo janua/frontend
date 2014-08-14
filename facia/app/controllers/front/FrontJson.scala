@@ -3,8 +3,8 @@ package controllers.front
 import model._
 import scala.concurrent.Future
 import play.api.libs.ws.{Response, WS}
-import play.api.libs.json.{JsObject, JsNull, JsValue, Json}
-import common.ExecutionContexts
+import play.api.libs.json.{JsObject, JsNull, JsValue, JsString, Json}
+import common.{Logging, S3Metrics, ExecutionContexts}
 import model.FaciaPage
 import services.SecureS3Request
 import conf.Configuration
@@ -37,12 +37,13 @@ trait FrontJsonLite extends ExecutionContexts{
 
     (curated ++ editorsPicks ++ results)
     .filterNot{ j =>
-      (j \ "id").asOpt[String].exists(_.startsWith("snap/"))
+      (j \ "id").asOpt[String].exists(Snap.isSnap)
      }
-    .take(3).map{ j =>
+    .map{ j =>
       Json.obj(
-        "headline" -> (j \ "safeFields" \ "headline"),
+        "headline" -> ((j \ "meta" \ "headline").asOpt[JsString].getOrElse(j \ "safeFields" \ "headline"): JsValue),
         "thumbnail" -> (j \ "safeFields" \ "thumbnail"),
+        "shortUrl" -> (j \ "safeFields" \ "shortUrl"),
         "id" -> (j \ "id")
       )
     }
@@ -52,16 +53,30 @@ trait FrontJsonLite extends ExecutionContexts{
 object FrontJsonLite extends FrontJsonLite
 
 
-trait FrontJson extends ExecutionContexts {
+trait FrontJson extends ExecutionContexts with Logging {
 
   val stage: String = Configuration.facia.stage.toUpperCase
-  val bucketLocation: String = s"$stage/frontsapi/pressed"
+  val bucketLocation: String
 
   private def getAddressForPath(path: String): String = s"$bucketLocation/$path/pressed.json"
 
   def get(path: String): Future[Option[FaciaPage]] = {
     val response = SecureS3Request.urlGet(getAddressForPath(path)).get()
-    parseResponse(response)
+    response.map { r =>
+      r.status match {
+        case 200 => parsePressedJson(r.body)
+        case 403 =>
+          S3Metrics.S3AuthorizationError.increment()
+          log.warn(s"Got 403 trying to load path: $path")
+          None
+        case 404 =>
+          log.warn(s"Got 404 trying to load path: $path")
+          None
+        case responseCode =>
+          log.warn(s"Got $responseCode trying to load path: $path")
+          None
+      }
+    }
   }
 
   def getAsJsValue(path: String): Future[JsValue] = {
@@ -137,15 +152,6 @@ trait FrontJson extends ExecutionContexts {
     )
   }
 
-  private def parseResponse(response: Future[Response]): Future[Option[FaciaPage]] = {
-    response.map { r =>
-      r.status match {
-        case 200 => parsePressedJson(r.body)
-        case _   => None
-      }
-    }
-  }
-
   private def parseSeoData(id: String, seoJson: JsValue): SeoData = {
     val seoDataJson = SeoDataJson(
       id,
@@ -168,4 +174,6 @@ trait FrontJson extends ExecutionContexts {
 
 }
 
-object FrontJson extends FrontJson
+object FrontJsonLive extends FrontJson {
+  val bucketLocation: String = s"$stage/frontsapi/pressed/live"
+}

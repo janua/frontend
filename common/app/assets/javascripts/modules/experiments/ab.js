@@ -1,31 +1,21 @@
 define([
-    'common/common',
+    'lodash/objects/assign',
     'common/utils/storage',
     'common/utils/mediator',
+    'common/utils/config',
     'common/modules/analytics/mvt-cookie',
-    'common/modules/experiments/tests/hide-supporting-links',
-    'common/modules/experiments/tests/across-the-guardian',
-    'common/modules/experiments/tests/display-socially-referred-burners',
-    'common/modules/experiments/tests/sentry',
-    'common/modules/experiments/tests/larger-mobile-mpu'
+    'common/modules/experiments/tests/high-commercial-component'
 ], function (
-    common,
+    assign,
     store,
     mediator,
+    globalConfig,
     mvtCookie,
-    ABHideSupportingLinks,
-    ABAcrossTheGuardian,
-    ABSociallyReferredContent,
-    ABSentry,
-    ABLargerMobileMpu
+    HighCommercialComponent
     ) {
 
     var TESTS = [
-            new ABHideSupportingLinks(),
-            new ABAcrossTheGuardian(),
-            new ABSociallyReferredContent(),
-            new ABSentry(),
-            new ABLargerMobileMpu()
+            new HighCommercialComponent()
         ],
         participationsKey = 'gu.ab.participations';
 
@@ -57,7 +47,7 @@ define([
         // renamed/deleted from the backend
         var participations = getParticipations();
         Object.keys(participations).forEach(function (k) {
-            if (typeof(config.switches['ab' + k]) === 'undefined') {
+            if (typeof(assign({}, globalConfig, config).switches['ab' + k]) === 'undefined') {
                 removeParticipation({ id: k });
             } else {
                 var testExists = TESTS.some(function (element) {
@@ -160,7 +150,7 @@ define([
     }
 
     function isTestSwitchedOn(test, config) {
-        return config.switches['ab' + test.id];
+        return assign({}, globalConfig, config).switches['ab' + test.id];
     }
 
     function getTestVariant(testId) {

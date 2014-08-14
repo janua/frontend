@@ -7,21 +7,9 @@
 
 <script>
 
-    var modules = [],
-        redefine = function(modules) {
-            modules.forEach(function(module) {
-                define.apply(null, module);
-            });
-        },
-        define = function() {
-            modules.push(arguments);
-        };
-    define.amd = true;
-
     var curl = {
         baseUrl: '@{Configuration.assets.path}javascripts',
         apiName: 'require',
-        overwriteApi: true,
         paths: {
             @curlPaths.map { case (module, path) =>
                 '@module': '@Static(path)',
@@ -29,13 +17,14 @@
             facebook: '//connect.facebook.net/en_US/all.js',
             swipe: '@Static("javascripts/components/swipe/swipe.js")',
             zxcvbn: '@Static("javascripts/components/zxcvbn/index.js")',
-            gravity: '@Static("javascripts/vendor/gravity.js")',
             'ophan/ng': '@{Configuration.javascript.config("ophanJsUrl")}',
-            outbrain: '@Static("javascripts/vendor/outbrain.js")',
-            foresee: '@Static("javascripts/vendor/foresee/foresee-trigger.js")',
+            foresee: 'http://assets.guim.co.uk/javascripts/vendor/foresee4/foresee-trigger.js',
             googletag: '@{Configuration.javascript.config("googletagJsUrl")}',
-            raven: '@Static("javascripts/components/raven-js/dist/raven.js")',
-            'bootstraps/video-player': '@Static("javascripts/bootstraps/video-player.js")'
+            core: '@Static("javascripts/core.js")',
+            'bootstraps/app' : '@Static("javascripts/bootstraps/app.js")',
+            'bootstraps/commercial' : '@Static("javascripts/bootstraps/commercial.js")',
+            'bootstraps/video-player': '@Static("javascripts/bootstraps/video-player.js")',
+            'bootstraps/dev' : '@Static("javascripts/bootstraps/dev.js")'
         }
     };
 
@@ -78,8 +67,8 @@
                 var styleNodes = document.querySelectorAll('[data-cache-name]');
                 for (var i = 0, j = styleNodes.length; i<j; ++i) {
                     var style = styleNodes[i],
-                        nameAndCacheKey = style.getAttribute('data-cache-file-woff').match(/fonts\/(.*)\.woff(?:\.(.*))?\.json$/),
-                        cachedCss = localStorage.getItem('gu.fonts.' + nameAndCacheKey[1] + '.' + nameAndCacheKey[2]);
+                        nameAndCacheKey = style.getAttribute('data-cache-file-woff').match(/fonts\/([^/]*?)\/?([^/]*)\.woff.json$/),
+                        cachedCss = localStorage.getItem('gu.fonts.' + nameAndCacheKey[2] + '.' + nameAndCacheKey[1]);
                         @* try to parse it (should really use the storage module) *@
                         try {
                             cachedCss = JSON.parse(cachedCss).value;
@@ -124,6 +113,63 @@
 
     })(guardian.isModernBrowser);
 
-</script>
+    @* inline curl *@
+    @Html(Static.js.curl)
 
-<script async="async" src="@Static("javascripts/bootstraps/app.js")"></script>
+    require([
+        'core',
+        'domReady!'
+    ], function (core) {
+
+        require(['raven', 'common/utils/config'], function(raven, config) {
+
+            raven.config(
+                'http://' + config.page.sentryPublicApiKey + '@@' + config.page.sentryHost,
+                {
+                    whitelistUrls: [
+                        /assets\.guim\.co\.uk/,
+                        /ophan\.co\.uk/,
+                    ],
+                    tags: {
+                        edition: config.page.edition,
+                        contentType: config.page.contentType,
+                        buildNumber: config.page.buildNumber
+                    },
+                    dataCallback: function(data) {
+                        data.tags.origin = (/j.ophan.co.uk/.test(data.culprit)) ? 'ophan' : 'app';
+                        return data;
+                    },
+                    shouldSendCallback: function(data) {
+                        return Math.random() < 0.4 && guardian.config.switches.enableDiagnosticsLogging;
+                    }
+                }
+            ).install();
+
+            require(['common/utils/ajax', 'common/modules/experiments/ab'], function(ajax, ab) {
+
+                ajax.init();
+                ab.segmentUser();
+                ab.run();
+
+                if (config.switches.commercial) {
+                    require(['bootstraps/commercial', 'js!googletag'], function(commercial) {
+                        commercial.init();
+                    });
+                }
+
+                if (guardian.isModernBrowser) {
+                    @if(play.Play.isDev()) {
+                        require(['bootstraps/dev'], function (devmode) { devmode.init(); });
+                    }
+
+                    require(['bootstraps/app'], function(bootstrap) {
+                        bootstrap.go();
+                    });
+                }
+
+            });
+
+        });
+
+    });
+</script>

@@ -1,6 +1,5 @@
 /*global s_i_guardian:true */
 define([
-    'common/common',
     'common/utils/detect',
     'common/modules/experiments/ab',
     'common/utils/storage',
@@ -8,9 +7,11 @@ define([
     'common/utils/cookies',
     'omniture',
     'common/modules/analytics/mvt-cookie',
-    'common/modules/analytics/beacon'
+    'common/modules/analytics/beacon',
+    'common/utils/pad',
+    'common/utils/mediator',
+    'common/utils/deferToAnalytics' // Ensure that 'analytics:ready' is handled.
 ], function(
-    common,
     detect,
     ab,
     storage,
@@ -18,7 +19,9 @@ define([
     Cookies,
     s,
     mvtCookie,
-    beacon
+    beacon,
+    pad,
+    mediator
     ) {
 
     // https://developer.omniture.com/en_US/content_page/sitecatalyst-tagging/c-tagging-overview
@@ -85,9 +88,12 @@ define([
             s.prop37 = 'D=v37';
 
             if(/social/.test(tag)) {
-                s.linkTrackVars += ',eVar12';
+                s.linkTrackVars += ',eVar12,prop4,prop9,prop10';
                 s.linkTrackEvents += ',event16';
                 s.eVar12 = tag;
+                s.prop4     = config.page.keywords || '';
+                s.prop9     = config.page.contentType || '';
+                s.prop10    = config.page.tones || '';
                 s.events = s.apl(s.events, 'event16', ',');
             }
         };
@@ -117,6 +123,15 @@ define([
 
             s.prop1     = config.page.headline || '';
 
+            // eVar1 contains today's date
+            // in the Omniture backend it only ever holds the first
+            // value a user gets, so in effect it is the first time
+            // we saw this user
+            var now = new Date();
+            s.eVar1 = now.getFullYear() + '/' +
+                pad(now.getMonth() + 1, 2) + '/' +
+                pad(now.getDate(), 2);
+
             if(id.getUserFromCookie()) {
                 s.prop2 = 'GUID:' + id.getUserFromCookie().id;
                 s.eVar2 = 'GUID:' + id.getUserFromCookie().id;
@@ -136,12 +151,17 @@ define([
 
             s.prop13    = config.page.series || '';
 
+            // see http://blogs.adobe.com/digitalmarketing/mobile/responsive-web-design-and-web-analytics/
+            s.eVar18    = detect.getBreakpoint();
+            s.eVar21    = document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight;
+            s.eVar32    = detect.getOrientation();
+
             /* Set Time Parting Day and Hour Combination - 0 = GMT */
             var tpA = s.getTimeParting('n','+0');
             s.prop20 = tpA[2] + ':' + tpA[1];
             s.eVar20 = 'D=c20';
 
-            
+
             s.prop25    = config.page.blogs || '';
 
             s.prop14    = config.page.buildNumber || '';
@@ -160,22 +180,18 @@ define([
             s.prop51  = mvt;
             s.eVar51  = mvt;
 
-            var alphaTag = 'notAlpha,';
+            // cookie used for user migration
+            var gu_shift = Cookies.get('GU_SHIFT');
+            if (gu_shift) {
+                var shiftValue = 'gu_shift,' + gu_shift + ',';
+                var gu_view = Cookies.get('GU_VIEW');
 
-            // prefix all the MVT tests with the alpha user tag if present
-            if (Cookies.get('GU_ALPHA') === '2') {
-                // This tag allows us to easily segment phase one, phase two, or phase one and two.
-                alphaTag = 'r2alph2,';
+                if (gu_view) {
+                    shiftValue += ',' + gu_view;
+                }
 
-                s.prop51  = alphaTag + s.prop51;
-                s.eVar51  = alphaTag + s.eVar51;
-
-            } else if (Cookies.get('GU_ALPHA') === 'true') {
-                // A value of true means phase one.
-                alphaTag = 'r2alpha,';
-
-                s.prop51  = alphaTag + s.prop51;
-                s.eVar51  = alphaTag + s.eVar51;
+                s.prop51  = shiftValue + s.prop51;
+                s.eVar51  = shiftValue + s.eVar51;
             }
 
             if (s.prop51) {
@@ -205,6 +221,13 @@ define([
 
             s.prop56    = 'Javascript';
 
+            // not all pages have a production office
+            if (config.page.productionOffice) {
+                s.prop64 = config.page.productionOffice;
+            }
+
+            s.prop63    = detect.getPageSpeed();
+
             s.prop65    = config.page.headline || '';
 
             s.prop67    = 'nextgen-served';
@@ -221,6 +244,9 @@ define([
                 s.eVar50 = s.getQueryParam('INTCMP');
             }
             s.eVar50 = s.getValOnce(s.eVar50,'s_intcampaign', 0);
+
+            // the operating system
+            s.eVar58 = navigator.platform || 'unknown';
 
             // the number of Guardian links inside the body
             if (config.page.inBodyInternalLinkCount) {
@@ -253,16 +279,7 @@ define([
             s.eVar75 = config.page.wordCount || 0;
         };
 
-        this.loaded = function(callback) {
-            this.populatePageProperties();
-            this.logView();
-            if (typeof callback === 'function') {
-                callback();
-            }
-        };
-
-        this.go = function(c, callback) {
-            var that = this;
+        this.go = function(c) {
 
             config = c; // update the module-wide config
 
@@ -270,7 +287,9 @@ define([
             window.s_account = config.page.omnitureAccount;
 
             s = window.s;
-            that.loaded(callback);
+            this.populatePageProperties();
+            this.logView();
+            mediator.emit('analytics:ready');
         };
 
         this.confirmPageView = function() {
@@ -286,7 +305,7 @@ define([
                     clearInterval(checkForPageViewInterval);
 
                     self.pageviewSent = true;
-                    common.mediator.emit('module:analytics:omniture:pageview:sent');
+                    mediator.emit('module:analytics:omniture:pageview:sent');
                 }
             }, 250);
 
@@ -296,16 +315,16 @@ define([
             }, 10000);
         };
 
-        common.mediator.on('module:clickstream:interaction', that.trackNonLinkEvent );
+        mediator.on('module:clickstream:interaction', that.trackNonLinkEvent );
 
-        common.mediator.on('module:clickstream:click', that.logTag );
+        mediator.on('module:clickstream:click', that.logTag );
 
-        common.mediator.on('module:autoupdate:loaded', function() {
+        mediator.on('module:autoupdate:loaded', function() {
             that.populatePageProperties();
             that.logUpdate();
         });
 
-        common.mediator.on('module:analytics:omniture:pageview:sent', function(){
+        mediator.on('module:analytics:omniture:pageview:sent', function(){
             // independently log this page view
             // used for checking we have not broken analytics
             beacon.fire('/count/pva.gif');

@@ -1,24 +1,37 @@
 package common
 
+import java.io.{File, FileInputStream}
+
+import com.amazonaws.AmazonClientException
 import com.amazonaws.auth._
-import com.amazonaws.internal.StaticCredentialsProvider
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.gu.conf.ConfigurationFactory
-import com.gu.management.{ Manifest => ManifestFile }
-import conf.Configuration
-import java.io.{FileInputStream, File}
+import conf.{Configuration, Switches}
 import org.apache.commons.io.IOUtils
 import play.api.Play
 import play.api.Play.current
 
-class BadConfigurationException(property: String) extends RuntimeException(s"Property $property not configured")
+import scala.util.Try
+
+class BadConfigurationException(msg: String) extends RuntimeException(msg)
 
 class GuardianConfiguration(val application: String, val webappConfDirectory: String = "env") extends Logging {
+
+  case class OAuthCredentials(oauthClientId: String, oauthSecret: String, oauthCallback: String)
 
   protected val configuration = ConfigurationFactory.getConfiguration(application, webappConfDirectory)
 
   private implicit class OptionalString2MandatoryString(conf: com.gu.conf.Configuration) {
     def getMandatoryStringProperty(property: String) = configuration.getStringProperty(property)
-      .getOrElse(throw new BadConfigurationException(property))
+      .getOrElse(throw new BadConfigurationException(s"$property not configured"))
+  }
+
+  object indexes {
+    lazy val tagIndexesBucket =
+      configuration.getMandatoryStringProperty("tag_indexes.bucket")
+
+    lazy val adminRebuildIndexRateInMinutes =
+      configuration.getIntegerProperty("tag_indexes.rebuild_rate_in_minutes").getOrElse(60)
   }
 
   object environment {
@@ -33,8 +46,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
     val stage = apply("STAGE", "unknown")
 
-    val projectName = Play.application.configuration.getString("guardian.projectName").getOrElse("frontend")
-    val secure = Play.application.configuration.getBoolean("guardian.secure").getOrElse(false)
+    lazy val projectName = Play.application.configuration.getString("guardian.projectName").getOrElse("frontend")
+    lazy val secure = Play.application.configuration.getBoolean("guardian.secure").getOrElse(false)
 
     lazy val isNonProd = List("dev", "code", "gudev").contains(stage)
   }
@@ -65,7 +78,10 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   object contentApi {
     val defaultContentApi: String = "http://content.guardianapis.com"
     lazy val contentApiLiveHost: String = configuration.getStringProperty("content.api.elastic.host").getOrElse(defaultContentApi)
-    lazy val contentApiDraftHost: String = configuration.getStringProperty("content.api.draft.host").getOrElse(contentApiLiveHost)
+    def contentApiDraftHost: String =
+        configuration.getStringProperty("content.api.draft.host")
+          .filter(_ => Switches.FaciaToolDraftContent.isSwitchedOn)
+          .getOrElse(contentApiLiveHost)
 
     lazy val key: Option[String] = configuration.getStringProperty("content.api.key")
     lazy val timeout: Int = configuration.getIntegerProperty("content.api.timeout.millis").getOrElse(2000)
@@ -142,6 +158,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val domain = """^https?://(?:profile\.)?([^/:]+)""".r.unapplySeq(url).flatMap(_.headOption).getOrElse("theguardian.com")
     lazy val apiClientToken = configuration.getStringProperty("id.apiClientToken").getOrElse("")
     lazy val webappUrl = configuration.getStringProperty("id.webapp.url").getOrElse("")
+    lazy val membershipUrl = configuration.getStringProperty("id.membership.url").getOrElse("membership.theguardian.com")
+    lazy val stripePublicToken =  configuration.getStringProperty("id.membership.stripePublicToken").getOrElse("")
   }
 
   object static {
@@ -190,22 +208,28 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val apiClientHeader = configuration.getMandatoryStringProperty("discussion.apiClientHeader")
     lazy val url = configuration.getMandatoryStringProperty("discussion.url")
   }
+
+  object witness {
+    lazy val witnessApiRoot = configuration.getMandatoryStringProperty("witness.apiRoot")
+  }
   
   object commercial {
     lazy val dfpAdUnitRoot = configuration.getMandatoryStringProperty("guardian.page.dfpAdUnitRoot")
+    lazy val dfpAccountId = configuration.getMandatoryStringProperty("guardian.page.dfpAccountId")
     lazy val books_url = configuration.getMandatoryStringProperty("commercial.books_url")
     lazy val masterclasses_url = configuration.getMandatoryStringProperty("commercial.masterclasses_url")
     lazy val soulmates_url = configuration.getMandatoryStringProperty("commercial.soulmates_url")
     lazy val travel_url = configuration.getMandatoryStringProperty("commercial.travel_url")
+    lazy val traveloffers_url = configuration.getStringProperty("traveloffers.api.url") map (u => s"$u/consumerfeed")
 
-    lazy val dfpSponsoredTagsDataKey =
-      s"${environment.stage.toUpperCase}/commercial/dfp/sponsored-tags.json"
-    lazy val dfpAdvertisementFeatureTagsDataKey =
-      s"${environment.stage.toUpperCase}/commercial/dfp/advertisement-feature-tags.json"
-    lazy val dfpPageSkinnedAdUnitsKey =
-      s"${environment.stage.toUpperCase}/commercial/dfp/pageskinned-adunits.json"
-    lazy val dfpLineItemsKey =
-      s"${environment.stage.toUpperCase}/commercial/dfp/lineitems.json"
+    private lazy val dfpRoot = s"${environment.stage.toUpperCase}/commercial/dfp"
+    lazy val dfpSponsoredTagsDataKey = s"$dfpRoot/sponsored-tags-v2.json"
+    lazy val dfpAdvertisementFeatureTagsDataKey = s"$dfpRoot/advertisement-feature-tags-v2.json"
+    lazy val inlineMerchandisingSponsorshipsDataKey = s"$dfpRoot/inline-merchandising-tags-v2.json"
+    lazy val dfpPageSkinnedAdUnitsKey = s"$dfpRoot/pageskinned-adunits-v4.json"
+    lazy val dfpLineItemsKey = s"$dfpRoot/lineitems.json"
+
+    lazy val travelOffersS3Key = s"${environment.stage.toUpperCase}/commercial/cache/traveloffers.xml"
   }
 
   object open {
@@ -228,7 +252,9 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
       ("secureDiscussionApiRoot", discussion.secureApiRoot),
       "discussionApiClientHeader" -> discussion.apiClientHeader,
       ("ophanJsUrl", ophan.jsLocation),
-      ("googletagJsUrl", googletag.jsLocation)
+      ("googletagJsUrl", googletag.jsLocation),
+      ("membershipUrl", id.membershipUrl),
+      ("stripePublicToken", id.stripePublicToken)
     )
 
     lazy val pageData: Map[String, String] = {
@@ -245,13 +271,37 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
   object facia {
     lazy val stage = configuration.getStringProperty("facia.stage").getOrElse(Configuration.environment.stage)
-    lazy val collectionCap: Int = configuration.getIntegerProperty("facia.collection.cap").getOrElse(25)
+    lazy val collectionCap: Int = 35
   }
 
   object faciatool {
-    lazy val contentApiPostEndpoint: Option[String] = configuration.getStringProperty("contentapi.post.endpoint")
-    lazy val frontPressQueueUrl: Option[String] = configuration.getStringProperty("frontpress.sqs.queue")
+    lazy val contentApiPostEndpoint = configuration.getStringProperty("contentapi.post.endpoint")
+    lazy val frontPressCronQueue = configuration.getStringProperty("frontpress.sqs.cron_queue_url")
+    lazy val frontPressToolQueue = configuration.getStringProperty("frontpress.sqs.tool_queue_url")
     lazy val configBeforePressTimeout: Int = 1000
+
+
+    case class OAuthCredentials(oauthClientId: String, oauthSecret: String, oauthCallback: String)
+    val oauthCredentials: Option[OAuthCredentials] =
+      for {
+        oauthClientId <- configuration.getStringProperty("faciatool.oauth.clientid")
+        oauthSecret <- configuration.getStringProperty("faciatool.oauth.secret")
+        oauthCallback <- configuration.getStringProperty("faciatool.oauth.callback")
+      } yield OAuthCredentials(oauthClientId, oauthSecret, oauthCallback)
+
+    //It's not possible to take a batch size above 10
+    lazy val pressJobBatchSize: Int =
+      Try(configuration.getStringProperty("faciapress.batch.size").get.toInt)
+        .filter(_ <= 10).getOrElse(10)
+
+    //Above 59 would probably break the cron expression
+    lazy val pressJobConsumeRateInSeconds: Int =
+      Try(configuration.getStringProperty("faciapress.rate.inseconds").get.toInt)
+        .filter(_ <= 59).filter(_ > 0).getOrElse(10)
+
+    lazy val adminPressJobPushRateInMinutes: Int =
+      Try(configuration.getStringProperty("admin.pressjob.push.rate.inminutes").get.toInt)
+        .getOrElse(3)
   }
 
   object pa {
@@ -265,22 +315,36 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   }
 
   object aws {
-    private lazy val accessKey = configuration.getStringProperty("aws.access.key")
-    private lazy val secretKey = configuration.getStringProperty("aws.access.secret.key")
 
     lazy val region = configuration.getMandatoryStringProperty("aws.region")
     lazy val bucket = configuration.getMandatoryStringProperty("aws.bucket")
     lazy val notificationSns: String = configuration.getMandatoryStringProperty("sns.notification.topic.arn")
     lazy val frontPressSns: Option[String] = configuration.getStringProperty("frontpress.sns.topic")
 
-    lazy val credentials: AWSCredentialsProvider = new AWSCredentialsProviderChain(
-      // the first 3 are a copy n paste job from the constructor of DefaultAWSCredentialsProviderChain
-      new EnvironmentVariableCredentialsProvider(),
-      new SystemPropertiesCredentialsProvider(),
-      new InstanceProfileCredentialsProvider(),
+    def mandatoryCredentials: AWSCredentialsProvider = credentials.getOrElse(throw new BadConfigurationException("AWS credentials are not configured"))
+    val credentials: Option[AWSCredentialsProvider] = {
+      val provider = new AWSCredentialsProviderChain(
+        new EnvironmentVariableCredentialsProvider(),
+        new SystemPropertiesCredentialsProvider(),
+        new ProfileCredentialsProvider("nextgen"),
+        new InstanceProfileCredentialsProvider
+      )
 
-      new StaticCredentialsProvider(new NullableAWSCredentials(accessKey, secretKey))
-    )
+      // this is a bit of a convoluted way to check whether we actually have credentials.
+      // I guess in an ideal world there would be some sort of isConfigued() method...
+      try {
+        provider.getCredentials
+        Some(provider)
+      } catch {
+        case ex: AmazonClientException =>
+          log.error(ex.getMessage, ex)
+
+          // We really, really want to ensure that PROD is configured before saying a box is OK
+          if (Play.isProd) throw ex
+          // this means that on dev machines you only need to configure keys if you are actually going to use them
+          None
+      }
+    }
   }
 
   object pingdom {
@@ -304,15 +368,27 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val imageHost = configuration.getMandatoryStringProperty("avatars.image.host")
     lazy val signingKey = configuration.getMandatoryStringProperty("avatars.signing.key")
   }
+
+  object admin {
+    lazy val oauthCredentials: Option[OAuthCredentials] =
+      for {
+        oauthClientId <- configuration.getStringProperty("admin.oauth.clientid")
+        oauthSecret <- configuration.getStringProperty("admin.oauth.secret")
+        oauthCallback <- configuration.getStringProperty("admin.oauth.callback")
+      } yield OAuthCredentials(oauthClientId, oauthSecret, oauthCallback)
+  }
+
+  object preview {
+    lazy val oauthCredentials: Option[OAuthCredentials] =
+      for {
+        oauthClientId <- configuration.getStringProperty("preview.oauth.clientid")
+        oauthSecret <- configuration.getStringProperty("preview.oauth.secret")
+        oauthCallback <- configuration.getStringProperty("preview.oauth.callback")
+      } yield OAuthCredentials(oauthClientId, oauthSecret, oauthCallback)
+  }
 }
 
 object ManifestData {
   lazy val build = ManifestFile.asKeyValuePairs.getOrElse("Build", "DEV").dequote.trim
-}
-
-// AWSCredentialsProviderChain relies on these being null if not configured.
-private class NullableAWSCredentials(accessKeyId: Option[String], secretKey: Option[String]) extends AWSCredentials{
-  def getAWSAccessKeyId: String = accessKeyId.getOrElse(null)
-  def getAWSSecretKey: String = secretKey.getOrElse(null)
 }
 

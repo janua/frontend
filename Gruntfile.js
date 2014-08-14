@@ -1,13 +1,29 @@
 /* global module: false, process: false */
+var pngquant = require('imagemin-pngquant');
+
 module.exports = function (grunt) {
+
+    require('time-grunt')(grunt);
+
+    // Load the plugins
+    require('jit-grunt')(grunt, {
+        replace: 'grunt-text-replace',
+        scsslint: 'grunt-scss-lint',
+        cssmetrics: 'grunt-css-metrics'
+    });
 
     var isDev = (grunt.option('dev') !== undefined) ? Boolean(grunt.option('dev')) : process.env.GRUNT_ISDEV === '1',
         singleRun = grunt.option('single-run') !== false,
-        screenshotsDir = './screenshots',
         staticTargetDir = './static/target/',
         staticHashDir = './static/hash/',
         testConfDir = './common/test/assets/javascripts/conf/',
-        propertiesFile = (isDev) ? process.env.HOME + '/.gu/frontend.properties' : '/etc/gu/frontend.properties';
+        requirejsDir = './static/requirejs',
+        propertiesFile = (isDev) ? process.env.HOME + '/.gu/frontend.properties' : '/etc/gu/frontend.properties',
+        webfontsDir = './resources/fonts/';
+
+    function isOnlyTask(task) {
+        return grunt.cli.tasks.length === 1 && grunt.cli.tasks[0] === task.name;
+    }
 
     if (isDev) {
         grunt.log.subhead('Running Grunt in DEV mode');
@@ -36,6 +52,23 @@ module.exports = function (grunt) {
                     noCache: true,
                     quiet: (isDev) ? false : true
                 }
+            },
+            compileStyleguide: {
+                files: [{
+                    expand: true,
+                    cwd: 'docs/styleguide/assets/scss/',
+                    src: ['*.scss', '!_*'],
+                    dest: 'docs/styleguide/assets/css/',
+                    rename: function(dest, src) {
+                        return dest + src.replace('scss', 'css');
+                    }
+                }],
+                options: {
+                    style: 'compressed',
+                    sourcemap: true,
+                    noCache: true,
+                    quiet: (isDev) ? false : true
+                }
             }
         },
 
@@ -44,42 +77,52 @@ module.exports = function (grunt) {
                 paths: {
                     common:       '../../../../common/app/assets/javascripts',
                     bean:         '../../../../common/app/assets/javascripts/components/bean/bean',
-                    bonzo:        '../../../../common/app/assets/javascripts/components/bonzo/src/bonzo',
+                    bonzo:        '../../../../common/app/assets/javascripts/components/bonzo/bonzo',
                     domReady:     '../../../../common/app/assets/javascripts/components/domready/ready',
                     EventEmitter: '../../../../common/app/assets/javascripts/components/eventEmitter/EventEmitter',
-                    qwery:        '../../../../common/app/assets/javascripts/components/qwery/mobile/qwery-mobile',
-                    reqwest:      '../../../../common/app/assets/javascripts/components/reqwest/src/reqwest',
-                    lodash:       '../../../../common/app/assets/javascripts/components/lodash-amd/modern',
-                    imager:       '../../../../common/app/assets/javascripts/components/imager.js/src/strategies/container',
-                    omniture:     '../../../../common/app/assets/javascripts/components/omniture/omniture',
+                    qwery:        '../../../../common/app/assets/javascripts/components/qwery/qwery-mobile',
+                    reqwest:      '../../../../common/app/assets/javascripts/components/reqwest/reqwest',
+                    lodash:       '../../../../common/app/assets/javascripts/components/lodash-amd',
+                    imager:       '../../../../common/app/assets/javascripts/components/imager.js/container',
                     fence:        '../../../../common/app/assets/javascripts/components/fence/fence',
-                    enhancer:     '../../../../common/app/assets/javascripts/components/enhancer/enhancer'
-
+                    enhancer:     '../../../../common/app/assets/javascripts/components/enhancer/enhancer',
+                    stripe:       '../../../../common/app/assets/javascripts/components/stripe/stripe.min',
+                    raven:        '../../../../common/app/assets/javascripts/components/raven-js/raven',
+                    fastclick:    '../../../../common/app/assets/javascripts/components/fastclick/fastclick',
+                    omniture:     '../../../../common/app/public/javascripts/vendor/omniture'
                 },
-                optimize: 'uglify2',
+                optimize: (isDev) ? 'none' : 'uglify2',
                 generateSourceMaps: true,
-                preserveLicenseComments: false
+                preserveLicenseComments: false,
+                fileExclusionRegExp: /^bower_components$/
             },
             common: {
                 options: {
                     baseUrl: 'common/app/assets/javascripts',
-                    name: 'common/bootstraps/app',
-                    out: staticTargetDir + 'javascripts/bootstraps/app.js',
+                    dir: requirejsDir,
+                    keepBuildDir: false,
                     shim: {
                         imager: {
-                            deps: ['components/imager.js/src/imager'],
+                            deps: ['components/imager.js/imager'],
                             exports: 'Imager'
                         },
                         omniture: {
                             exports: 's'
                         }
                     },
-                    wrap: {
-                        endFile: [
-                            'common/app/assets/javascripts/components/curl/dist/curl-with-js-and-domReady/curl.js',
-                            'common/app/assets/javascripts/bootstraps/go.js'
-                        ]
-                    }
+                    modules: [
+                        {
+                            name: 'core'
+                        },
+                        {
+                            name: 'bootstraps/app',
+                            exclude: ['core']
+                        },
+                        {
+                            name: 'bootstraps/commercial',
+                            exclude: ['core']
+                        }
+                    ]
                 }
             },
             facia: {
@@ -87,18 +130,28 @@ module.exports = function (grunt) {
                     baseUrl: 'facia/app/assets/javascripts',
                     name: 'bootstraps/facia',
                     out: staticTargetDir + 'javascripts/bootstraps/facia.js',
-                    exclude: ['../../../../common/app/assets/javascripts/bootstraps/app'],
-                    keepBuildDir: true
+                    exclude: [
+                        '../../../../common/app/assets/javascripts/core',
+                        '../../../../common/app/assets/javascripts/bootstraps/app'
+                    ]
+                }
+            },
+            identity: {
+                options: {
+                    baseUrl: 'identity/app/assets/javascripts',
+                    name: 'bootstraps/membership',
+                    out: staticTargetDir + 'javascripts/bootstraps/membership.js',
+                    exclude: [
+                        '../../../../common/app/assets/javascripts/core',
+                        '../../../../common/app/assets/javascripts/bootstraps/app'
+                    ]
                 }
             },
             ophan: {
                 options: {
                     baseUrl: 'common/app/assets/javascripts',
                     name: 'common/bootstraps/ophan',
-                    out: staticTargetDir + 'javascripts/bootstraps/ophan.js',
-                    wrap: {
-                        startFile: 'common/app/assets/javascripts/components/curl/dist/curl/curl.js'
-                    }
+                    out: staticTargetDir + 'javascripts/bootstraps/ophan.js'
                 }
             },
             admin: {
@@ -108,7 +161,7 @@ module.exports = function (grunt) {
                     out: staticTargetDir + 'javascripts/bootstraps/admin.js',
                     shim: {
                         imager: {
-                            deps: ['common/components/imager.js/src/imager'],
+                            deps: ['common/components/imager.js/imager'],
                             exports: 'Imager'
                         },
                         omniture: {
@@ -124,9 +177,11 @@ module.exports = function (grunt) {
                     out: staticTargetDir + 'javascripts/bootstraps/video-player.js',
                     paths: {
                         vast: '../../../../common/app/public/javascripts/vendor/vast-client',
-                        videojs: 'components/videojs/dist/video-js/video',
-                        videojsads: 'components/videojs-contrib-ads/src/videojs.ads',
-                        videojsvast: 'components/videojs-vast/videojs.vast'
+                        videojs: 'components/videojs/video',
+                        videojsads: 'components/videojs-contrib-ads/videojs.ads',
+                        videojsvast: 'components/videojs-vast/videojs.vast',
+                        videojspersistvolume: 'components/videojs-persistvolume/videojs.persistvolume',
+                        videojsplaylist: 'components/videojs-playlist-audio/videojs.playlist'
                     },
                     shim: {
                         vast: {
@@ -138,8 +193,11 @@ module.exports = function (grunt) {
                         videojsads: {
                             deps: ['videojs']
                         },
-                        videojsvast :{
+                        videojsvast: {
                              deps: ['vast', 'videojs']
+                        },
+                        videojsplaylist: {
+                            deps: ['videojs']
                         }
                     },
                     wrapShim: true,
@@ -147,212 +205,327 @@ module.exports = function (grunt) {
                     generateSourceMaps: true,
                     preserveLicenseComments: false
                 }
+            },
+            dev: {
+                options: {
+                    baseUrl: 'common/app/assets/javascripts',
+                    name: 'bootstraps/dev',
+                    out: staticTargetDir + 'javascripts/bootstraps/dev.js',
+                    paths: {
+                        socketio: 'components/socket.io-client/socket.io'
+                    }
+                },
+                exclude: ['core','bootstraps/app']
             }
         },
 
         // Create JSON web font files from fonts. See https://github.com/ahume/grunt-webfontjson
         webfontjson: {
-            WebAgateSansWoff: {
+            GuardianAgateSans1WebWoff2: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebAgateSans.woff.json',
+                    filename: staticTargetDir + 'fonts/GuardianAgateSans1Web.woff2.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'AgateSans',
-                            file: 'resources/fonts/AgateSans-Regular.woff',
+                            'font-family': '"Guardian Agate Sans 1 Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianAgateSans1Web/GuardianAgateSans1Web-Regular.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'AgateSans',
+                            'font-family': '"Guardian Agate Sans 1 Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/AgateSans-Bold.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianAgateSans1Web/GuardianAgateSans1Web-Bold.woff2',
                             format: 'woff'
                         }
                     ]
                 }
             },
-            WebAgateSansTtf: {
+            GuardianAgateSans1WebWoff: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebAgateSans.ttf.json',
+                    filename: staticTargetDir + 'fonts/GuardianAgateSans1Web.woff.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'AgateSans',
-                            file: 'resources/fonts/AgateSans-Regular.ttf',
+                            'font-family': '"Guardian Agate Sans 1 Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianAgateSans1Web/GuardianAgateSans1Web-Regular.woff',
+                            format: 'woff'
+                        },
+                        {
+                            'font-family': '"Guardian Agate Sans 1 Web"',
+                            'font-weight': '700',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianAgateSans1Web/GuardianAgateSans1Web-Bold.woff',
+                            format: 'woff'
+                        }
+                    ]
+                }
+            },
+            GuardianAgateSans1WebTtf: {
+                options: {
+                    filename: staticTargetDir + 'fonts/GuardianAgateSans1Web.ttf.json',
+                    callback: 'guFont',
+                    fonts: [
+                        {
+                            'font-family': '"Guardian Agate Sans 1 Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianAgateSans1Web/GuardianAgateSans1Web-Regular.ttf',
                             format: 'ttf'
                         },
                         {
-                            'font-family': 'AgateSans',
+                            'font-family': '"Guardian Agate Sans 1 Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/AgateSans-Bold.ttf'
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianAgateSans1Web/GuardianAgateSans1Web-Bold.ttf',
+                            format: 'ttf'
                         }
                     ]
                 }
             },
-            WebEgyptianWoff: {
+            GuardianEgyptianWebWoff2: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebEgyptian.woff.json',
+                    filename: staticTargetDir + 'fonts/GuardianEgyptianWeb.woff2.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'EgyptianText',
-                            file: 'resources/fonts/EgyptianText-Regular.woff',
+                            'font-family': '"Guardian Text Egyptian Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Regular.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianText',
+                            'font-family': '"Guardian Text Egyptian Web"',
                             'font-style': 'italic',
-                            file: 'resources/fonts/EgyptianText-RegularItalic.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-RegularItalic.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianText',
+                            'font-family': '"Guardian Text Egyptian Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/EgyptianText-Medium.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Medium.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '200',
-                            file: 'resources/fonts/EgyptianHeadline-Light.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Light.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '400',
-                            file: 'resources/fonts/EgyptianHeadline-Regular.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Regular.woff2',
                             format: 'woff'
                         },
                         // This weight contains only a certain set of chars
                         // since it is used only in one place (section names)
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '900',
-                            file: 'resources/fonts/EgyptianHeadline-Semibold-redux.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianEgyptianWeb/GuardianEgyptianWeb-Semibold.woff2',
                             format: 'woff'
                         }
                     ]
                 }
             },
-            WebEgyptianTtf: {
+            GuardianEgyptianWebWoff: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebEgyptian.ttf.json',
+                    filename: staticTargetDir + 'fonts/GuardianEgyptianWeb.woff.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'EgyptianText',
-                            file: 'resources/fonts/EgyptianText-Regular.ttf',
-                            format: 'ttf'
+                            'font-family': '"Guardian Text Egyptian Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Regular.woff',
+                            format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianText',
+                            'font-family': '"Guardian Text Egyptian Web"',
                             'font-style': 'italic',
-                            file: 'resources/fonts/EgyptianText-RegularItalic.ttf',
-                            format: 'ttf'
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-RegularItalic.woff',
+                            format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianText',
+                            'font-family': '"Guardian Text Egyptian Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/EgyptianText-Medium.ttf',
-                            format: 'ttf'
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Medium.woff',
+                            format: 'woff'
                         },
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '200',
-                            file: 'resources/fonts/EgyptianHeadline-Light.ttf',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Light.woff',
+                            format: 'woff'
+                        },
+                        {
+                            'font-family': '"Guardian Egyptian Web"',
+                            'font-weight': '400',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Regular.woff',
+                            format: 'woff'
+                        },
+                        // This weight contains only a certain set of chars
+                        // since it is used only in one place (section names)
+                        {
+                            'font-family': '"Guardian Egyptian Web"',
+                            'font-weight': '900',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianEgyptianWeb/GuardianEgyptianWeb-Semibold.woff',
+                            format: 'woff'
+                        }
+                    ]
+                }
+            },
+            GuardianEgyptianWebTtf: {
+                options: {
+                    filename: staticTargetDir + 'fonts/GuardianEgyptianWeb.ttf.json',
+                    callback: 'guFont',
+                    fonts: [
+                        {
+                            'font-family': '"Guardian Text Egyptian Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Regular.ttf',
                             format: 'ttf'
                         },
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Text Egyptian Web"',
+                            'font-style': 'italic',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-RegularItalic.ttf',
+                            format: 'ttf'
+                        },
+                        {
+                            'font-family': '"Guardian Text Egyptian Web"',
+                            'font-weight': '700',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianTextEgyptianWeb/GuardianTextEgyptianWeb-Medium.ttf',
+                            format: 'ttf'
+                        },
+                        {
+                            'font-family': '"Guardian Egyptian Web"',
+                            'font-weight': '200',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Light.ttf',
+                            format: 'ttf'
+                        },
+                        {
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '400',
-                            file: 'resources/fonts/EgyptianHeadline-Regular.ttf',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianEgyptianWeb/GuardianEgyptianWeb-Regular.ttf',
                             format: 'ttf'
                         },
                         // This weight contains only a certain set of chars
                         // since it is used only in one place (section names)
                         {
-                            'font-family': 'EgyptianHeadline',
+                            'font-family': '"Guardian Egyptian Web"',
                             'font-weight': '900',
-                            file: 'resources/fonts/EgyptianHeadline-Semibold-redux.ttf',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianEgyptianWeb/GuardianEgyptianWeb-Semibold.ttf',
                             format: 'ttf'
                         }
                     ]
                 }
             },
-            WebTextSansWoff: {
+            GuardianTextSansWebWoff2: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebTextSans.woff.json',
+                    filename: staticTargetDir + 'fonts/GuardianTextSansWeb.woff2.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'TextSans',
-                            file: 'resources/fonts/TextSans-Regular.woff',
+                            'font-family': '"Guardian Text Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Regular.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'TextSans',
+                            'font-family': '"Guardian Text Sans Web"',
                             'font-style': 'italic',
-                            file: 'resources/fonts/TextSans-RegularIt.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianTextSansWeb/GuardianTextSansWeb-RegularItalic.woff2',
                             format: 'woff'
                         },
                         {
-                            'font-family': 'TextSans',
+                            'font-family': '"Guardian Text Sans Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/TextSans-Medium.woff',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Medium.woff2',
                             format: 'woff'
                         }
                     ]
                 }
             },
-            WebTextSansTtf: {
+            GuardianTextSansWebWoff: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebTextSans.ttf.json',
+                    filename: staticTargetDir + 'fonts/GuardianTextSansWeb.woff.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'TextSans',
-                            file: 'resources/fonts/TextSans-Regular.ttf',
-                            format: 'ttf'
+                            'font-family': '"Guardian Text Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Regular.woff',
+                            format: 'woff'
                         },
                         {
-                            'font-family': 'TextSans',
+                            'font-family': '"Guardian Text Sans Web"',
                             'font-style': 'italic',
-                            file: 'resources/fonts/TextSans-RegularIt.ttf',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianTextSansWeb/GuardianTextSansWeb-RegularItalic.woff',
+                            format: 'woff'
+                        },
+                        {
+                            'font-family': '"Guardian Text Sans Web"',
+                            'font-weight': '700',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Medium.woff',
+                            format: 'woff'
+                        }
+                    ]
+                }
+            },
+            GuardianTextSansWebTtf: {
+                options: {
+                    filename: staticTargetDir + 'fonts/GuardianTextSansWeb.ttf.json',
+                    callback: 'guFont',
+                    fonts: [
+                        {
+                            'font-family': '"Guardian Text Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Regular.ttf',
                             format: 'ttf'
                         },
                         {
-                            'font-family': 'TextSans',
+                            'font-family': '"Guardian Text Sans Web"',
+                            'font-style': 'italic',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianTextSansWeb/GuardianTextSansWeb-RegularItalic.ttf',
+                            format: 'ttf'
+                        },
+                        {
+                            'font-family': '"Guardian Text Sans Web"',
                             'font-weight': '700',
-                            file: 'resources/fonts/TextSans-Medium.ttf',
+                            file: webfontsDir + 'hinting-off_kerning-off/original/GuardianTextSansWeb/GuardianTextSansWeb-Medium.ttf',
                             format: 'ttf'
                         }
                     ]
                 }
             },
-            WebHeadlineSansTtf: {
+            GuardianSansWebWoff2: {
                 options: {
-                    filename: staticTargetDir + 'fonts/WebHeadlineSans.ttf.json',
+                    filename: staticTargetDir + 'fonts/GuardianSansWeb.woff2.json',
                     callback: 'guFont',
                     fonts: [
                         {
-                            'font-family': 'HeadlineSans',
-                            file: 'resources/fonts/HeadlineSans-Light.ttf',
+                            'font-family': '"Guardian Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/latin1/GuardianSansWeb/GuardianSansWeb-Light.woff2',
+                            'font-weight': '200',
+                            format: 'woff'
+                        }
+                    ]
+                }
+            },
+            GuardianSansWebWoff: {
+                options: {
+                    filename: staticTargetDir + 'fonts/GuardianSansWeb.woff.json',
+                    callback: 'guFont',
+                    fonts: [
+                        {
+                            'font-family': '"Guardian Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianSansWeb/GuardianSansWeb-Light.woff',
+                            'font-weight': '200',
+                            format: 'woff'
+                        }
+                    ]
+                }
+            },
+            GuardianSansWebTtf: {
+                options: {
+                    filename: staticTargetDir + 'fonts/GuardianSansWeb.ttf.json',
+                    callback: 'guFont',
+                    fonts: [
+                        {
+                            'font-family': '"Guardian Sans Web"',
+                            file: webfontsDir + 'hinting-off_kerning-off/ascii/GuardianSansWeb/GuardianSansWeb-Light.ttf',
                             'font-weight': '200',
                             format: 'ttf'
-                        }
-                    ]
-                }
-            },
-            WebHeadlineSansWoff: {
-                options: {
-                    filename: staticTargetDir + 'fonts/WebHeadlineSans.woff.json',
-                    callback: 'guFont',
-                    fonts: [
-                        {
-                            'font-family': 'HeadlineSans',
-                            file: 'resources/fonts/HeadlineSans-Light.woff',
-                            'font-weight': '200',
-                            format: 'woff'
                         }
                     ]
                 }
@@ -375,7 +548,7 @@ module.exports = function (grunt) {
              * Using this task to copy hooks, as Grunt's own copy task doesn't preserve permissions
              */
             copyHooks: {
-                command: 'cp git-hooks/pre-commit .git/hooks/',
+                command: 'ln -s ../git-hooks .git/hooks',
                 options: {
                     stdout: true,
                     stderr: true,
@@ -392,22 +565,14 @@ module.exports = function (grunt) {
                     stderr: true,
                     failOnError: true
                 }
-            },
-
-            videojs: {
-                command: 'npm install',
-                options: {
-                    stdout: true,
-                    stderr: true,
-                    failOnError: true,
-                    execOptions: {
-                        cwd: 'common/app/assets/javascripts/components/videojs'
-                    }
-                }
             }
         },
 
         imagemin: {
+            options: {
+                optimizationLevel: 2,
+                use: [pngquant()]
+            },
             files: {
                 expand: true,
                 cwd: staticTargetDir + 'images/',
@@ -417,35 +582,43 @@ module.exports = function (grunt) {
         },
 
         copy: {
-            // 3rd party javascript applications
-            'vendor': {
-                files: [{
-                    expand: true,
-                    cwd: 'common/app/public/javascripts/vendor',
-                    src: ['**/foresee/**'],
-                    dest: staticTargetDir + 'javascripts/vendor'
-                }]
-            },
-            'javascript-common': {
-                files: [{
-                    expand: true,
-                    cwd: 'common/app/public/javascripts',
-                    src: ['**/*.js'],
-                    dest: staticTargetDir + 'javascripts'
-                }]
-            },
-            'javascript-admin': {
+            'javascript': {
                 files: [
                     {
                         expand: true,
-                        cwd: 'admin/public/javascripts',
+                        cwd: 'common/app/public/javascripts/components',
                         src: ['**/*.js'],
-                        dest: staticTargetDir + 'javascripts'
+                        dest: staticTargetDir + 'javascripts/components'
                     },
                     {
                         expand: true,
-                        cwd: 'common/app/assets/javascripts',
-                        src: 'components/curl/dist/curl-with-js-and-domReady/curl.js',
+                        cwd: 'common/app/public/javascripts/vendor',
+                        src: [
+                            'formstack-interactive/0.1/boot.js',
+                            'vast-client.js'
+                        ],
+                        dest: staticTargetDir + 'javascripts/vendor'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'common/app/public/javascripts/vendor',
+                        src: [
+                            'foresee*/**'
+                        ],
+                        dest: staticHashDir + 'javascripts/vendor'
+                    },
+                    {
+                        expand: true,
+                        cwd: requirejsDir,
+                        src: [
+                            'core.js',
+                            'core.js.map',
+                            'bootstraps/app.js',
+                            'bootstraps/app.js.map',
+                            'bootstraps/commercial.js',
+                            'bootstraps/commercial.js.map',
+                            'components/curl/curl-domReady.js'
+                        ],
                         dest: staticTargetDir + 'javascripts'
                     }
                 ]
@@ -477,8 +650,16 @@ module.exports = function (grunt) {
             headCss: {
                 files: [{
                     expand: true,
-                    cwd: 'static/target/stylesheets',
+                    cwd: staticTargetDir + 'stylesheets',
                     src: ['**/head*.css'],
+                    dest: 'common/conf/assets'
+                }]
+            },
+            headJs: {
+                files: [{
+                    expand: true,
+                    cwd: 'common/app/assets/javascripts/components/curl',
+                    src: ['curl-domReady.js'],
                     dest: 'common/conf/assets'
                 }]
             },
@@ -506,33 +687,36 @@ module.exports = function (grunt) {
             }
         },
 
-        hash: {
+        asset_hash: {
             options: {
-                mapping: staticHashDir + 'assets/assets.map',
-                srcBasePath: staticTargetDir,
-                destBasePath: staticHashDir,
-                flatten: false,
+                assetMap: staticHashDir + 'assets/assets.map',
+                srcBasePath: 'static/target/',
+                destBasePath: 'static/hash/',
                 hashLength: (isDev) ? 0 : 32
             },
-            files: {
-                expand: true,
-                cwd: staticTargetDir,
-                src: '**/*',
-                filter: 'isFile',
-                dest: staticHashDir,
-                rename: function(dest, src) {
-                    // remove .. when hash length is 0
-                    return dest + src.split('/').slice(0, -1).join('/');
-                }
+            all: {
+                options: {
+                    preserveSourceMaps: true
+                },
+                files: [
+                    {
+                        src: [staticTargetDir + '**/*'],
+                        dest: staticHashDir
+                    }
+                ]
             }
         },
 
         uglify: {
-            components: {
+            javascript: {
                 files: [{
                     expand: true,
                     cwd: staticTargetDir + 'javascripts',
-                    src: ['**/*.js', '!bootstraps/**/*.js', '!**/raven-js/**/*', '**/raven-js/dist/*.js'],
+                    src: [
+                        '{components,vendor}/**/*.js',
+                        '!components/curl/**/*.js',
+                        '!components/zxcvbn/**/*.js'
+                    ],
                     dest: staticTargetDir + 'javascripts'
                 }]
             }
@@ -553,6 +737,9 @@ module.exports = function (grunt) {
             },
             facia: {
                 configFile: testConfDir + 'facia.js'
+            },
+            membership: {
+                configFile: testConfDir + 'membership.js'
             }
         },
 
@@ -568,7 +755,7 @@ module.exports = function (grunt) {
                 files: [{
                     expand: true,
                     cwd: 'common/app/assets/javascripts/',
-                    src: ['**/*.js', '!components/**', '!utils/atob.js']
+                    src: ['**/*.js', '!components/**', '!bower_components/**', '!utils/atob.js']
                 }]
             },
             facia: {
@@ -584,6 +771,13 @@ module.exports = function (grunt) {
                     cwd: 'facia-tool/public/javascripts/',
                     src: ['**/*.js', '!components/**', '!omniture.js']
                 }]
+            },
+            membership: {
+                files: [{
+                    expand: true,
+                    cwd: 'identity/app/assets/javascripts/',
+                    src: ['**/*.js']
+                }]
             }
         },
 
@@ -598,67 +792,6 @@ module.exports = function (grunt) {
                 reporterOutput: null
             }
         },
-
-        // Much of the CasperJS setup borrowed from smlgbl/grunt-casperjs-extra
-        env: {
-            casperjs: {
-                ENVIRONMENT : (process.env.ENVIRONMENT) ? process.env.ENVIRONMENT : (isDev) ? 'dev' : 'code',
-                PHANTOMJS_EXECUTABLE : 'node_modules/casperjs/node_modules/.bin/phantomjs',
-                extend: {
-                    PATH: {
-                        value: 'node_modules/.bin',
-                        delimiter: ':'
-                    }
-                }
-            }
-        },
-
-        casperjsLogFile: 'results.xml',
-        casperjs: {
-            options: {
-                casperjsOptions: [
-                    '--verbose',
-                    '--log-level=warning',
-                    '--ignore-ssl-errors=yes',
-                    '--includes=integration-tests/casper/tests/shared.js',
-                    '--xunit=integration-tests/target/casper/<%= casperjsLogFile %>'
-                ]
-            },
-            screenshot: {
-                src: ['tools/screenshots/screenshot.js']
-            },
-            all: {
-                src: ['integration-tests/casper/tests/**/*.spec.js']
-            },
-            admin: {
-                src: ['integration-tests/casper/tests/admin/*.spec.js']
-            },
-            article: {
-                src: ['integration-tests/casper/tests/article/*.spec.js']
-            },
-            applications: {
-                src: ['integration-tests/casper/tests/applications/*.spec.js']
-            },
-            common : {
-                src: ['integration-tests/casper/tests/common/*.spec.js']
-            },
-            discussion: {
-                src: ['integration-tests/casper/tests/discussion/*.spec.js']
-            },
-            facia: {
-                src: ['integration-tests/casper/tests/facia/*.spec.js']
-            },
-            identity: {
-                src: ['integration-tests/casper/tests/identity/*.spec.js']
-            },
-            open: {
-                src: ['integration-tests/casper/tests/open/*.spec.js']
-            },
-            commercial: {
-                src: ['integration-tests/casper/tests/commercial/*.spec.js']
-            }
-        },
-
 
         /*
          * Analyse
@@ -677,10 +810,7 @@ module.exports = function (grunt) {
             common: {
                 src: [
                     staticTargetDir + 'javascripts/bootstraps/*.js',
-                    staticTargetDir + 'stylesheets/*.css',
-                    // ignore hashed files
-                    '!' + '**/*.<%= Array(1 + hash.options.hashLength).join("?") %>.js',
-                    '!' + '**/*.<%= Array(1 + hash.options.hashLength).join("?") %>.css'
+                    staticTargetDir + 'stylesheets/*.css'
                 ],
                 options: {
                     credentials: propertiesFile
@@ -707,14 +837,20 @@ module.exports = function (grunt) {
         },
 
         /*
+         * Documentation (builds syleguide)
+         */
+        hologram: {
+            generate: {
+                options: {
+                    config: 'hologram_config.yml'
+                }
+            }
+        },
+
+        /*
          * Miscellaneous
          */
         mkdir: {
-            screenshots: {
-                options: {
-                    create: [screenshotsDir]
-                }
-            },
             fontsTarget: {
                 options: {
                     create: [staticTargetDir + 'fonts']
@@ -722,33 +858,16 @@ module.exports = function (grunt) {
             }
         },
 
-        s3: {
-            options: {
-                bucket: 'aws-frontend-store',
-                access: 'public-read',
-                //encodePaths: true,
-                gzip: true
-            },
-            screenshots: {
-                upload: [{
-                    src: screenshotsDir + '/**/*.png',
-                    dest: '<%= env.casperjs.ENVIRONMENT.toUpperCase() %>/screenshots/',
-                    rel : screenshotsDir
-                }]
-            }
-        },
-
         // Clean stuff up
         clean: {
-            js         : [staticTargetDir + 'javascripts', staticHashDir + 'javascripts'],
+            js         : [staticTargetDir + 'javascripts', staticHashDir + 'javascripts', requirejsDir],
             css        : [staticTargetDir + 'stylesheets', staticHashDir + 'stylesheets'],
             images     : [staticTargetDir + 'images', staticHashDir + 'images'],
             flash      : [staticTargetDir + 'flash', staticHashDir + 'flash'],
             fonts      : [staticTargetDir + 'fonts', staticHashDir + 'fonts'],
             // Clean any pre-commit hooks in .git/hooks directory
-            hooks      : ['.git/hooks/pre-commit'],
-            assets     : ['common/conf/assets'],
-            screenshots: [screenshotsDir]
+            hooks      : ['.git/hooks'],
+            assets     : ['common/conf/assets']
         },
 
         // Recompile on change
@@ -762,7 +881,7 @@ module.exports = function (grunt) {
             },
             css: {
                 files: ['common/app/assets/stylesheets/**/*.scss'],
-                tasks: ['compile:css'],
+                tasks: ['sass:compile', 'asset_hash'],
                 options: {
                     spawn: false
                 }
@@ -778,6 +897,13 @@ module.exports = function (grunt) {
             fonts: {
                 files: ['resources/fonts/**/*'],
                 tasks: ['compile:fonts']
+            },
+            styleguide: {
+                files: ['common/app/assets/stylesheets/**/*.scss', 'docs/styleguide/**/*.scss', 'docs/styleguide_templates/**/*.html'],
+                tasks: ['compile:css', 'hologram'],
+                options: {
+                    spawn: false
+                }
             }
         },
 
@@ -792,59 +918,16 @@ module.exports = function (grunt) {
             }
         },
 
-        reloadlet: {
+        csdevmode: {
             options: {
-                port: 8005
+                srcBasePath: 'common/app/assets/stylesheets/',
+                destBasePath: staticHashDir + '/stylesheets'
             },
             main: {
-                sass: {
-                    src: 'common/app/assets/stylesheets/',
-                    dest: 'static/target/stylesheets'
-                },
-                assets: [
-                    {
-                        local: 'static/target/stylesheets/head.default.css',
-                        remote: '/assets/stylesheets/head.default.css'
-                    },
-                    {
-                        local: 'static/target/stylesheets/global.css',
-                        remote: '/assets/stylesheets/global.css'
-                    }
-                ]
-            }
-        },
-
-        grunt: {
-            videojs: {
-                gruntfile: 'common/app/assets/javascripts/components/videojs/Gruntfile.js'
+                assets: ['global', 'head.default', 'head.facia']
             }
         }
     });
-
-    // Load the plugins
-    grunt.loadNpmTasks('grunt-karma');
-    grunt.loadNpmTasks('grunt-contrib-sass');
-    grunt.loadNpmTasks('grunt-scss-lint');
-    grunt.loadNpmTasks('grunt-css-metrics');
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-requirejs');
-    grunt.loadNpmTasks('grunt-webfontjson');
-    grunt.loadNpmTasks('grunt-contrib-clean');
-    grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('grunt-casperjs');
-    grunt.loadNpmTasks('grunt-env');
-    grunt.loadNpmTasks('grunt-mkdir');
-    grunt.loadNpmTasks('grunt-s3');
-    grunt.loadNpmTasks('grunt-contrib-imagemin');
-    grunt.loadNpmTasks('grunt-hash');
-    grunt.loadNpmTasks('grunt-contrib-copy');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-asset-monitor');
-    grunt.loadNpmTasks('grunt-text-replace');
-    grunt.loadNpmTasks('grunt-reloadlet');
-    grunt.loadNpmTasks('grunt-grunt');
-    grunt.loadNpmTasks('grunt-pagespeed');
 
     // Default task
     grunt.registerTask('default', ['clean', 'validate', 'compile', 'test', 'analyse']);
@@ -852,7 +935,7 @@ module.exports = function (grunt) {
     /**
      * Validate tasks
      */
-    grunt.registerTask('validate:css', ['sass:compile']);
+    grunt.registerTask('validate:css', ['compile:images', 'sass:compile', 'sass:compileStyleguide']);
     grunt.registerTask('validate:sass', ['scsslint']);
     grunt.registerTask('validate:js', function(app) {
         var target = (app) ? ':' + app : '';
@@ -866,61 +949,61 @@ module.exports = function (grunt) {
      * Compile tasks
      */
     grunt.registerTask('compile:images', ['copy:images', 'shell:spriteGeneration', 'imagemin']);
-    grunt.registerTask('compile:css', ['sass:compile', 'replace:cssSourceMaps', 'copy:css']);
-    grunt.registerTask('compile:js', function(app) {
-        var target = app ? ':' + app : '',
-            copyTasks = Object.keys(grunt.config('copy'))
-                .filter(function(copyTask) {
-                    return copyTask.indexOf('javascript') === 0;
-                })
-                .map(function(copyTask) {
-                    return 'copy:' + copyTask;
-                });
-        if (app) {
-            var copyTask = 'copy:javascript-' + app;
-            if (copyTasks.indexOf(copyTask) > -1) {
-                grunt.task.run(copyTask);
-            }
-        } else {
-            grunt.task.run(copyTasks);
+    grunt.registerTask('compile:css', function() {
+        grunt.task.run('sass:compile');
+        grunt.task.run('sass:compileStyleguide');
+        if (isDev) {
+            grunt.task.run(['replace:cssSourceMaps', 'copy:css']);
         }
-        grunt.task.run('requirejs' + target);
+    });
+    grunt.registerTask('compile:js', function() {
+        grunt.task.run(['requirejs', 'copy:javascript']);
         if (!isDev) {
-            grunt.task.run('uglify:components');
+            grunt.task.run('uglify:javascript');
         }
+
+        if (isOnlyTask(this)) {
+            grunt.task.run('asset_hash');
+        }
+
     });
     grunt.registerTask('compile:fonts', ['mkdir:fontsTarget', 'webfontjson']);
     grunt.registerTask('compile:flash', ['copy:flash']);
-    grunt.registerTask('compile:conf', ['copy:headCss', 'copy:vendor', 'copy:assetMap']);
-    grunt.registerTask('compile:videojs', ['shell:videojs', 'grunt:videojs']);
-    
-    grunt.registerTask('compile', function(app) {
-        grunt.task.run([
-            'compile:images',
-            'compile:css',
-            'compile:videojs',
-            'compile:js:' + (app || ''),
-            'compile:fonts',
-            'compile:flash',
-            'hash',
-            'compile:conf'
-        ]);
-    });
+    grunt.registerTask('compile:conf', ['copy:headJs', 'copy:headCss', 'copy:assetMap']);
+    grunt.registerTask('compile', [
+        'compile:images',
+        'compile:css',
+        'compile:js',
+        'compile:fonts',
+        'compile:flash',
+        'asset_hash',
+        'compile:conf'
+    ]);
+
+    /**
+     * compile:js:<requiretask> tasks. Generate one for each require task
+     */
+    function compileSpecificJs(requirejsName) {
+        if (!isDev && requirejsName !== 'common') {
+            grunt.task.run('requirejs:common');
+        }
+        grunt.task.run(['requirejs:' + requirejsName, 'copy:javascript', 'asset_hash']);
+    }
+    for (var requireTaskName in grunt.config('requirejs')) {
+        if (requireTaskName !== 'options') {
+            grunt.registerTask('compile:js:' + requireTaskName, compileSpecificJs.bind(this, requireTaskName) );
+        }
+    }
 
     /**
      * Test tasks
      */
-    grunt.registerTask('test:integration', function(app) {
-        var target = app || 'all';
-        grunt.config('casperjsLogFile', app + '.xml');
-        grunt.task.run(['env:casperjs', 'casperjs:' + target]);
-    });
     grunt.registerTask('test:unit', function(app) {
         var target = app ? ':' + app : '';
         grunt.config.set('karma.options.singleRun', (singleRun === false) ? false : true);
         grunt.task.run('karma' + target);
     });
-    grunt.registerTask('test', ['test:unit', 'test:integration:all']);
+    grunt.registerTask('test', ['test:unit']);
 
     /**
      * Analyse tasks
@@ -937,19 +1020,13 @@ module.exports = function (grunt) {
      * Miscellaneous tasks
      */
     grunt.registerTask('hookmeup', ['clean:hooks', 'shell:copyHooks']);
-    grunt.registerTask('snap', ['clean:screenshots', 'mkdir:screenshots', 'env:casperjs', 'casperjs:screenshot', 's3:screenshots']);
     grunt.registerTask('emitAbTestInfo', 'shell:abTestInfo');
 
     grunt.event.on('watch', function(action, filepath, target) {
         if (target === 'js') {
             // compile just the project
             var project = filepath.split('/').shift();
-            grunt.task.run('requirejs:' + project);
+            grunt.task.run(['requirejs:' + project, 'copy:javascript', 'asset_hash']);
         }
-        // TODO: decouple moving of files from hashing
-        //if (!isDev) {
-            grunt.task.run('hash');
-        //}
     });
-
 };

@@ -23,6 +23,11 @@ frontend-applications.properties
 !.editorconfig
 !.bowerrc
 !.travis.yml
+.DS_Store
+.idea
+.sass-cache
+.tm_properties
+.vagrant
 
 log
 logs
@@ -30,6 +35,7 @@ logs
 tmp
 old
 target
+.target
 /*/bin/
 
 RUNNING_PID
@@ -37,7 +43,6 @@ RUNNING_PID
 *.sublime-*
 
 local.sbt
-build.sbt
 
 node_modules
 screenshots
@@ -57,3 +62,19 @@ static
 common/app/assets/stylesheets/icons/*
 
 ivy-sbt
+
+# Eclipse #
+.project
+.classpath
+.settings/
+.metadata
+.classpath
+.springBeans
+.cache
+bower_components
+
+# Scala test framework #
+local.conf
+
+# Generared styleguide files #
+docs/styleguide/*.html

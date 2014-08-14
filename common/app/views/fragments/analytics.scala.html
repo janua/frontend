@@ -1,7 +1,6 @@
 @(page: model.MetaData)( implicit request:RequestHeader)
 @import org.joda.time.DateTime
 @import conf.Configuration
-@import conf.Switches.FreshnessLoggingSwitch
 
 @*<!-- TODO temporary till after dotcom switch -->*@
 @defining(
@@ -62,19 +61,17 @@
     }
 }
 
+@* google remarketing fallback *@
+<noscript>
+    <div style="display:inline;">
+        <img height="1" width="1" style="border-style:none;" alt="" src="//googleads.g.doubleclick.net/pagead/viewthroughconversion/971225648/?value=0&amp;guid=ON&amp;script=0"/>
+    </div>
+</noscript>
+
 @* there is currently no SSL version of the beacon *@
 @if(!Configuration.environment.secure) {
-    <img src="@Configuration.debug.beaconUrl/count/pv.gif" alt="" style="display : none ;" rel="nofollow"/>
-
-    @if(FreshnessLoggingSwitch.isSwitchedOn) {
-        @defining(DateTime.now) { now =>
-
-            @if(Edition.isEditionFront(request)) {
-                <img src="@Configuration.debug.beaconUrl/freshness/front/@{now.getMillis}" alt="" style="display : none ;" rel="nofollow"/>
-            } else {
-                <img src="@Configuration.debug.beaconUrl/freshness/@{now.getMillis}" alt="" style="display : none ;" rel="nofollow"/>
-            }
-            <!-- @now.toString() -->
-        }
+    @page match {
+        case v: model.Video => { <img src="@Configuration.debug.beaconUrl/counts.gif?c=pv&c=vpv" alt="" style="display : none ;" rel="nofollow"/> }
+        case _ => { <img src="@Configuration.debug.beaconUrl/count/pv.gif" alt="" style="display : none ;" rel="nofollow"/> }
     }
 }

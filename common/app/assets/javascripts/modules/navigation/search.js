@@ -1,10 +1,10 @@
 define([
-    'common/$',
-    'common/common',
+    'common/utils/$',
+    'lodash/functions/throttle',
     'bean'
 ], function (
     $,
-    common,
+    throttle,
     bean
 ) {
 
@@ -21,17 +21,17 @@ define([
             enabled = true;
             gcsUrl = config.page.googleSearchUrl + '?cx=' + config.page.googleSearchId;
 
-            var searchLoader = common.throttle(function() {
+            var searchLoader = throttle(function() {
                 self.load();
             });
 
-            bean.on(document, 'click touchstart', '.js-search-toggle', function(e) {
+            bean.on(document, 'click', '.js-search-toggle', function(e) {
                 searchLoader();
                 self.focusSearchField();
                 e.preventDefault();
             });
 
-            bean.on(document, 'click touchstart', '.search-results', function(e) {
+            bean.on(document, 'click', '.search-results', function(e) {
                 var targetEl = e.target;
                 if (targetEl.nodeName.toLowerCase() === 'a') {
                     targetEl.target = '_self';

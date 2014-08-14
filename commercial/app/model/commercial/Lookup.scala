@@ -1,20 +1,39 @@
 package model.commercial
 
-import com.gu.openplatform.contentapi
 import com.gu.openplatform.contentapi.model.Tag
-import common.{Edition, Logging, ExecutionContexts}
+import common.Edition.defaultEdition
+import common.{ExecutionContexts, Logging}
 import conf.LiveContentApi
-import model.{ImageElement, Content}
+import model.{Content, ImageContainer}
+
 import scala.concurrent.Future
 
 object Lookup extends ExecutionContexts with Logging {
-  def thumbnail(contentId: String): Future[Option[ImageElement]] = {
-    LiveContentApi.item(contentId, Edition.defaultEdition).response.map { response =>
-      val option: Option[contentapi.model.Content] = response.content
-      option.flatMap(Content(_).thumbnail)
+
+  def content(contentId: String): Future[Option[Content]] = {
+    LiveContentApi.item(contentId, defaultEdition).response map {
+      _.content map (Content(_))
     }
   }
 
+  def contentByShortUrls(shortUrls: Seq[String]): Future[Seq[Content]] = {
+    if (shortUrls.nonEmpty) {
+      val shortIds = shortUrls map (_.stripPrefix("http://").stripPrefix("gu.com").stripPrefix("/")) mkString ","
+      LiveContentApi.search(defaultEdition).ids(shortIds).response map {
+        _.results map (Content(_))
+      }
+    } else Future.successful(Nil)
+  }
+
+  def latestContentByKeyword(keywordId: String, maxItemCount: Int): Future[Seq[Content]] = {
+    LiveContentApi.search(defaultEdition).tag(keywordId).pageSize(maxItemCount).orderBy("newest").response map {
+      _.results map (Content(_))
+    }
+  }
+
+  def mainPicture(contentId: String): Future[Option[ImageContainer]] = {
+    content(contentId) map (_ flatMap (_.mainPicture))
+  }
 
   def keyword(term: String, section: Option[String] = None): Future[Seq[Tag]] = {
     val baseQuery = LiveContentApi.tags.q(term).tagType("keyword").pageSize(50)

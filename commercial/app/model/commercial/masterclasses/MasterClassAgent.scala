@@ -1,8 +1,8 @@
 package model.commercial.masterclasses
 
 import common.{AkkaAgent, ExecutionContexts, Logging}
-import model.ImageElement
-import model.commercial.{Segment, AdAgent, Lookup}
+import model.commercial.{AdAgent, Lookup, Segment}
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -16,27 +16,47 @@ object MasterClassAgent extends AdAgent[MasterClass] with ExecutionContexts {
     adsToShow sortBy(_.eventBriteEvent.startDate.getMillis)
   }
 
-  def wrapEventbriteWithContentApi(eventbriteEvents: Seq[EventbriteMasterClass]): Future[Seq[MasterClass]] = {
-    val seqThumbs: Seq[Future[MasterClass]] = eventbriteEvents.map {
-      event =>
-        val contentId: String = event.guardianUrl.replace("http://www.theguardian.com/", "")
-        val thumbnail: Future[Option[ImageElement]] = Lookup.thumbnail(contentId)
-
-        thumbnail.map {
-          thumb => MasterClass(event, thumb)
-        } recover {
-          // This is just in case the Future doesn't pan out.
-          case _: Exception => MasterClass(event, None)
-        }
+  def specificClasses(eventBriteIds: Seq[String]): Seq[MasterClass] = {
+    for {
+      masterclass <- currentAds
+      eventId <- eventBriteIds
+      if masterclass.eventBriteEvent.id == eventId
+    } yield {
+      masterclass
     }
-    Future.sequence(seqThumbs)
+  }
+
+  def wrapEventbriteWithContentApi(eventbriteEvents: Seq[EventbriteMasterClass]): Future[Seq[MasterClass]] = {
+
+    val futureMasterclasses = eventbriteEvents map { event =>
+      val contentId = event.guardianUrl.replace("http://www.theguardian.com/", "")
+      Lookup.mainPicture(contentId) map { imageContainer =>
+        MasterClass(event, imageContainer)
+      } recover {
+        // This is just in case the Future doesn't pan out.
+        case _: Exception => MasterClass(event, None)
+      }
+    }
+
+    Future.sequence(futureMasterclasses)
   }
 
   def refresh() {
 
     def populateKeywordIds(events: Seq[EventbriteMasterClass]):Seq[EventbriteMasterClass] = {
       val populated = events map { event =>
-        val eventKeywordIds = MasterClassTagsAgent.forTag(event.name)
+
+        val keywordIdsFromTitle = MasterClassTagsAgent.forTag(event.name)
+
+        val keywordIdsFromTags = (event.tags flatMap MasterClassTagsAgent.forTag).distinct
+
+        val eventKeywordIds = {
+          if (keywordIdsFromTitle.nonEmpty) {
+            keywordIdsFromTitle
+          } else {
+            keywordIdsFromTags
+          }
+        }
         event.copy(keywordIds = eventKeywordIds)
       }
 
@@ -85,15 +105,11 @@ object MasterClassTagsAgent extends ExecutionContexts with Logging {
     Future.sequence {
       tags map { tag =>
         Lookup.keyword(tag) map { keywords =>
-          tagKeywordIds.alter(_.updated(tag, keywords.map(_.id)))(2.seconds)
+          tagKeywordIds.alter(_.updated(tag, keywords.map(_.id)))
         }
       }
     }
   }
 
-  def stop() {
-    tagKeywordIds.close()
-  }
-
-  def forTag(name: String) = tagKeywordIds().get(name).getOrElse(Nil)
+  def forTag(name: String) = tagKeywordIds().getOrElse(name, Nil)
 }

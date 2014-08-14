@@ -8,10 +8,10 @@
 
 define([
     'common/modules/userPrefs',
-    'common/common'
+    'common/utils/mediator'
 ], function (
     userPrefs,
-    common
+    mediator
 ) {
 
     var supportsPushState,
@@ -42,7 +42,7 @@ define([
     }
 
     /**
-     * @param Object performance Allow passing in of window.performance, for testing
+     * @param performance - Object allows passing in of window.performance, for testing
      */
     function getPageSpeed(performance) {
 
@@ -100,13 +100,30 @@ define([
     }
 
     function getFontFormatSupport(ua) {
-        var format = 'woff';
-            ua = ua.toLowerCase();
+        ua = ua.toLowerCase();
+        var browserSupportsWoff2 = false;
+
+        // for now only Chrome 36+ supports WOFF 2.0.
+        // Opera/Chromium also support it but their share on theguardian.com is around 0.5%
+        var woff2browsers = /Chrome\/([0-9]+)/i;
+
+        if (woff2browsers.test(ua)) {
+            var chromeVersion = parseInt(woff2browsers.exec(ua)[1], 10);
+
+            if (chromeVersion >= 36) {
+                browserSupportsWoff2 = true;
+            }
+        }
+
+        if (browserSupportsWoff2) {
+            return 'woff2';
+        }
 
         if (ua.indexOf('android') > -1) {
-            format = 'ttf';
+            return 'ttf';
         }
-        return format;
+
+        return 'woff';
     }
 
     function hasTouchScreen() {
@@ -178,7 +195,7 @@ define([
                 pageVisibility = this[hidden] ? 'hidden' : 'visible';
             }
 
-            common.mediator.emit('modules:detect:pagevisibility:' + pageVisibility);
+            mediator.emit('modules:detect:pagevisibility:' + pageVisibility);
         }
 
         // Standards:
@@ -202,7 +219,7 @@ define([
     }
 
     function pageVisible() {
-        return pageVisibility === 'visible' ? true : false;
+        return pageVisibility === 'visible';
     }
 
     function hasWebSocket() {
@@ -220,7 +237,8 @@ define([
         getBreakpoint: getBreakpoint,
         initPageVisibility: initPageVisibility,
         pageVisible: pageVisible,
-        hasWebSocket: hasWebSocket
+        hasWebSocket: hasWebSocket,
+        getPageSpeed: getPageSpeed
     };
 
 });

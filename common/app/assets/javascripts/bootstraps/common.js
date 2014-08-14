@@ -2,18 +2,19 @@
 /* TODO - fix module constructors so we can remove the above jshint override */
 define([
     //Commmon libraries
-    'common/$',
+    'common/utils/$',
     'common/utils/mediator',
     'common/utils/deferToLoad',
     'common/utils/ajax',
     'common/modules/userPrefs',
+    'common/utils/url',
     //Vendor libraries
     'bonzo',
     'bean',
     'qwery',
     'enhancer',
-    'lodash/objects/assign',
     'lodash/functions/debounce',
+    'fastclick',
     //Modules
     'common/utils/storage',
     'common/utils/detect',
@@ -22,9 +23,8 @@ define([
     'common/modules/onward/onward-content',
     'common/modules/ui/images',
     'common/modules/navigation/profile',
-    'common/modules/navigation/sections',
-    'common/modules/navigation/newNavigation',
     'common/modules/navigation/search',
+    'common/modules/navigation/navigation',
     'common/modules/ui/tabs',
     'common/modules/ui/toggles',
     'common/modules/ui/dropdowns',
@@ -33,44 +33,37 @@ define([
     'common/modules/analytics/omniture',
     'common/modules/analytics/scrollDepth',
     'common/utils/cookies',
-    'common/modules/analytics/omnitureMedia',
     'common/modules/analytics/livestats',
     'common/modules/experiments/ab',
     'common/modules/discussion/comment-count',
     'common/modules/gallery/lightbox',
     'common/modules/onward/history',
-    'common/modules/onward/sequence',
+    'common/modules/onward/breaking-news',
     'common/modules/ui/message',
     'common/modules/identity/autosignin',
-    'common/modules/adverts/article-body-adverts',
-    'common/modules/adverts/article-aside-adverts',
-    'common/modules/adverts/slice-adverts',
-    'common/modules/adverts/front-commercial-components',
-    'common/modules/adverts/dfp',
-    'common/modules/analytics/commercial/tags/container',
     'common/modules/analytics/foresee-survey',
     'common/modules/onward/geo-most-popular',
     'common/modules/analytics/register',
-    'common/modules/commercial/loader',
     'common/modules/onward/tonal',
     'common/modules/identity/api',
     'common/modules/onward/more-tags',
     'common/modules/ui/smartAppBanner',
-    'common/modules/ui/surveyBanner',
-    'common/modules/adverts/badges'
+    'common/modules/ui/fauxBlockLink',
+    'common/modules/discussion/loader'
 ], function (
     $,
     mediator,
     deferToLoadEvent,
     ajax,
     userPrefs,
+    Url,
 
     bonzo,
     bean,
     qwery,
     enhancer,
-    extend,
     debounce,
+    FastClick,
 
     storage,
     detect,
@@ -79,10 +72,8 @@ define([
     Onward,
     images,
     Profile,
-    Sections,
-    NewNavigation,
     Search,
-
+    Navigation,
     Tabs,
     Toggles,
     Dropdowns,
@@ -91,43 +82,42 @@ define([
     Omniture,
     ScrollDepth,
     Cookies,
-    OmnitureMedia,
     liveStats,
     ab,
     CommentCount,
     LightboxGallery,
-    History,
-    sequence,
+    history,
+    breakingNews,
     Message,
     AutoSignin,
-    ArticleBodyAdverts,
-    ArticleAsideAdverts,
-    SliceAdverts,
-    frontCommercialComponents,
-    dfp,
-    TagContainer,
     Foresee,
     GeoMostPopular,
     register,
-    CommercialLoader,
     TonalComponent,
     id,
     MoreTags,
     smartAppBanner,
-    surveyBanner,
-    badges
+    FauxBlockLink,
+    DiscussionLoader
 ) {
 
     var modules = {
+
+        initFastClick: function() {
+            new FastClick(document.body);
+        },
 
         upgradeImages: function () {
             images.upgrade();
             images.listen();
         },
 
-        initialiseNavigation: function (config) {
-            var sections = new Sections(config),
-                search = new Search(config),
+        initialiseFauxBlockLink: function(context){
+            new FauxBlockLink(context);
+        },
+
+        initialiseTopNavItems: function(config){
+            var search = new Search(config),
                 header = document.getElementById('header');
 
             if (header) {
@@ -139,12 +129,11 @@ define([
                 }
             }
 
-            sections.init(document);
             search.init(header);
         },
 
-        initialiseNewNavigation: function (config) {
-            NewNavigation.init(config);
+        initialiseNavigation: function (config) {
+            Navigation.init(config);
         },
 
         transcludeRelated: function (config, context) {
@@ -218,19 +207,10 @@ define([
             });
         },
 
-        initAbTests: function (config) {
-            ab.segmentUser(config);
-        },
-
-        runAbTests: function (config, context) {
-            ab.run(config, context);
-        },
-
         initRightHandComponent: function(config) {
             if(config.page.contentType === 'Article' &&
                 detect.getBreakpoint() !== 'mobile' &&
-                parseInt(config.page.wordCount, 10) > 500 &&
-                !config.page.isLiveBlog) {
+                parseInt(config.page.wordCount, 10) > 500) {
                 new GeoMostPopular({});
             }
         },
@@ -239,19 +219,10 @@ define([
             liveStats.log(config);
         },
 
-        loadAnalytics: function (config, context) {
+        loadAnalytics: function (config) {
             var omniture = new Omniture();
 
-            omniture.go(config, function(){
-                // callback:
-
-                Array.prototype.forEach.call(context.getElementsByTagName('video'), function(video){
-                    if (!bonzo(video).hasClass('tracking-applied')) {
-                        bonzo(video).addClass('tracking-applied');
-                        new OmnitureMedia(video).init();
-                    }
-                });
-            });
+            omniture.go(config);
 
             if (config.switches.ophan && !config.page.isSSL) {
                 require('ophan/ng', function (ophan) {
@@ -261,55 +232,16 @@ define([
                         mediator.on('scrolldepth:data', ophan.record);
 
                         new ScrollDepth({
-                            isContent: config.page.contentType === 'Article'
+                            isContent: /Article|LiveBlog/.test(config.page.contentType)
                         });
                     }
                 });
             }
         },
 
-        loadAdverts: function (config) {
-
-            var showAds =
-                !userPrefs.isOff('adverts') &&
-                !config.page.shouldHideAdverts &&
-                !config.page.isSSL &&
-                (
-                    config.switches.standardAdverts || config.switches.commercialComponents
-                );
-
-            if (showAds) {
-
-
-                // if it's an article, excluding live blogs, create our inline adverts
-                if (config.switches.standardAdverts && config.page.contentType === 'Article') {
-                    new ArticleAsideAdverts(config).init();
-                    // no inline adverts on live
-                    if (!config.page.isLiveBlog) {
-                        new ArticleBodyAdverts().init();
-                    }
-                }
-
-                new SliceAdverts(config).init();
-
-                frontCommercialComponents.init(config);
-
-                badges.init();
-
-                var options = {};
-
-                if (!config.switches.standardAdverts) {
-                    options.adSlotSelector = '.ad-slot--commercial-component';
-                } else if (!config.switches.commercialComponents) {
-                    options.adSlotSelector = '.ad-slot--dfp:not(.ad-slot--commercial-component)';
-                }
-                dfp.init(extend(config, options));
-            }
-        },
-
         cleanupCookies: function() {
-            Cookies.cleanUp(['mmcore.pd', 'mmcore.srv', 'mmid', 'GU_ABFACIA', 'GU_FACIA']);
-            Cookies.cleanUpDuplicates(['GU_ALPHA','GU_VIEW']);
+            Cookies.cleanUp(['mmcore.pd', 'mmcore.srv', 'mmid', 'GU_ABFACIA', 'GU_FACIA', 'GU_ALPHA']);
+            Cookies.cleanUpDuplicates(['GU_VIEW']);
         },
 
         // opt-in to the responsive alpha
@@ -340,45 +272,18 @@ define([
             var releaseMessage = new Message('alpha');
 
             // Do not show the release message on -sp- based paths.
-            var spRegExp = new RegExp('.*/-sp-.*');
+            var spRegExp = new RegExp('.*-sp-.*');
 
-            if (config.switches.releaseMessage && (detect.getBreakpoint() !== 'mobile') && !spRegExp.test(path)) {
+            if (config.switches.releaseMessage && (detect.getBreakpoint() !== 'mobile') && !spRegExp.test(path) && config.page.contentType !== 'Video' && config.page.hasClassicVersion) {
                 // force the visitor in to the alpha release for subsequent visits
                 Cookies.add('GU_VIEW', 'responsive', 365);
                 releaseMessage.show(msg);
             }
         },
 
-        displayOnboardMessage: function (config) {
-            if(window.location.hash === '#opt-in-message' && config.switches.networkFrontOptIn && detect.getBreakpoint() !== 'mobile') {
-                bean.on(document, 'click', '.js-site-message-close', function() {
-                    Cookies.add('GU_VIEW', 'responsive', 365);
-                    Cookies.add('GU_ALPHA', '2', 365);
-                });
-                bean.on(document, 'click', '.js-site-message', function() {
-                    Cookies.add('GU_VIEW', 'responsive', 365);
-                    Cookies.add('GU_ALPHA', '2', 365);
-                });
-                var message = new Message('onboard', { type: 'modal' }),
-                    path = (document.location.pathname) ? document.location.pathname : '/',
-                    exitLink = '/preference/platform/classic?page=' + encodeURIComponent(path + '?view=classic'),
-                    msg = '<h2 class="site-message__header">Thanks for joining us.</h2>' +
-                    '<div class="site-message__message" id="site-message__message">' +
-                    '<p>You’re looking at a prototype of our new website. Opt-out any time by clicking "Current version" at the bottom of the page. <a href="http://next.theguardian.com/">Find out more</a>.</p>' +
-                    '<ul class="site-message__list">' +
-                    '<li class="site-message__list__item">We love feedback - <a href="https://www.surveymonkey.com/s/theguardian-beta-feedback">let us know yours</a>.</li>' +
-                    '<li class="site-message__list__item">Stay up to date with new releases on <a href="http://next.theguardian.com/blog/">our blog</a>.</li>' +
-                    '</ul>' +
-                    '<ul class="site-message__actions u-unstyled">' +
-                    '<li class="site-message__actions__item"><i class="i i-arrow-white-circle"></i>  '+
-                    '<a class="js-site-message-close" data-link-name="R2 alpha opt in" href="#" tabindex=1>Got it</a>' +
-                    '<li class="site-message__actions__item">' +
-                    '<i class="i i-back-white"></i>' +
-                    '<a class="js-main-site-link" rel="nofollow" href="' + exitLink + '"' +
-                    'data-link-name="R2 alpha opt out">Opt-out and return to the current site </a>' +
-                    '</li>' +
-                    '</ul>';
-                message.show(msg);
+        displayBreakingNews: function (config) {
+            if (config.switches.breakingNews) {
+                breakingNews(config);
             }
         },
 
@@ -390,17 +295,14 @@ define([
 
         logReadingHistory : function() {
             mediator.on('page:common:ready', function(config) {
-                if(/Article|Video|Gallery|Interactive/.test(config.page.contentType)) {
-                    new History().log({
+                if(config.page.contentType !== 'Network Front') {
+                    history.log({
                         id: '/' + config.page.pageId,
                         meta: {
                             section: config.page.section,
-                            keywords: config.page.keywordIds.split(',').slice(0, 5)
+                            keywords: config.page.keywordIds && (config.page.keywordIds + '').split(',').slice(0, 5)
                         }
                     });
-                }
-                if (config.page.section !== 'identity') {
-                    sequence.init('/' + config.page.pageId);
                 }
             });
         },
@@ -409,14 +311,6 @@ define([
            mediator.on('page:common:ready', function(config) {
                 if (config.switches && config.switches.facebookAutosignin && detect.getBreakpoint() !== 'mobile') {
                     new AutoSignin(config).init();
-                }
-            });
-        },
-
-        loadTags : function() {
-            mediator.on('page:common:ready', function(config) {
-                if (config.page.contentType !== 'Identity' && config.page.section !== 'identity') {
-                    TagContainer.init(config);
                 }
             });
         },
@@ -451,7 +345,7 @@ define([
 
         augmentInteractive: function() {
             mediator.on('page:common:ready', function(config, context) {
-                if (/Article|Interactive/.test(config.page.contentType)) {
+                if (/Article|Interactive|LiveBlog/.test(config.page.contentType)) {
                     $('figure.interactive').each(function (el) {
                         enhancer.render(el, context, config, mediator);
                     });
@@ -463,26 +357,6 @@ define([
             if (!config.page.isSSL) {
                 register.initialise(config);
             }
-        },
-
-        loadCommercialComponent: function(config) {
-            [
-                ['commercial-component', 'merchandising'],
-                ['commercial-component-high', 'merchandising-high']
-            ].forEach(function(data) {
-                var commercialComponent = new RegExp('^#' + data[0] + '=(.*)$').exec(window.location.hash),
-                    slot = qwery('[data-name="' + data[1] + '"]').shift();
-                if (commercialComponent && slot) {
-                    bonzo(slot).removeClass('ad-slot--dfp');
-                    var loader = new CommercialLoader({ config: config }),
-                        postLoadEvents = {};
-                        postLoadEvents[commercialComponent[1]] = function() {
-                            bonzo(slot).css('display', 'block');
-                        };
-                    loader.postLoadEvents = postLoadEvents;
-                    loader.init(commercialComponent[1], slot);
-                }
-            });
         },
 
         repositionComments: function() {
@@ -503,9 +377,19 @@ define([
             }
         },
 
-        showSurveyBanner: function(config) {
-            if(config.switches.surveyBanner) {
-                surveyBanner.init();
+        initDiscussion: function() {
+            mediator.on('page:common:ready', function(config, context) {
+                if (config.page.commentable && config.switches.discussion) {
+                    var discussionLoader = new DiscussionLoader(context, mediator, { 'switches': config.switches });
+                    discussionLoader.attachTo($('.discussion')[0]);
+                }
+            });
+        },
+
+        testCookie: function() {
+            var queryParams = Url.getUrlVars();
+            if (queryParams.test) {
+                Cookies.addSessionCookie('GU_TEST', encodeURIComponent(queryParams.test));
             }
         }
     };
@@ -515,14 +399,10 @@ define([
         deferToLoadEvent(function() {
             if (!self.initialisedDeferred) {
                 self.initialisedDeferred = true;
-                modules.initAbTests(config);
                 modules.logLiveStats(config);
                 modules.loadAnalytics(config, context);
                 modules.cleanupCookies(context);
-                modules.runAbTests(config, context);
                 modules.transcludePopular(config);
-                modules.loadCommercialComponent(config, context);
-                modules.loadAdverts(config);
                 modules.transcludeRelated(config, context);
                 modules.transcludeOnwardContent(config, context);
                 modules.initRightHandComponent(config, context);
@@ -534,16 +414,16 @@ define([
     var ready = function (config, context) {
         if (!this.initialised) {
             this.initialised = true;
-            modules.displayOnboardMessage(config);
+            modules.initFastClick();
+            modules.testCookie();
             modules.windowEventListeners();
+            modules.initialiseFauxBlockLink(context);
             modules.checkIframe();
             modules.upgradeImages();
             modules.showTabs();
-            if(config.switches.newNavigation){
-                modules.initialiseNewNavigation(config);
-            } else {
-                modules.initialiseNavigation(config);
-            }
+            modules.initialiseTopNavItems(config);
+            modules.initialiseNavigation(config);
+            modules.displayBreakingNews(config);
             modules.showToggles();
             modules.showRelativeDates();
             modules.initClickstream();
@@ -554,14 +434,13 @@ define([
             modules.logReadingHistory();
             modules.unshackleParagraphs(config, context);
             modules.initAutoSignin(config);
-            modules.loadTags(config);
             modules.augmentInteractive();
             modules.runForseeSurvey(config);
             modules.startRegister(config);
             modules.repositionComments();
             modules.showMoreTagsLink();
             modules.showSmartBanner(config);
-            modules.showSurveyBanner(config);
+            modules.initDiscussion();
         }
         mediator.emit('page:common:ready', config, context);
     };
@@ -575,3 +454,4 @@ define([
         init: init
     };
 });
+

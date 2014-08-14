@@ -1,7 +1,6 @@
 @(item: model.MetaData)(implicit request: RequestHeader)
 @import common._
 @import conf._
-@import Switches._
 @import play.api.Play
 @import play.api.Play.current
 @import views.support._
@@ -21,17 +20,15 @@
 <link rel="apple-touch-icon" sizes="72x72" href="@Static("images/favicons/72x72.png")" />
 <link rel="apple-touch-icon-precomposed" href="@Static("images/favicons/57x57.png")" />
 
-@if(RssLinkSwitch.isSwitchedOn) {
-    @item.rssPath.map { path =>
-      <link href="@{LinkTo(path)}" rel="alternate" type="application/rss+xml" title="@views.support.Title(item) RSS feed" />
-    }
+@item.rssPath.map { path =>
+  <link href="@{LinkTo(path)}" rel="alternate" type="application/rss+xml" title="@views.support.Title(item) RSS feed" />
 }
 
 <link rel="canonical" href="@CanonicalLink(request)" />
 
 <meta name="apple-mobile-web-app-title" content="Guardian" />
 <meta name="application-name" content="The Guardian" />
-<meta name="msapplication-TileColor" content="#214583" />
+<meta name="msapplication-TileColor" content="#005689" />
 <meta name="msapplication-TileImage" content="@Static("images/favicons/windows_tile_144_b.png")" />
 
 @* https://support.google.com/plus/answer/1713826 *@
@@ -65,8 +62,8 @@
 }
 
 @item.pagination.map{ pagination =>
-    @pagination.next.map{ next => <link rel="next" href="@LinkTo(item.url)?page=@next" /> }
-    @pagination.previous.map{ prev => <link rel="prev" href="@LinkTo(item.url)@if(prev != 1){?page=@prev}" /> }
+    @pagination.next.map{ next => <link rel="next" href="@LinkTo(item.url+"?page="+next)" /> }
+    @pagination.previous.map{ prev => <link rel="prev" href="@LinkTo(item.url+(if(prev != 1){"?page="+prev}else{""}))" /> }
 }
 
 @*

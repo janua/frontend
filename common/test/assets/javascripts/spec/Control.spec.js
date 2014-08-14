@@ -1,7 +1,6 @@
-define([ 'common/common',
-         'bean',
+define([ 'bean',
          'common/modules/ui/toggles',
-         'helpers/fixtures'], function(common, bean, Toggles, fixtures) {
+         'helpers/fixtures'], function(bean, Toggles, fixtures) {
 
         describe("Controls", function() {
 
@@ -36,24 +35,10 @@ define([ 'common/common',
                 expect(document.getElementById('control-1').className).toContain('is-active')
             });
 
-            it("Should update the state of a button when touched (from an initial state of 'off')", function() {
-                new Toggles().init(document.querySelector('#controls-a'));
-
-                bean.fire(document.getElementById('control-2'), 'touchstart');
-                expect(document.getElementById('control-2').className).not.toContain('is-active')
-            });
-
             it("Should update the state of a button when clicked (from an initial state of 'on')", function() {
                 new Toggles().init(document.querySelector('#controls-a'));
 
                 bean.fire(document.getElementById('control-1'), 'click');
-                expect(document.getElementById('control-1').className).toContain('is-active')
-            });
-
-            it("Should update the state of a button when touched (from an initial state of 'on')", function() {
-                new Toggles().init(document.querySelector('#controls-a'));
-
-                bean.fire(document.getElementById('control-1'), 'touchstart');
                 expect(document.getElementById('control-1').className).toContain('is-active')
             });
 

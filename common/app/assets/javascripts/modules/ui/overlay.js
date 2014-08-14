@@ -1,10 +1,10 @@
 define([
     'bean',
-    'common/common',
+    'common/utils/mediator',
     'bonzo'
 ], function (
     bean,
-    common,
+    mediator,
     bonzo
 ) {
 
@@ -17,7 +17,7 @@ define([
                        '  <div class="overlay__header u-cf">' +
                        '    <div class="overlay__toolbar u-cf"></div>' +
                        '    <button class="overlay__cta overlay__cta--close js-overlay-close" data-link-name="Close overlay">' +
-                       '      <i class="i i-close-icon"></i>' +
+                       '      <i class="i i-close-icon-white"></i>' +
                        '    </button>' +
                        '  </div>' +
                        '  <div class="overlay__body">' + content + '</div>' +
@@ -37,7 +37,7 @@ define([
         bean.on(this.node, 'click', '.js-overlay-close', function(e) {
             e.preventDefault();
             self.hide();
-            common.mediator.emit('modules:overlay:close', self);
+            mediator.emit('modules:overlay:close', self);
         });
 
     }
@@ -56,7 +56,7 @@ define([
 
         window.scrollTo(window.pageXOffset, 0);
 
-        common.mediator.emit('modules:overlay:show', this);
+        mediator.emit('modules:overlay:show', this);
     };
 
     Overlay.prototype.hide = function() {
@@ -71,7 +71,7 @@ define([
 
 
         this.node.style.display = 'none';
-        common.mediator.emit('modules:overlay:hide', this);
+        mediator.emit('modules:overlay:hide', this);
     };
 
     Overlay.prototype.setBody = function(content) {

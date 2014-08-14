@@ -9,12 +9,15 @@ define([
     'utils/update-scrollables',
     'utils/terminate',
     'utils/is-valid-date',
+    'modules/list-manager',
+    'modules/droppable',
     'modules/authed-ajax',
+    'modules/copied-article',
     'models/group',
-    'models/collections/droppable',
     'models/collections/collection',
     'models/collections/article',
-    'models/collections/latest-articles'
+    'models/collections/latest-articles',
+    'models/collections/new-items'
 ], function(
     pageConfig,
     ko,
@@ -25,14 +28,16 @@ define([
     updateScrollables,
     terminate,
     isValidDate,
-    authedAjax,
-    Group,
+    listManager,
     droppable,
+    authedAjax,
+    copiedArticle,
+    Group,
     Collection,
     Article,
-    LatestArticles
+    LatestArticles,
+    newItems
 ) {
-
     return function() {
 
         var model = vars.model = {};
@@ -52,9 +57,15 @@ define([
 
         model.front = ko.observable();
 
-        model.liveMode = vars.state.liveMode;
+        model.headlineLength = ko.computed(function() {
+            return _.contains(vars.CONST.restrictHeadlinesOn, model.front()) ? vars.CONST.restrictedHeadlineLength : vars.CONST.headlineLength;
+        }, this);
 
-        model.frontSparkUrl = ko.observable();
+        model.title = ko.computed(function() {
+            return model.front() || (pageConfig.priority + ' fronts');
+        }, this);
+
+        model.liveMode = vars.state.liveMode;
 
         model.latestArticles = new LatestArticles({
             filterTypes: vars.CONST.filterTypes
@@ -62,7 +73,6 @@ define([
 
         model.clipboard = new Group({
             parentType: 'Clipboard',
-            reflow: updateScrollables,
             keepCopy:  true
         });
 
@@ -87,51 +97,69 @@ define([
         };
 
         model.previewUrl = ko.computed(function() {
-            return vars.CONST.viewer + '#env=' + pageConfig.env + '&url=' + model.front() + encodeURIComponent('?view=mobile');
+            if (pageConfig.env === 'prod' && !model.liveMode()) {
+                return vars.CONST.previewBase + '/responsive-viewer/' + model.front();
+            } else {
+                return vars.CONST.viewer +
+                    '#env=' + pageConfig.env +
+                    '&mode=' + (model.liveMode() ? 'live' : 'draft' ) +
+                    '&url=' + model.front();
+            }
         });
 
-        function detectPressFailure() {
-            model.statusPressFailure(false);
+        model.detectPressFailureCount = 0;
+
+        model.deferredDetectPressFailure = _.debounce(function () {
+            var count;
 
             if (model.switches()['facia-tool-check-press-lastmodified'] && model.front()) {
+                model.statusPressFailure(false);
+
+                count = ++model.detectPressFailureCount;
+
                 authedAjax.request({
                     url: '/front/lastmodified/' + model.front()
                 })
                 .always(function(resp) {
                     var lastPressed;
 
-                    if (resp.status !== 200) { return; }
-                    lastPressed = new Date(resp.responseText);
-                    if (isValidDate(lastPressed)) {
-                        model.statusPressFailure(
-                            _.some(model.collections(), function(collection) {
-                                var l = new Date(collection.state.lastUpdated());
-                                return isValidDate(l) ? l > lastPressed : false;
-                            })
-                        );
+                    if (model.detectPressFailureCount === count && resp.status === 200) {
+                        lastPressed = new Date(resp.responseText);
+
+                        if (isValidDate(lastPressed)) {
+                            model.statusPressFailure(
+                                _.some(model.collections(), function(collection) {
+                                    var l = new Date(collection.state.lastUpdated());
+                                    return isValidDate(l) ? l > lastPressed : false;
+                                })
+                            );
+                        }
                     }
                 });
             }
-        }
+        }, vars.CONST.detectPressFailureMs || 10000);
 
-        var deferredDetectPressFailure = _.debounce(detectPressFailure, vars.CONST.detectPressFailureMs || 10000);
-
-        function pressFront() {
+        model.pressLiveFront = function () {
             model.statusPressFailure(false);
-
             if (model.front()) {
                 authedAjax.request({
-                    url: '/collection/update/' + model.collections()[0].id,
+                    url: '/press/live/' + model.front(),
                     method: 'post'
                 })
                 .always(function() {
-                    deferredDetectPressFailure();
+                    model.deferredDetectPressFailure();
                 });
             }
-        }
+        };
 
-        model.deferredDetectPressFailure = deferredDetectPressFailure;
-        model.pressFront = pressFront;
+        model.pressDraftFront = function () {
+            if (model.front()) {
+                authedAjax.request({
+                    url: '/press/draft/' + model.front(),
+                    method: 'post'
+                });
+            }
+        };
 
         function getFront() {
             return queryParams().front;
@@ -140,7 +168,8 @@ define([
         function loadCollections(frontId) {
             model.collections(
                 ((vars.state.config.fronts[frontId] || {}).collections || [])
-                .filter(function(id){ return vars.state.config.collections[id]; })
+                .filter(function(id) { return vars.state.config.collections[id]; })
+                .filter(function(id) { return !vars.state.config.collections[id].uneditable; })
                 .map(function(id){
                     return new Collection(
                         _.extend(
@@ -158,14 +187,6 @@ define([
                     );
                 })
             );
-            showFrontSpark();
-        }
-
-        function showFrontSpark() {
-            model.frontSparkUrl(undefined);
-            if (model.switches()['facia-tool-sparklines']) {
-                model.frontSparkUrl(vars.sparksBaseFront + getFront());
-            }
         }
 
         var startCollectionsPoller = _.once(function() {
@@ -189,7 +210,6 @@ define([
                         list.refreshSparklines();
                     }, index * period / (model.collections().length || 1)); // stagger requests
                 });
-                showFrontSpark();
             }, period);
         });
 
@@ -204,9 +224,9 @@ define([
         });
 
         this.init = function() {
-            droppable.init();
-
             fetchSettings(function (config, switches) {
+                var fronts;
+
                 if (switches['facia-tool-disable']) {
                     terminate();
                     return;
@@ -215,17 +235,19 @@ define([
 
                 vars.state.config = config;
 
-                model.fronts(
-                    getFront() === 'testcard' ? ['testcard'] :
-                       _.chain(config.fronts)
-                        .map(function(front, path) {
-                            return front.priority === vars.priority ? path : undefined;
-                        })
-                        .without(undefined)
-                        .without('testcard')
-                        .sortBy(function(path) { return path; })
-                        .value()
-                );
+                fronts = getFront() === 'testcard' ? ['testcard'] :
+                   _.chain(config.fronts)
+                    .map(function(front, path) {
+                        return front.priority === vars.priority ? path : undefined;
+                    })
+                    .without(undefined)
+                    .without('testcard')
+                    .sortBy(function(path) { return path; })
+                    .value();
+
+                if (!_.isEqual(model.fronts(), fronts)) {
+                   model.fronts(fronts);
+                }
             }, vars.CONST.configSettingsPollMs, true)
             .done(function() {
                 var wasPopstate = false;
@@ -246,6 +268,10 @@ define([
                     }
                     wasPopstate = false;
                     loadCollections(front);
+
+                    if (!model.liveMode()) {
+                        model.pressDraftFront();
+                    }
                 });
 
                 model.liveMode.subscribe(function() {
@@ -253,6 +279,10 @@ define([
                         collection.closeAllArticles();
                         collection.populate();
                     });
+
+                    if (!model.liveMode()) {
+                        model.pressDraftFront();
+                    }
                 });
 
                 updateScrollables();
@@ -265,8 +295,10 @@ define([
                 model.latestArticles.search();
                 model.latestArticles.startPoller();
             });
+
+            listManager.init(newItems);
+            droppable.init();
+            copiedArticle.flush();
         };
-
     };
-
 });

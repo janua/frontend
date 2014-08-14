@@ -1,6 +1,7 @@
 define([
-    'common/$',
+    'common/utils/$',
     'common/utils/ajax',
+    'common/utils/config',
     'bonzo',
     'qwery',
     'bean',
@@ -16,6 +17,7 @@ define([
 ], function(
     $,
     ajax,
+    config,
     bonzo,
     qwery,
     bean,
@@ -66,7 +68,6 @@ Loader.prototype.classes = {
     comments: 'discussion__comments',
     commentBox: 'discussion__comment-box',
     commentBoxBottom: 'discussion__comment-box--bottom',
-    joinDiscussion: 'd-discussion__show-all-comments',
     topComments: 'discussion__comments--top-comments'
 };
 
@@ -130,13 +131,23 @@ Loader.prototype.ready = function() {
         var commentId = self.getCommentIdFromHash();
         if (commentId) {
             self.comments.gotoComment(commentId);
-            bonzo(self.getElem('joinDiscussion')).addClass('u-h');
         }
     });
 
     // More for analytics than anything
     if (window.location.hash === '#comments') {
         this.mediator.emit('discussion:seen:comments-anchor');
+    }
+
+    // The check on this should be done through the discussion API
+    // for now though this is a good (enough) check
+    if (config.switches.sentimentalComments) {
+        setTimeout(function() {
+            $('.open a[href="#comments"]').each(function () {
+                $('.d-discussion').addClass('d-discussion--sentimental');
+                $('.discussion__show-threaded').remove();
+            }.bind(this));
+        }.bind(this), 800); // used as we don't know when the open module loads.
     }
 
     register.end('discussion');
@@ -188,10 +199,6 @@ Loader.prototype.loadComments = function(args) {
                 self.comments.removeState('shut');
             }
 
-            self.on('click', self.getElem('joinDiscussion'), function (e) {
-                self.comments.showHiddenComments(e);
-                self.cleanUpOnShowComments();
-            });
             bonzo(commentsContainer).removeClass('js-hidden');
             self.initUnthreaded();
         }).fail(self.loadingError.bind(self));
@@ -217,7 +224,7 @@ Loader.prototype.initUnthreaded = function() {
 
             $el.data('loaded', true);
             $loader.removeClass('u-h');
-            activityStream.endpoint = '/discussion/non-threaded'+ this.getDiscussionId() + '.json';
+            activityStream.endpoint = '/discussion/non-threaded'+ this.getDiscussionId() + '.json?page=:page';
             activityStream
                 .fetch($nonThreadedContainer[0])
                 .then(function() {
@@ -331,6 +338,7 @@ Loader.prototype.renderCommentBox = function() {
             switches: this.options.switches
         });
         this.commentBox.render(this.getElem('commentBox'));
+
         this.commentBox.on('post:success', this.commentPosted.bind(this));
         this.canComment = true;
     }
@@ -352,7 +360,6 @@ Loader.prototype.commentPosted = function () {
 /* Configure DOM for viewing of comments once some have been shown */
 Loader.prototype.cleanUpOnShowComments = function () {
     bonzo(this.comments.getElem('header')).removeClass('u-h');
-    bonzo(this.getElem('joinDiscussion')).addClass('u-h');
 };
 
 Loader.prototype.renderUserBanned = function() {

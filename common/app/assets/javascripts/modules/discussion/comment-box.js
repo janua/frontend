@@ -1,6 +1,8 @@
 define([
+    'common/utils/$',
     'bean',
     'bonzo',
+    'common/utils/config',
     'common/utils/context',
     'common/utils/mediator',
     'common/modules/discussion/api',
@@ -9,8 +11,10 @@ define([
     'common/modules/discussion/user-avatars',
     'common/modules/identity/validation-email'
 ], function(
+    $,
     bean,
     bonzo,
+    config,
     context,
     mediator,
     DiscussionApi,
@@ -68,6 +72,7 @@ CommentBox.prototype.classes = {};
 CommentBox.prototype.errorMessages = {
     EMPTY_COMMENT_BODY: 'Please write a comment.',
     COMMENT_TOO_LONG: 'Your comment must be fewer than 5000 characters long.',
+    COMMENT_NEEDS_SENTIMENT: 'Please select yes or no.',
     ENHANCE_YOUR_CALM: 'You can only post one comment every minute. Please try again in a moment.',
     USER_BANNED: 'Commenting has been disabled for this account (<a href="/community-faqs#321a">why?</a>).',
     API_ERROR: 'Sorry, there was a problem posting your comment.',
@@ -136,7 +141,6 @@ CommentBox.prototype.prerender = function() {
         window.setTimeout(setSpoutMargin.bind(this), 0);
 
     }
-
 };
 
 /** @override */
@@ -154,6 +158,7 @@ CommentBox.prototype.ready = function() {
     bean.on(this.context, 'change keyup', [commentBody], this.setFormState.bind(this));
     bean.on(commentBody, 'focus', this.setExpanded.bind(this)); // this isn't delegated as bean doesn't support it
     this.on('click', this.getClass('preview'), this.previewComment);
+    this.on('click', this.getClass('hide-preview'), this.resetPreviewComment);
     this.on('click', this.getClass('cancel'), this.cancelComment);
     this.on('click', this.getClass('show-parent'), this.setState.bind(this, 'parent-visible', false));
     this.on('click', this.getClass('hide-parent'), this.removeState.bind(this, 'parent-visible', false));
@@ -168,6 +173,32 @@ CommentBox.prototype.ready = function() {
     if (this.options.focus) {
         this.getElem('body').focus();
     }
+
+    if (config.switches.sentimentalComments) {
+        setTimeout(function() {
+            $('.open a[href="#comments"]').each(function (openLink) {
+                var sentimentActiveClass = 'd-comment-box__sentiment--active';
+                this.setState('sentimental');
+                this.options.maxLength = 350;
+
+                $.create('<div>' + $('.open__head__accent').text() + '</div>')
+                    .addClass('d-comment-box__sentiments-head tone-news tone-colour')
+                    .insertAfter(this.getElem('sentiments'));
+
+                bean.on(openLink, 'click', function (e) {
+                    this.getElem('body').focus();
+                    e.preventDefault();
+                }.bind(this));
+
+                bean.on(this.elem, 'click', this.getClass('sentiment'), function (e) {
+                    $('.' + sentimentActiveClass, this.elem).removeClass(sentimentActiveClass);
+                    $(e.currentTarget).addClass(sentimentActiveClass);
+                    this.elem.sentiment.value = e.currentTarget.getAttribute('data-value');
+                    this.getElem('body').focus();
+                }.bind(this));
+            }.bind(this));
+        }.bind(this), 800);
+    }
 };
 
 /**
@@ -176,8 +207,12 @@ CommentBox.prototype.ready = function() {
 CommentBox.prototype.postComment = function(e) {
     var self = this,
         comment = {
-            body: this.getElem('body').value
+            body: this.elem.body.value
         };
+
+    if (this.elem.sentiment.value) {
+        comment.sentiment = this.elem.sentiment.value;
+    }
 
     e.preventDefault();
     self.clearErrors();
@@ -189,7 +224,11 @@ CommentBox.prototype.postComment = function(e) {
 
         if (comment.body.length > self.options.maxLength) {
             self.error('COMMENT_TOO_LONG', '<b>Comments must be shorter than '+ self.options.maxLength +' characters.</b>'+
-                'Yours is currently '+ (comment.body.length-self.options.maxLength) +' characters too long.');
+                'Yours is currently '+ (comment.body.length-self.options.maxLength) +' character(s) too long.');
+        }
+
+        if (self.hasState('sentimental') && !comment.sentiment) {
+            self.error('COMMENT_NEEDS_SENTIMENT');
         }
 
         if (self.options.replyTo) {
@@ -204,7 +243,7 @@ CommentBox.prototype.postComment = function(e) {
         }
     };
 
-    var  invalidEmailError = function () {
+    var invalidEmailError = function () {
         self.error('EMAIL_NOT_VERIFIED');
         ValidationEmail.init(self.context);
     };
@@ -254,8 +293,7 @@ CommentBox.prototype.error = function(type, message) {
 CommentBox.prototype.postCommentSuccess = function(comment, resp) {
     comment.id = parseInt(resp.message, 10);
     this.getElem('body').value = '';
-    this.removeState('preview-visible');
-    this.getElem('preview-body').innerHTML = '';
+    this.resetPreviewComment();
     this.setFormState();
     this.emit('post:success', comment);
     this.mediator.emit('discussion:commentbox:post:success', comment);
@@ -308,15 +346,12 @@ CommentBox.prototype.setFormState = function(disabled) {
     disabled = typeof disabled === 'boolean' ? disabled : false;
 
     var commentBody = this.getElem('body'),
-        submitButton = this.getElem('submit'),
-        previewSubmitButton = this.getElem('preview-submit');
+        submitButton = this.getElem('submit');
 
     if (disabled || commentBody.value.length === 0) {
         submitButton.setAttribute('disabled', 'disabled');
-        previewSubmitButton.setAttribute('disabled', 'disabled');
     } else {
         submitButton.removeAttribute('disabled');
-        previewSubmitButton.removeAttribute('disabled');
     }
 };
 
@@ -362,8 +397,7 @@ CommentBox.prototype.previewComment = function(e) {
     self.clearErrors();
 
     if (comment.body === '') {
-        this.getElem('preview-body').innerHTML = '';
-        this.removeState('preview-visible');
+        this.resetPreviewComment();
         self.error('EMPTY_COMMENT_BODY');
     }
 
@@ -386,12 +420,18 @@ CommentBox.prototype.cancelComment = function() {
     if (this.options.state === 'response') {
         this.destroy();
     } else {
-        this.getElem('preview-body').innerHTML = '';
-        this.removeState('preview-visible');
+        this.resetPreviewComment();
         this.getElem('body').value = '';
         this.setFormState();
         this.removeState('expanded');
     }
+};
+
+
+
+CommentBox.prototype.resetPreviewComment = function() {
+    this.removeState('preview-visible');
+    this.getElem('preview-body').innerHTML = '';
 };
 
 /**

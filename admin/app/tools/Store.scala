@@ -2,11 +2,13 @@ package tools
 
 import common.Logging
 import conf.AdminConfiguration
-import conf.Configuration.commercial.{dfpAdvertisementFeatureTagsDataKey, dfpSponsoredTagsDataKey, dfpPageSkinnedAdUnitsKey, dfpLineItemsKey}
+import conf.Configuration.commercial._
 import services.S3
-import play.api.libs.json.Json
+import dfp.{PageSkinSponsorshipReportParser, PageSkinSponsorshipReport, SponsorshipReport, SponsorshipReportParser}
+import org.joda.time.DateTime
+import implicits.Dates
 
-trait Store extends Logging {
+trait Store extends Logging with Dates {
   lazy val configKey = AdminConfiguration.configKey
   lazy val switchesKey = AdminConfiguration.switchesKey
   lazy val topStoriesKey = AdminConfiguration.topStoriesKey
@@ -30,16 +32,29 @@ trait Store extends Logging {
   def putDfpAdvertisementFeatureTags(keywordsJson: String) {
     S3.putPublic(dfpAdvertisementFeatureTagsDataKey, keywordsJson, defaultJsonEncoding)
   }
+  def putInlineMerchandisingSponsorships(keywordsJson: String) {
+    S3.putPublic(inlineMerchandisingSponsorshipsDataKey, keywordsJson, defaultJsonEncoding)
+  }
   def putDfpPageSkinAdUnits(adUnitJson: String) {
     S3.putPublic(dfpPageSkinnedAdUnitsKey, adUnitJson, defaultJsonEncoding )
   }
   def putDfpLineItemsReport(everything: String) {
     S3.putPublic(dfpLineItemsKey, everything, defaultJsonEncoding)
   }
+  def putCachedTravelOffersFeed(everything: String) {
+    S3.putPublic(travelOffersS3Key, everything, "text/plain")
+  }
 
-  def getDfpSponsoredTags() = S3.get(dfpSponsoredTagsDataKey)
-  def getDfpAdvertisementTags() = S3.get(dfpAdvertisementFeatureTagsDataKey)
-  def getDfpPageSkinnedAdUnits() = S3.get(dfpPageSkinnedAdUnitsKey)
+  val now: String = DateTime.now().toHttpDateTimeString
+
+  def getDfpSponsoredTags() =
+    S3.get(dfpSponsoredTagsDataKey).flatMap(SponsorshipReportParser(_)) getOrElse SponsorshipReport(now, Nil)
+  def getDfpAdvertisementTags() =
+    S3.get(dfpAdvertisementFeatureTagsDataKey).flatMap(SponsorshipReportParser(_)) getOrElse SponsorshipReport(now, Nil)
+  def getDfpPageSkinnedAdUnits() =
+    S3.get(dfpPageSkinnedAdUnitsKey).flatMap(PageSkinSponsorshipReportParser(_)) getOrElse PageSkinSponsorshipReport(now, Nil)
+  def getDfpInlineMerchandisingSponsorships() =
+    S3.get(inlineMerchandisingSponsorshipsDataKey).flatMap(SponsorshipReportParser(_)) getOrElse SponsorshipReport(now, Nil)
   def getDfpLineItemsReport() = S3.get(dfpLineItemsKey)
 }
 

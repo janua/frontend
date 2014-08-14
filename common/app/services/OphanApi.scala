@@ -5,7 +5,8 @@ import play.api.libs.json._
 import conf.Configuration._
 import common.{ExecutionContexts, Logging}
 import play.api.libs.ws.WS
-
+import java.net.URL
+import play.api.Play.current
 
 object OphanApi extends ExecutionContexts with Logging {
 
@@ -21,6 +22,14 @@ object OphanApi extends ExecutionContexts with Logging {
       log.error("Ophan host or key not configured")
       Future.successful(JsObject(Nil))
     }
+  }
+
+  def UrlToContentPath(url: String): String = {
+    var contentId = new URL(url).getPath
+    if (contentId.startsWith("/")) {
+      contentId = contentId.substring(1)
+    }
+    contentId
   }
 
   def getBreakdown(platform: String, hours: Int): Future[JsValue] = getBody(s"breakdown?platform=$platform&hours=$hours")
@@ -41,10 +50,21 @@ object OphanApi extends ExecutionContexts with Logging {
 
   def getMostReferredFromSocialMedia(days: Int): Future[JsValue] = getBody(s"mostread?days=$days&referrer=social%20media")
 
-  def getAdsRenderTime(platform: String): Future[JsValue] =
-    getBody(s"ads/render-time?platform=${platform}&hours=24", 5000)
+  val validQueryKeys = Seq("platform", "hours", "ad-slot")
 
-  def getAdsRenderTime(platform: String, slotName: String): Future[JsValue] =
-    getBody(s"ads/render-time?platform=${platform}&hours=24&ad-slot=$slotName", 5000)
+  def getAdsRenderTime(params: Map[String, Seq[String]]): Future[JsValue] = {
+    val query: String = params
+      .filter { case(k, v) =>
+        validQueryKeys.contains(k)
+      }
+      .map { case (k, v) =>
+        k + "=" + v.mkString(",")
+      }
+      .mkString("&")
+    getBody(s"ads/render-time?$query", 5000)
+  }
 
+  def getSurgingContent() = getBody("surging?")
+
+  def getMostViewedVideos(hours: Int, count: Int): Future[JsValue] = getBody(s"video/mostviewed?hours=$hours&count=$count")
 }

@@ -1,11 +1,11 @@
 package conf
 
-import com.gu.management.{ DefaultSwitch, Switchable }
 import common._
 import implicits.Collections
-import org.joda.time.{Days, DateTime, DateMidnight}
+import org.joda.time.{Days, DateTime, LocalDate}
 import play.api.libs.ws.WS
 import play.api.{Application, Plugin}
+import play.api.Play.current
 
 sealed trait SwitchState
 case object On extends SwitchState
@@ -15,12 +15,12 @@ case class Switch( group: String,
                    name: String,
                    description: String,
                    safeState: SwitchState,
-                   sellByDate: DateMidnight
+                   sellByDate: LocalDate
                  ) extends Switchable {
 
   val delegate = DefaultSwitch(name, description, initiallyOn = safeState == On)
 
-  def isSwitchedOn: Boolean = delegate.isSwitchedOn && new DateMidnight().isBefore(sellByDate)
+  def isSwitchedOn: Boolean = delegate.isSwitchedOn && new LocalDate().isBefore(sellByDate)
 
   def switchOn() {
     if (isSwitchedOff) {
@@ -33,7 +33,7 @@ case class Switch( group: String,
     }
   }
 
-  def daysToExpiry = Days.daysBetween(new DateTime(), sellByDate).getDays
+  def daysToExpiry = Days.daysBetween(new DateTime(), sellByDate.toDateTimeAtStartOfDay).getDays
 
   def expiresSoon = daysToExpiry < 7
 }
@@ -42,11 +42,7 @@ object Switches extends Collections {
 
   // Switch names can be letters numbers and hyphens only
 
-  private lazy val never = new DateMidnight(2100, 1, 1)
-
-  // Waiting for an answer from Australian office, due imminently.
-  private lazy val profilingEvalDeadline = new DateMidnight(2014, 6, 25)
-
+  private lazy val never = new LocalDate(2100, 1, 1)
 
   // Load Switches
 
@@ -85,7 +81,7 @@ object Switches extends Collections {
 
   val CssFromStorageSwitch = Switch("Performance Switches", "css-from-storage",
     "If this switch is on CSS will be cached in users localStorage and read from there on subsequent requests.",
-    safeState = Off, sellByDate = never
+    safeState = On, sellByDate = never
   )
 
   val ShowAllArticleEmbedsSwitch = Switch("Performance Switches", "show-all-embeds",
@@ -104,6 +100,11 @@ object Switches extends Collections {
   )
 
   // Advertising Switches
+
+  val CommercialSwitch = Switch("Advertising", "commercial",
+    "Kill switch for all commercial JS.",
+    safeState = On, sellByDate = never
+  )
 
   val StandardAdvertsSwitch = Switch("Advertising", "standard-adverts",
     "Display 'standard' adverts, e.g. top banner ads, inline ads, MPUs, etc.",
@@ -127,49 +128,49 @@ object Switches extends Collections {
 
   val SmartBannerSwitch = Switch("Advertising", "smart-banner",
     "Display smart app banner onboarding message to iOS and Android users",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 30)
+    safeState = Off, sellByDate = new LocalDate(2014, 8, 31)
   )
-
-  val SurveyBannerSwitch = Switch("Advertising", "survey-banner",
-    "Display survey banner on all devices",
-    safeState = Off, sellByDate = new DateMidnight(2014, 7, 1)
-  )
-
-  // Ad Targeting
-  /*
-    These switches are to control length of request to DFP
-    while there's a problem with the maximum length constraint
-  */
-
-  val AudienceScienceSwitch = Switch("Ad Targeting", "audience-science",
-    "If this switch is on, Audience Science segments will be used to target ads.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 11, 1))
-
-  val AudienceScienceGatewaySwitch = Switch("Ad Targeting", "audience-science-gateway",
-    "If this switch is on, Audience Science Gateway segments will be used to target ads.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 11, 1))
-
-  val CriteoSwitch = Switch("Ad Targeting", "criteo",
-    "If this switch is on, Criteo segments will be used to target ads.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 11, 1))
 
   // Commercial Tags
 
-  val ImrWorldwideSwitch = Switch("Commercial Tags", "imr-worldwide",
-    "Enable the IMR Worldwide audience segment tracking.",
-    safeState = Off, sellByDate = profilingEvalDeadline)
+  val AudienceScienceSwitch = Switch("Commercial Tags", "audience-science",
+    "If this switch is on, Audience Science segments will be used to target ads.",
+    safeState = Off, sellByDate = new LocalDate(2014, 11, 1))
+
+  val AudienceScienceGatewaySwitch = Switch("Commercial Tags", "audience-science-gateway",
+    "If this switch is on, Audience Science Gateway segments will be used to target ads.",
+    safeState = Off, sellByDate = new LocalDate(2014, 11, 1))
+
+  val CriteoSwitch = Switch("Commercial Tags", "criteo",
+    "If this switch is on, Criteo segments will be used to target ads.",
+    safeState = Off, sellByDate = new LocalDate(2014, 11, 1))
 
   val EffectiveMeasureSwitch = Switch("Commercial Tags", "effective-measure",
     "Enable the Effective Measure audience segment tracking.",
-    safeState = Off, sellByDate = profilingEvalDeadline)
+    safeState = Off, sellByDate = never)
 
-  // We don't foresee this service being switched off
-  val ForeseeSwitch = Switch("Performance Switches", "foresee",
-    "Enable Foresee surveys for a sample of our audience",
+  val ImrWorldwideSwitch = Switch("Commercial Tags", "imr-worldwide",
+    "Enable the IMR Worldwide audience segment tracking.",
     safeState = Off, sellByDate = never)
 
   val MediaMathSwitch = Switch("Commercial Tags", "media-math",
     "Enable Media Math audience segment tracking",
+    safeState = Off, sellByDate = never)
+
+  val RemarketingSwitch = Switch("Commercial Tags", "remarketing",
+    "Enable Remarketing tracking",
+    safeState = Off, sellByDate = never)
+
+  // Content Recommendation
+
+  val OutbrainSwitch = Switch("Content Recommendation", "outbrain",
+    "Enable the Outbrain content recommendation widget.",
+    safeState = Off, sellByDate = never)
+
+
+  // We don't foresee this service being switched off
+  val ForeseeSwitch = Switch("Performance Switches", "foresee",
+    "Enable Foresee surveys for a sample of our audience",
     safeState = Off, sellByDate = never)
 
   // Commercial Feeds
@@ -212,12 +213,7 @@ object Switches extends Collections {
 
   val DiagnosticsLogging = Switch("Diagnostics", "enable-diagnostics-logging",
     "If this switch is on, then js error reports and requests sent to the Diagnostics servers will be logged.",
-    safeState = Off, never
-  )
-
-  val FreshnessLoggingSwitch = Switch("Diagnostics", "freshness",
-    "If this switch is on, page freshness will be logged.",
-    safeState = On, new DateMidnight(2014, 6, 30)
+    safeState = On, never
   )
 
   val ScrollDepthSwitch = Switch("Analytics", "scroll-depth",
@@ -229,7 +225,7 @@ object Switches extends Collections {
 
   val ReleaseMessageSwitch = Switch("Feature Switches", "release-message",
     "If this is switched on users will be messaged that they are inside the beta release",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 30)
+    safeState = Off, sellByDate = new LocalDate(2014, 8, 31)
   )
 
   val GeoMostPopular = Switch("Feature Switches", "geo-most-popular",
@@ -239,7 +235,7 @@ object Switches extends Collections {
 
   val FontSwitch = Switch("Feature Switches", "web-fonts",
     "If this is switched on then the custom Guardian web font will load.",
-    safeState = Off, sellByDate = never
+    safeState = On, sellByDate = never
   )
 
   val SearchSwitch = Switch("Feature Switches", "google-search",
@@ -250,11 +246,6 @@ object Switches extends Collections {
   val IdentityProfileNavigationSwitch = Switch("Feature Switches", "id-profile-navigation",
     "If this switch is on you will see the link in the topbar taking you through to the users profile or sign in..",
     safeState = On, sellByDate = never
-  )
-
-  val ClientSideErrorSwitch = Switch("Feature Switches", "client-side-errors",
-    "If this is switch on the the browser will log JavaScript errors to the server (via a beacon)",
-    safeState = Off, sellByDate = never
   )
 
   val FacebookAutoSigninSwitch = Switch("Feature Switches", "facebook-autosignin",
@@ -272,32 +263,12 @@ object Switches extends Collections {
     safeState = Off, sellByDate = never
   )
 
-  val NetworkFrontOptIn = Switch("Feature Switches", "network-front-opt-in",
-    "If this is switched on then an opt-in message will be displayed to users coming from the R2 network front",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 30)
-  )
-
   val IndiaRegionSwitch = Switch("Feature Switches", "india-region",
     "If this switch is switched on then the India region will be enabled",
     safeState = Off,
     // I know this is far away, but this will lie dormant for a while (other than testing) while
     // the planets align for the rest of the project
-    sellByDate = new DateMidnight(2014, 10, 30)
-  )
-
-  val RssLinkSwitch = Switch("Feature Switches", "rss-link",
-    "If this switch is on a link to the RSS is rendered in the HTML",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 30)
-  )
-
-  val TagLinkingSwitch = Switch("Feature Switches", "tag-linking",
-    "If this switch is turned on then tags will be 'auto' linked to where possible in article bodies",
-    safeState = On, sellByDate = new DateMidnight(2014, 6, 30)
-  )
-
-  val NewNavigationSwitch = Switch("Feature Switches", "new-navigation",
-    "If this switch is turned on then the new navigation will be displayed on mobiles and tablets",
-    safeState = Off, sellByDate = new DateMidnight(2014, 7, 8)
+    sellByDate = new LocalDate(2014, 10, 30)
   )
 
   val EnhanceTweetsSwitch = Switch("Feature Switches", "enhance-tweets",
@@ -305,41 +276,26 @@ object Switches extends Collections {
     safeState = Off, sellByDate = never
   )
 
-  val WorldCupWallchartEmbedSwitch = Switch("Feature Switches", "worldcup-wallchart-embed",
-    "If this switch is turned on JavaScript will load. It will be removed after the new Premier League session starts.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 8, 10)
+  val SentimentalCommentsSwitch = Switch("Feature Switches", "sentimental-comments",
+    "When this switch is on, you will be able to put sentiment into your comments.",
+    safeState = Off, sellByDate = new LocalDate(2014, 9, 1)
   )
 
-  val WorldCupArticleContainerSwitch = Switch("Feature Switches", "worldcup-article-container",
-    "If this switch is turned on world cup articles will have an extra container.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 8, 10)
+  val EnhancedMediaPlayerSwitch = Switch("Feature Switches", "enhanced-media-player",
+    "If this is switched on then videos are enhanced using our JavaScript player",
+    safeState = On, sellByDate = never
+  )
+
+  val BreakingNewsSwitch = Switch("Feature Switches", "breaking-news",
+    "If this is switched on then the breaking news feed is requested and articles are displayed",
+    safeState = Off, sellByDate = new LocalDate(2014, 9, 30)
   )
 
   // A/B Tests
 
-  val ABHideSupportingLinks = Switch("A/B Tests", "ab-hide-supporting-links",
-    "If this switch is turned on, run the HideSupportingLinks A/B test.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 24)
-  )
-
-  val ABAcrossTheGuardian = Switch("A/B Tests", "ab-across-the-guardian",
-    "If this switch is turned on, run the AcrossTheGuardian A/B/C/D test.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 25)
-  )
-
-  val ABDisplaySociallyReferredBurners = Switch("A/B Tests", "ab-display-socially-referred-burners",
-    "If this switch is turned on, run the DisplayReferredContent A/B test",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 24)
-  )
-
-  val ABSentry = Switch("A/B Tests", "ab-sentry",
-    "If this switch is turned on, users JavaScript errors will be beaconed back to the Sentry server.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 6, 27)
-  )
-
-  val ABLargerMobileMpu = Switch("A/B Tests", "ab-larger-mobile-mpu",
-    "If this switch is turned on, run the LargerMobileMpu A/B test",
-    safeState = Off, sellByDate = new DateMidnight(2014, 7, 1)
+  val ABHighCommercialComponent = Switch("A/B Tests", "ab-high-commercial-component",
+    "Switch for the High Commercial Component A/B test.",
+    safeState = Off, sellByDate = never
   )
 
   // Dummy Switches
@@ -356,7 +312,7 @@ object Switches extends Collections {
 
   val AlwaysExpiredSwitch = Switch("Unwired Test Switch", "always-expired",
     "Switch that is only used while running tests. You never need to change this switch.",
-    safeState = On, new DateMidnight().minusDays(1)
+    safeState = On, new LocalDate().minusDays(1)
   )
 
   // Facia Tool Switches
@@ -401,6 +357,16 @@ object Switches extends Collections {
     safeState = Off, sellByDate = never
   )
 
+  val FaciaToolDraftPressSwitch = Switch("Front Press Switches", "facia-tool-press-draft-front",
+    "If this switch is on facia tool will press draft fronts on each change",
+    safeState = Off, sellByDate = never
+  )
+
+  val FaciaToolDraftContent = Switch("Front Press Switches", "facia-tool-draft-content",
+    "If this switch is on facia tool will offer draft content to editors, and press draft fronts from draft content ",
+    safeState = Off, sellByDate = never
+  )
+
   val FaciaToolCachedContentApiSwitch = Switch("Front Press Switches", "facia-tool-cached-capi-requests",
     "If this switch is on facia tool will cache responses from the content API and use them on failure",
     safeState = On, sellByDate = never
@@ -419,7 +385,7 @@ object Switches extends Collections {
 
   val FaciaToolContainerTagsSwitch = Switch("Facia Tool", "facia-tool-tags",
     "If this switch is on the container configuration will allow articles to show their tags or sections",
-    safeState = Off, sellByDate = new DateMidnight(2014, 7, 7)
+    safeState = Off, sellByDate = new LocalDate(2014, 9, 2)
   )
 
   val ImageServerSwitch = Switch("Image Server", "image-server",
@@ -427,20 +393,35 @@ object Switches extends Collections {
     safeState = On, sellByDate = never // this is a performance related switch, not a feature switch
   )
 
-  val ParameterlessImagesSwitch = Switch("Image Server", "parameterless-images",
-    "If this switch is on images then image resize fields (width, height, quality) will be in the url and not in parameters.",
-    safeState = Off, sellByDate = new DateMidnight(2014, 7, 31)
-  )
-
   val SeoOptimisedContentImageSwitch = Switch("Image Server", "seo-optimised-article-image",
     "If this switch is on images then articles will get a 460px on static.guim.co.uk image as the low-res version.",
-    safeState = On, sellByDate = new DateMidnight(2014, 8, 30)
+    safeState = On, sellByDate = new LocalDate(2014, 8, 30)
+  )
+
+  // actually just here to make us remove this in the future
+  val GuShiftCookieSwitch = Switch("Feature Switches", "gu-shift-cookie",
+    "If switched on, the GU_SHIFT cookie will be updated when users opt into or out of Next Gen",
+    safeState = On, sellByDate = new LocalDate(2014, 9, 30)
+  )
+
+  val CenturyRedirectionSwitch = Switch("Feature Switches", "redirect-century-pages",
+    "If switched on, we redirect /century and /century/yyyy-yyyy to valid (non-R1) endpoints",
+    safeState = Off,
+
+    // extending as the owner of the switch is on holiday.
+    sellByDate = new LocalDate(2014, 8, 18)
+  )
+
+  val ChildrensBooksSwitch = Switch("Feature Switches", "childrens-books-hide-popular",
+    "If switched on, video pages in the childrens books section will not show popular videos",
+    safeState = On, sellByDate = new LocalDate(2014, 9, 8)
   )
 
   val all: List[Switch] = List(
     AutoRefreshSwitch,
     DoubleCacheTimesSwitch,
     RelatedContentSwitch,
+    CommercialSwitch,
     StandardAdvertsSwitch,
     CommercialComponentsSwitch,
     VideoAdvertsSwitch,
@@ -454,7 +435,6 @@ object Switches extends Collections {
     SearchSwitch,
     ReleaseMessageSwitch,
     IntegrationTestSwitch,
-    ClientSideErrorSwitch,
     IdentityProfileNavigationSwitch,
     CssFromStorageSwitch,
     FacebookAutoSigninSwitch,
@@ -473,6 +453,8 @@ object Switches extends Collections {
     ImrWorldwideSwitch,
     ForeseeSwitch,
     MediaMathSwitch,
+    RemarketingSwitch,
+    OutbrainSwitch,
     DiagnosticsLogging,
     TravelOffersFeedSwitch,
     JobFeedSwitch,
@@ -481,35 +463,33 @@ object Switches extends Collections {
     MoneysupermarketFeedsSwitch,
     LCMortgageFeedSwitch,
     GuBookshopFeedsSwitch,
-    NetworkFrontOptIn,
     ImageServerSwitch,
     FaciaToolPressSwitch,
     ShowAllArticleEmbedsSwitch,
     FrontPressJobSwitch,
     FaciaToolContainerTagsSwitch,
-    RssLinkSwitch,
     EnhanceTweetsSwitch,
-    NewNavigationSwitch,
-    WorldCupWallchartEmbedSwitch,
-    WorldCupArticleContainerSwitch,
+    SentimentalCommentsSwitch,
     IndiaRegionSwitch,
     MemcachedSwitch,
     MemcachedFallbackSwitch,
     IncludeBuildNumberInMemcachedKey,
     GeoMostPopular,
-    TagLinkingSwitch,
-    ABHideSupportingLinks,
-    ABAcrossTheGuardian,
-    ABDisplaySociallyReferredBurners,
-    ABSentry,
-    ABLargerMobileMpu,
     SmartBannerSwitch,
-    SurveyBannerSwitch,
-    ParameterlessImagesSwitch,
-    FreshnessLoggingSwitch,
     SeoOptimisedContentImageSwitch,
     FaciaToolCachedContentApiSwitch,
-    FaciaToolCachedZippingContentApiSwitch
+    FaciaToolCachedZippingContentApiSwitch,
+    FaciaToolDraftPressSwitch,
+    FaciaToolDraftContent,
+    GuShiftCookieSwitch,
+    ABHighCommercialComponent,
+    EnhancedMediaPlayerSwitch,
+    BreakingNewsSwitch,
+    CenturyRedirectionSwitch,
+    ChildrensBooksSwitch
+  )
+
+  val httpSwitches: List[Switch] = List(
   )
 
   val grouped: List[(String, Seq[Switch])] = all.toList stableGroupBy { _.group }

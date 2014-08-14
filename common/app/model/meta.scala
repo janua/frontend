@@ -1,9 +1,8 @@
 package model
 
-import common.{Pagination, ManifestData}
+import common.{NavItem, Edition, ManifestData, Pagination}
 import conf.Configuration
 import dfp.DfpAgent
-import conf.Switches._
 
 trait MetaData extends Tags {
   def id: String
@@ -15,6 +14,12 @@ trait MetaData extends Tags {
   def pagination: Option[Pagination] = None
   def description: Option[String] = None
   def rssPath: Option[String] = None
+
+  // i.e. show the link back to the desktop site
+  def hasClassicVersion: Boolean = !special
+
+  // Special means "Next Gen platform only".
+  def special = id.contains("-sp-")
 
   def title: Option[String] = None
   // this is here so it can be included in analytics.
@@ -28,9 +33,11 @@ trait MetaData extends Tags {
   lazy val isFront = false
   lazy val contentType = ""
 
-  lazy val adUnitSuffix = if (isFront) section + "/front" else section
+  def adUnitSuffix = section
 
-  lazy val hasPageSkin = false
+  def hasPageSkin(edition: Edition) = false
+
+  def isSurging = 0
 
   def metaData: Map[String, Any] = Map(
     ("page-id", id),
@@ -40,7 +47,9 @@ trait MetaData extends Tags {
     ("analytics-name", analyticsName),
     ("blockVideoAds", false),
     ("is-front", isFront),
-    ("ad-unit-suffix", adUnitSuffix)
+    ("ad-unit", s"/${Configuration.commercial.dfpAccountId}/${Configuration.commercial.dfpAdUnitRoot}/$adUnitSuffix/ng"),
+    ("is-surging", isSurging),
+    ("has-classic-version", hasClassicVersion)
   )
 
   def openGraph: Map[String, Any] = Map(
@@ -59,6 +68,8 @@ trait MetaData extends Tags {
   )
 
   def cacheSeconds = 60
+
+  def customSignPosting: Option[NavItem] = None
 }
 
 class Page(
@@ -129,12 +140,16 @@ trait Elements {
   def mainVideo: Option[VideoElement] = videos.find(_.isMain).headOption
   lazy val hasMainVideo: Boolean = mainVideo.flatMap(_.videoAssets.headOption).isDefined
 
+  def mainAudio: Option[AudioElement] = audios.find(_.isMain).headOption
+  lazy val hasMainAudio: Boolean = mainAudio.flatMap(_.audioAssets.headOption).isDefined
+
   def mainEmbed: Option[EmbedElement] = embeds.find(_.isMain).headOption
   lazy val hasMainEmbed: Boolean = mainEmbed.flatMap(_.embedAssets.headOption).isDefined
 
   lazy val bodyImages: Seq[ImageElement] = images.filter(_.isBody)
   lazy val bodyVideos: Seq[VideoElement] = videos.filter(_.isBody)
   lazy val videoAssets: Seq[VideoAsset] = videos.flatMap(_.videoAssets)
+  lazy val audioAssets: Seq[AudioAsset] = audios.flatMap(_.audioAssets)
   lazy val thumbnail: Option[ImageElement] = images.find(_.isThumbnail)
 
   def elements: Seq[Element] = Nil
@@ -146,6 +161,11 @@ trait Elements {
 
   protected lazy val videos: Seq[VideoElement] = elements.flatMap {
     case video: VideoElement => Some(video)
+    case _ => None
+  }
+
+  protected lazy val audios: Seq[AudioElement] = elements.flatMap {
+    case audio: AudioElement => Some(audio)
     case _ => None
   }
 
@@ -170,6 +190,8 @@ trait Tags {
 
   def isSponsored = DfpAgent.isSponsored(tags)
   def isAdvertisementFeature = DfpAgent.isAdvertisementFeature(tags)
+  def hasInlineMerchandise = DfpAgent.hasInlineMerchandise(tags)
+  def sponsor = DfpAgent.getSponsor(tags)
 
   // Tones are all considered to be 'News' it is the default so we do not list news tones explicitly
   lazy val visualTone: String =

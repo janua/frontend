@@ -3,6 +3,53 @@ scala:
 - 2.10.3
 env:
   global:
+  - TAG_INDEXES_BUCKET=aws-frontend-pressed
+  - ASSETS_PATH=/assets/
+  - ASSETS_SECUREPATH=/assets/
+  - IMAGES_PATH=http://i.guimcode.co.uk.global.prod.fastly.net/
+  - STATIC_PATH=http://static.guim.co.uk
+  - STATIC_SECUREPATH=https://static-secure.guim.co.uk
+  - STATICSPORT_PATH=http://sport.guim.co.uk
+  - SWITCHBOARD_CONFIG_URL=http://s3-eu-west-1.amazonaws.com/aws-frontend-store/DEV/config/switches.properties
+  - FRONT_CONFIG=http://s3-eu-west-1.amazonaws.com/aws-frontend-store/CODE/config/front.json
+  - FRONTEND_STORE=http://s3-eu-west-1.amazonaws.com/aws-frontend-store
+  - AJAX_CORS_ORIGIN=http://m.random.com,http://127.0.0.1:9000,http://www.random.com,http://m.thegulocal.com,https://profile.thegulocal.com,http://localhost:9000
+  - ADMIN_CONFIG_FILE=DEV/config/front.json
+  - SWITCHES_FILE=DEV/config/switches_properties
+  - ID_URL=https://profile_thegulocal_com
+  - ID_APIROOT=https://idapi.thegulocal.com
+  - ID_APICLIENTTOKEN=frontend-dev-client-token
+  - ID_WEBAPP_URL=https://id.thegulocal.com
+  - ID_MEMBERSHIP_URL=https://mem.thegulocal.com
+  - ID_MEMBERSHIP_STRIPEPUBLICTOKEN=pk_test_Qm3CGRdrV4WfGYCpm0sftR0f
+  - DISCUSSION_APIROOT=http://discussion.code.dev-guardianapis.com/discussion-api
+  - DISCUSSION_SECUREAPIROOT=https://discussion.code.dev-guardianapis.com/discussion-api
+  - DISCUSSION_APITIMEOUT=2000
+  - DISCUSSION_APICLIENTHEADER=nextgen-dev
+  - DISCUSSION_URL=http://discussion.code.dev-theguardian.com
+  - WITNESS_APIROOT=http://n0ticeapis.com/2
+  - OPEN_CTA_APIROOT=http://opencontent.code.dev-guardianapis.com/discussion-api
+  - GUARDIAN_PAGE_OMNITUREACCOUNT=guardiangu-frontend-dev
+  - GUARDIAN_PAGE_GOOGLESEARCHID=007466294097402385199:m2ealvuxh1i
+  - GUARDIAN_PAGE_FBAPPID=232588266837342
+  - GUARDIAN_PAGE_IDAPIJSCLIENTTOKEN=frontend-dev-js-client-token
+  - GUARDIAN_PAGE_ONWARDWEBSOCKET=wss://frontend-OnwardLo-G3SS42I4G3PN-384008737.eu-west-1.elb.amazonaws.com/recently-published
+  - GUARDIAN_PAGE_DFPACCOUNTID=158186692
+  - GUARDIAN_PAGE_DFPADUNITROOT=test-theguardian.com
+  - GUARDIAN_PAGE_SENTRYPUBLICAPIKEY=49094b9a8f3d48889e30b9f2f36b7d19
+  - GUARDIAN_PAGE_SENTRYHOST=frontend.errors.guim.co.uk/2
+  - AVATARS_IMAGE_HOST=http://static.guimcode.co.uk
+  - AVATARS_SIGNING_KEY=weasels-owls-badgers-narwhals-goat
+  - COMMERCIAL_BOOKS_URL=http://www.guardianbookshop.co.uk
+  - COMMERCIAL_MASTERCLASSES_URL=http://theguardian_com/guardian-masterclasses
+  - COMMERCIAL_SOULMATES_URL=https://soulmates_theguardian_com
+  - COMMERCIAL_TRAVEL_URL=http://www.guardianholidayoffers.co.uk
+  - FACIATOOL_OAUTH_CLIENTID=283258724824-gv88hsfbl2os5n9qlt2ocs8bu94cao5r.apps.googleusercontent.com
+  - FACIATOOL_OAUTH_CALLBACK=http://localhost:9000/oauth2callback
+  - ADMIN_OAUTH_CLIENTID=265127054270-97f63kb58ns533alnhlb1vj4jds79q2f.apps.googleusercontent.com
+  - ADMIN_OAUTH_CALLBACK=http://localhost:9000/oauth2callback
+  - PREVIEW_OAUTH_CLIENTID=768784040766-1eq1drssgu65vrs4oi1hjh70d9b30fti.apps.googleusercontent.com
+  - PREVIEW_OAUTH_CALLBACK=http://localhost:9000/oauth2callback
   - IMAGES_PATH=http://i.guim.co.uk
   - DISCUSSION_APIROOT=http://discussion.guardianapis.com/discussion-api
   - ASSETS_PATH=http://assets.guim.co.uk/
@@ -14,3 +61,5 @@ env:
   - secure: ot06DD1CPBZ7suBJq06P0s6s5rWvVmOGzcVudR9SVMwwWdcSHgPgCDDjHviF1r+7hGrg9NeYT5rPMZXCrQM5OVxdD9Jfs/X+DEbRxBAdqccp2Z7SVlEMhSJ6Bf+q5eGR5HvJ9fFCdwkioem757UPKN72l67OYiQ3viUllVxkFx4=
   - secure: cOCU8Cj9yZEG7yR9hfZI2xvLSk1S7Xk4P6x/s/NbLbWhvhJqVwWHirnDOMbbwgZT/vrnz/Wa4O5YV1t68R5rDvh0u12TBna3L7BgRHUZsApmvuM8PPqUBtoFAB0BVQFJVYYrqs6ecn/kgMu7k9gDDVcxtrbMbGMe4ZyJtn3cPRI=
   - secure: S7HCq83qt3NiMNN9PnHDn58PHJaJ0MDtS9mx0sxjM7Yr+lBW20us7+3zXjSBojM311sFL0yEWBaiklgCNqxuAD/t9xgIcFu+vTEDznRhdOkVZwwm8L7k1D64UgA0nqTO25/+hwAd/TMXcmeRcsTUUuMbIsfHSPsostL0oJ1LpHk=
+
+

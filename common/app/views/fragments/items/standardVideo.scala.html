@@ -40,7 +40,7 @@
                     </h@headingLevel>
                 }
 
-                case InlineImage => {
+                case _ => {
                     <div class="item__media-wrapper item__media-wrapper--has-icon">
                         @trail.trailPicture(5,3).map{ imageContainer =>
                             @ImgSrc.imager(imageContainer, Item620).map { imgSrc =>

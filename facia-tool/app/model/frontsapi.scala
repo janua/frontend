@@ -133,8 +133,6 @@ trait UpdateActions extends Logging {
   implicit val collectionMetaWrites = Json.writes[CollectionMetaUpdate]
   implicit val updateListWrite = Json.writes[UpdateList]
 
-  def getBlock(id: String): Option[Block] = FaciaApi.getBlock(id)
-
   def insertIntoLive(update: UpdateList, block: Block): Block =
     if (update.live) {
       val live = updateList(update, block.live)
@@ -203,7 +201,7 @@ trait UpdateActions extends Logging {
 
   def updateCollectionList(id: String, update: UpdateList, identity: UserIdentity): Option[Block] = {
     lazy val updateJson = Json.toJson(update)
-    getBlock(id)
+    FaciaApi.getBlock(id)
     .map(insertIntoLive(update, _))
     .map(insertIntoDraft(update, _))
     .map(_.sortByGroup)
@@ -215,7 +213,7 @@ trait UpdateActions extends Logging {
 
   def updateCollectionFilter(id: String, update: UpdateList, identity: UserIdentity): Option[Block] = {
     lazy val updateJson = Json.toJson(update)
-    getBlock(id)
+    FaciaApi.getBlock(id)
       .map(deleteFromLive(update, _))
       .map(deleteFromDraft(update, _))
       .map(_.sortByGroup)
@@ -224,7 +222,7 @@ trait UpdateActions extends Logging {
   }
 
   def updateCollectionMeta(id: String, update: CollectionMetaUpdate, identity: UserIdentity): Option[Block] =
-    getBlock(id)
+    FaciaApi.getBlock(id)
       .map(updateCollectionMeta(_, update, identity))
       .map(_.sortByGroup)
       .map(putBlock(id, _, identity))

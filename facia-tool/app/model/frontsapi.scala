@@ -74,7 +74,8 @@ case class Block(
                   updatedEmail: String,
                   displayName: Option[String],
                   href: Option[String],
-                  diff: Option[JsValue]
+                  diff: Option[JsValue],
+                  lastBlock: Option[String]
                   ) {
 
   def sortByGroup: Block = this.copy(
@@ -167,8 +168,8 @@ trait UpdateActions extends Logging {
   def updateCollectionMeta(block: Block, update: CollectionMetaUpdate, identity: UserIdentity): Block =
     block.copy(displayName=update.displayName, href=update.href)
 
-  def putBlock(id: String, block: Block, identity: UserIdentity): Block =
-    FaciaApi.putBlock(id, block, identity)
+  def putBlock(id: String, block: Block): Block =
+    FaciaApi.putBlock(id, block)
 
   //Archiving
   def archivePublishBlock(id: String, block: Block, identity: UserIdentity): Block =
@@ -185,14 +186,11 @@ trait UpdateActions extends Logging {
   def archiveDeleteBlock(id: String, block: Block, updateJson: JsValue, identity: UserIdentity): Block =
     archiveBlock(id, block, Json.obj("action" -> "delete", "update" -> updateJson), identity)
 
+  def archiveMetaBlock(id: String, block: Block, updateJson: JsValue, identity: UserIdentity): Block =
+    archiveBlock(id, block, Json.obj("action" -> "metaUpdate", "update" -> updateJson), identity)
+
   private def archiveBlock(id: String, block: Block, updateJson: JsValue, identity: UserIdentity): Block =
-    Try(FaciaApi.archive(id, block, updateJson, identity)) match {
-      case Failure(t: Throwable) => {
-        log.warn(t.toString)
-        block
-      }
-      case Success(_) => block
-    }
+    FaciaApi.archive(id, block, updateJson, identity)
 
   def putMasterConfig(config: Config, identity: UserIdentity): Option[Config] = {
     FaciaApi.archiveMasterConfig(config, identity)
@@ -206,8 +204,9 @@ trait UpdateActions extends Logging {
     .map(insertIntoDraft(update, _))
     .map(_.sortByGroup)
     .map(capCollection)
-    .map(putBlock(id, _, identity))
+    .map(updateIdentity(_, identity))
     .map(archiveUpdateBlock(id, _, updateJson, identity))
+    .map(putBlock(id, _))
     .orElse(createBlock(id, identity, update))
   }
 
@@ -217,15 +216,20 @@ trait UpdateActions extends Logging {
       .map(deleteFromLive(update, _))
       .map(deleteFromDraft(update, _))
       .map(_.sortByGroup)
+      .map(updateIdentity(_, identity))
       .map(archiveDeleteBlock(id, _, updateJson, identity))
-      .map(putBlock(id, _, identity))
+      .map(putBlock(id, _))
   }
 
-  def updateCollectionMeta(id: String, update: CollectionMetaUpdate, identity: UserIdentity): Option[Block] =
+  def updateCollectionMeta(id: String, update: CollectionMetaUpdate, identity: UserIdentity): Option[Block] = {
+    lazy val updateJson = Json.toJson(update)
     FaciaApi.getBlock(id)
       .map(updateCollectionMeta(_, update, identity))
       .map(_.sortByGroup)
-      .map(putBlock(id, _, identity))
+      .map(updateIdentity(_, identity))
+      .map(archiveMetaBlock(id, _, updateJson, identity))
+      .map(putBlock(id, _))
+  }
 
   private def updateList(update: UpdateList, blocks: List[Trail]): List[Trail] = {
     val trail: Trail = blocks
@@ -260,14 +264,48 @@ trait UpdateActions extends Logging {
 
   def createBlock(id: String, identity: UserIdentity, update: UpdateList): Option[Block] = {
     if (update.live)
-      Option(FaciaApi.putBlock(id, Block(None, List(Trail(update.item, Option(DateTime.now), update.itemMeta.map(itemMetaWhiteList))), None, DateTime.now.toString, identity.fullName, identity.email, None, None, None), identity))
+      Option(
+        FaciaApi.putBlock(
+          id,
+          Block(
+            None,
+            List(Trail(update.item, Option(DateTime.now), update.itemMeta.map(itemMetaWhiteList))),
+            None,
+            DateTime.now.toString,
+            identity.fullName,
+            identity.email, None, None, None, None)
+        )
+      )
     else
-      Option(FaciaApi.putBlock(id, Block(None, Nil, Some(List(Trail(update.item, Option(DateTime.now), update.itemMeta.map(itemMetaWhiteList)))), DateTime.now.toString, identity.fullName, identity.email, None, None, None), identity))
+      Option(
+        FaciaApi.putBlock(
+          id,
+          Block(
+            None,
+            Nil,
+            Some(List(Trail(update.item, Option(DateTime.now), update.itemMeta.map(itemMetaWhiteList)))),
+            DateTime.now.toString,
+            identity.fullName,
+            identity.email, None, None, None, None)
+        )
+      )
   }
 
   def capCollection(block: Block): Block =
     block.copy(live = block.live.take(collectionCap), draft = block.draft.map(_.take(collectionCap)))
 
+  def publishBlock(id: String, identity: UserIdentity): Option[Block] =
+    FaciaApi.getBlock(id)
+    .map(updateIdentity(_, identity))
+    .map(FaciaApi.publishBlock(id, _))
+
+  def discardBlock(id: String, identity: UserIdentity): Option[Block] =
+    FaciaApi.getBlock(id)
+      .map(updateIdentity(_, identity))
+      .map{block => putBlock(id, block.copy(draft = None))}
+
+  def updateIdentity(block: Block, identity: UserIdentity): Block =
+    block.copy(lastUpdated = DateTime.now.toString, updatedBy = identity.fullName, updatedEmail = identity.email)
 }
 
 object UpdateActions extends UpdateActions

@@ -1,16 +1,13 @@
 package controllers
 
-import util.SanitizeInput
-import frontsapi.model._
-import frontsapi.model.UpdateList
-import play.api.mvc._
-import play.api.libs.json._
-import common.{FaciaToolMetrics, ExecutionContexts, Logging}
-import conf.Configuration
-import tools.FaciaApi
-import model.{NoCache, Cached}
-import services._
 import auth.ExpiringActions
+import common.{ExecutionContexts, FaciaToolMetrics, Logging}
+import conf.Configuration
+import frontsapi.model.{UpdateList, _}
+import model.{Cached, NoCache}
+import play.api.libs.json._
+import play.api.mvc._
+import services._
 
 
 object FaciaToolController extends Controller with Logging with ExecutionContexts {
@@ -56,7 +53,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
   def publishCollection(id: String) = ExpiringActions.ExpiringAuthAction { request =>
     val identity = request.user
     FaciaToolMetrics.DraftPublishCount.increment()
-    val block = FaciaApi.publishBlock(id, identity)
+    val block = UpdateActions.publishBlock(id, identity)
     block foreach { b =>
       UpdateActions.archivePublishBlock(id, b, identity)
       FaciaPress.press(PressCommand.forOneId(id).withPressDraft().withPressLive())
@@ -67,7 +64,7 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
 
   def discardCollection(id: String) = ExpiringActions.ExpiringAuthAction { request =>
     val identity = request.user
-    val block = FaciaApi.discardBlock(id, identity)
+    val block = UpdateActions.discardBlock(id, identity)
     block.foreach { b =>
       UpdateActions.archiveDiscardBlock(id, b, identity)
       FaciaPress.press(PressCommand.forOneId(id).withPressDraft())

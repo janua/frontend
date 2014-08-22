@@ -96,6 +96,13 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
       request.body.asJson flatMap (_.asOpt[Map[String, UpdateList]]) map {
         case update: Map[String, UpdateList] =>
           val identity = request.user
+
+          FaciaToolDiffs.listStreams
+          update.foreach{ case (id, l) =>
+            val s = Json.stringify(Json.toJson(l))
+            FaciaToolDiffs.putDiff(s)
+          }
+
           val updatedCollections: Map[String, Block] = update.collect {
             case ("update", updateList) =>
               UpdateActions.updateCollectionList(updateList.id, updateList, identity).map(updateList.id -> _)

@@ -19,8 +19,7 @@ trait Prototypes {
       "-encoding", "utf8"
     ),
     scalacOptions := Seq("-unchecked", "-optimise", "-deprecation",
-      "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
-      "-Xfatal-warnings"
+      "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings"
     ),
     doc in Compile <<= target.map(_ / "none")
   )

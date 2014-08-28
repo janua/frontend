@@ -5,7 +5,9 @@ import conf.{Gzipper, Configuration => GuardianConfiguration}
 import metrics.FrontendMetric
 import play.api._
 import play.api.mvc.WithFilters
-import services.ConfigAgentLifecycle
+import services.{FaciaToolDiffWorker, FaciaToolDiffConsumer, ConfigAgentLifecycle}
+
+import scala.concurrent.Future
 
 object Global extends WithFilters(Gzipper)
   with GlobalSettings
@@ -31,5 +33,16 @@ object Global extends WithFilters(Gzipper)
   override def onLoadConfig(config: Configuration, path: File, classloader: ClassLoader, mode: Mode.Mode): Configuration = {
     val newConfig: Configuration = if (secureCookie(mode)) config ++ devConfig else config
     super.onLoadConfig(newConfig, path, classloader, mode)
+  }
+
+  override def onStart(app: Application): Unit = {
+    super.onStart(app)
+    import scala.concurrent.ExecutionContext.Implicits.global
+    Future(FaciaToolDiffWorker.worker.run())
+  }
+
+  override def onStop(app: Application) {
+    FaciaToolDiffWorker.worker.shutdown()
+    super.onStop(app)
   }
 }

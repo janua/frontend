@@ -100,7 +100,11 @@ object Frontend extends Build with Prototypes {
     )
   )
 
-  val faciaTool = application("facia-tool").dependsOn(commonWithTests)
+  val faciaTool = application("facia-tool").dependsOn(commonWithTests).aggregate(common).settings(
+    libraryDependencies ++= Seq(
+      "com.amazonaws" % "amazon-kinesis-client" % "1.1.0"
+    )
+  )
 
   val faciaPress = application("facia-press").dependsOn(commonWithTests)
 

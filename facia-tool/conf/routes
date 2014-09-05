@@ -51,5 +51,7 @@ GET           /json/proxy/*absUrl        controllers.FaciaContentApiProxy.json(a
 POST          /config/fronts             controllers.FrontController.create()
 POST          /config/fronts/*path       controllers.FrontController.update(path)
 
+GET           /j                         controllers.FaciaToolController.testCase
+
 POST          /config/collections        controllers.CollectionController.create()
 POST          /config/collections/*id    controllers.CollectionController.update(id)

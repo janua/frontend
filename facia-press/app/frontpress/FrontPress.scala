@@ -36,6 +36,8 @@ trait FrontPress extends Logging {
       case (config, collection) if config.contentApiQuery.isDefined => collection
     }
 
+    println(collections.map{case (con, col) => s"${con.id}: ${con.contentApiQuery.isDefined} ${col.results.size}"}.mkString("\n"))
+
     if (collectionsWithBackFills.nonEmpty && collectionsWithBackFills.forall(_.isBackFillEmpty)) {
       val errorMessage = s"Tried to generate pressed JSON for front $id but all back fills were empty - aborting!"
       log.error(errorMessage)

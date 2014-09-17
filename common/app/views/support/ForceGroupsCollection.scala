@@ -5,17 +5,18 @@ import play.api.libs.json.JsString
 
 trait FirstTwoBigItems extends CollectionItems {
   override lazy val items: Seq[Content] = {
-    def setMetaFields(c: Content, fields: Map[String, String]): Content = {
-      Content(apiContent = c.apiContent.copy(metaData = c.apiContent.metaData ++ fields.map {
-        case (k, v) => k -> JsString(v)
-      }))
-    }
-
     super.items match {
       case x :: y :: tail =>
-        setMetaFields(x, Map("group" -> "1", "imageAdjust" -> "boost")) ::
-          setMetaFields(y, Map("group" -> "1")) :: tail
-      case x => x.map(setMetaFields(_, Map("group" -> "1", "imageAdjust" -> "boost")))
+        Content(x.apiContent.copy(metaData = x.apiContent.metaData.map { meta =>
+          meta.copy(group = Option("1"), imageAdjust = Option("boost"))
+        })) ::
+        Content(y.apiContent.copy(metaData = y.apiContent.metaData.map { meta =>
+            meta.copy(group = Option("1"))})) ::
+        tail
+      case x => x.map{ content =>
+        Content(content.apiContent.copy(metaData = content.apiContent.metaData.map { meta =>
+          meta.copy(group = Option("1"))}))
+      }
     }
   }
 }

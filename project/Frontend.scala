@@ -44,7 +44,9 @@ object Frontend extends Build with Prototypes {
 
       "com.gu" %% "play-googleauth" % "0.1.56-SNAPSHOT",
 
-      scalaCheck,
+      "com.gu" %% "facia-api-client" % "0.5-SNAPSHOT",
+
+        scalaCheck,
 
       filters,
       ws

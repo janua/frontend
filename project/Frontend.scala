@@ -157,6 +157,10 @@ object Frontend extends Build with Prototypes {
     unmanagedResourceDirectories in Runtime <+= baseDirectory(_ / "src" / "test" / "resources")
   )
 
+  val faciaEndToEnd = application("facia-end-to-end")
+    .dependsOn(commonWithTests)
+    .dependsOn(facia, faciaTool, faciaPress)
+
   val dev = application("dev-build")
     .dependsOn(
       withTests(article)

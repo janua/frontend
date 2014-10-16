@@ -41,6 +41,10 @@ trait FrontPress extends Logging {
       val errorMessage = s"Tried to generate pressed JSON for front $id but all back fills were empty - aborting!"
       log.error(errorMessage)
       Failure(new RuntimeException(errorMessage))
+    } else if (id != "breaking-news" && collections.forall(_._2.items.isEmpty)) {
+      val errorMessage = s"Tried to generate pressed JSON for front $id but it was empty - aborting!"
+      log.error(errorMessage)
+      Failure(new RuntimeException(errorMessage))
     } else {
       val collectionsJson = collections.map { case (configWithId, collection) =>
         Json.obj(configWithId.id -> Json.toJson(CollectionJson.fromCollection(configWithId.config, collection)))

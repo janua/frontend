@@ -16,3 +16,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "0.7.1")
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.1.6")
 
 addSbtPlugin("io.github.janua" % "play-clojurescript" % "0.0.1")
+
+libraryDependencies ++= Seq(
+  "om" % "om" % "0.8.0-alpha1"
+)

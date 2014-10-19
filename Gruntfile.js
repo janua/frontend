@@ -98,7 +98,8 @@ module.exports = function (grunt) {
         'compile:fonts',
         'compile:flash',
         'asset_hash',
-        'compile:conf'
+        'compile:conf',
+        'shell:cljs_once'
     ]);
 
     /**
@@ -143,4 +144,6 @@ module.exports = function (grunt) {
     grunt.registerTask('hookmeup', ['clean:hooks', 'shell:copyHooks']);
     grunt.registerTask('emitAbTestInfo', 'shell:abTestInfo');
 
+    grunt.registerTask('cljs', 'shell:cljs_once');
+    grunt.registerTask('cljsauto', 'shell:cljs_auto');
 };

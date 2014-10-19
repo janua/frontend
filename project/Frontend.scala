@@ -1,7 +1,6 @@
 package com.gu
 
 import akka.remote.transport.TestAssociationHandle
-import assets.compiler.cljs.ClojurescriptPlugin
 import sbt._
 import sbt.Keys._
 import play.Play.autoImport._
@@ -38,7 +37,8 @@ object Frontend extends Build with Prototypes {
       faciaScalaClient,
       filters,
       ws,
-      scalaTestPlus
+      scalaTestPlus,
+      "om" % "om" % "0.8.0-alpha1"
     )
   ).settings(
       mappings in TestAssets ~= filterAssets
@@ -96,7 +96,7 @@ object Frontend extends Build with Prototypes {
       dfpAxis,
       anorm,
       jdbc,
-      "om" % "om" % "0.7.3"
+      "om" % "om" % "0.8.0-alpha1"
     )
   )
 

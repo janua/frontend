@@ -1,6 +1,7 @@
 package com.gu
 
 import akka.remote.transport.TestAssociationHandle
+import assets.compiler.cljs.ClojurescriptPlugin
 import sbt._
 import sbt.Keys._
 import play.Play.autoImport._
@@ -94,7 +95,8 @@ object Frontend extends Build with Prototypes {
       paClient,
       dfpAxis,
       anorm,
-      jdbc
+      jdbc,
+      "om" % "om" % "0.7.3"
     )
   )
 
@@ -159,13 +161,13 @@ object Frontend extends Build with Prototypes {
     onward
   )
 
-  val integrationTests = Project("integrated-tests", file("integrated-tests")).settings(
-    libraryDependencies ++= Seq(
-      scalaTest,
-      seleniumJava % Test,
-      jodaTime % Test
-    )
-  )
+//  val integrationTests = Project("integrated-tests", file("integrated-tests")).settings(
+//    libraryDependencies ++= Seq(
+//      scalaTest,
+//      seleniumJava % Test,
+//      jodaTime % Test
+//    )
+//  )
 
   val pngResizer = application("png-resizer")
     .dependsOn(commonWithTests)

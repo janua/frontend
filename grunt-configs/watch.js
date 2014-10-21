@@ -64,7 +64,7 @@ module.exports = function(grunt, options) {
         },
         clojurescript: {
             files: [
-                '/Users/francis/Documents/frontend/admin/assets/**/*.cljs'
+                '**/*.cljs'
             ],
             tasks: [
                 'cljs'

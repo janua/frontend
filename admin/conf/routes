@@ -129,3 +129,8 @@ GET         /css-reports                                                        
 GET         /css-reports.json                                                                       controllers.admin.CssReportController.index
 GET         /css-reports/all.json                                                                   controllers.admin.CssReportController.aggregateReport
 GET         /css-reports/:date.json                                                                 controllers.admin.CssReportController.report(date: LocalDate)
+
+# Facia Press History
+GET         /history/restore/*key/:versionId controllers.admin.FaciaPressHistory.restoreVersion(key, versionId)
+GET         /history/object/*key/:versionId controllers.admin.FaciaPressHistory.getPressedHistoryFile(key, versionId)
+GET         /history/list/*key controllers.admin.FaciaPressHistory.getHistoryFor(key)

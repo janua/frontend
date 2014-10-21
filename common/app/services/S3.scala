@@ -238,7 +238,7 @@ object S3FrontsApi extends S3 {
   def getPressedHistoryVersion(path: String, versionId: String) =
     get(getLivePressedKeyForPath(path), Option(versionId))
 
-  def restorePressedVerion(path: String, versionId: String) =
+  def restorePressedVersion(path: String, versionId: String) =
     restoreVersion(getLivePressedKeyForPath(path), versionId)
 
 }

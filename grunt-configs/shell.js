@@ -31,6 +31,14 @@ module.exports = function(grunt, options) {
                     cwd: 'facia-tool/public'
                 }
             }
+        },
+
+        cljs_once: {
+            command: "lein cljsbuild once"
+        },
+
+        cljs_auto: {
+            command: "lein cljsbuild auto"
         }
     };
 };

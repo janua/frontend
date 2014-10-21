@@ -61,6 +61,17 @@ module.exports = function(grunt, options) {
             options: {
                 spawn: false
             }
+        },
+        clojurescript: {
+            files: [
+                '**/*.cljs'
+            ],
+            tasks: [
+                'cljs'
+            ],
+            options: {
+                spawn: false
+            }
         }
     };
 };

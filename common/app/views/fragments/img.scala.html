@@ -1,4 +1,4 @@
-@(img: Option[model.ImageContainer], isShowcase: Boolean = false, isFeature: Boolean = false)
+@(img: Option[model.Element], isShowcase: Boolean = false, isFeature: Boolean = false)
 @import views.support.{ImgSrc, Item620, Naked, Profile, SeoOptimisedContentImage, Showcase}
 
 @img.map{ picture =>
@@ -29,7 +29,7 @@
     </figure>
 }
 
-@upgrade(picture: model.ImageContainer, upgradeProfile: Profile) = {
+@upgrade(picture: model.ImageContainerTypeclass.ImageContainer, upgradeProfile: Profile) = {
     @ImgSrc.imager(picture, upgradeProfile).map { imgSrc =>
         <div class="js-image-upgrade" data-src="@imgSrc">
             @image(picture)
@@ -37,7 +37,7 @@
     }
 }
 
-@image(picture: model.ImageContainer) = {
+@image(picture: model.ImageContainerTypeclass.ImageContainer) = {
     <img src="@SeoOptimisedContentImage.bestFor(picture).map(Html(_))"
         class="maxed responsive-img"
         itemprop="contentURL representativeOfPage"
@@ -45,7 +45,7 @@
 
 }
 
-@caption(picture: model.ImageContainer) = {
+@caption(picture: model.ImageContainerTypeclass.ImageContainer) = {
     @SeoOptimisedContentImage.elementFor(picture).map { img =>
         @img.caption.map { caption =>
             <figcaption class="caption caption--main caption--img" itemprop="description">

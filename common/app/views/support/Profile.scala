@@ -1,6 +1,6 @@
 package views.support
 
-import model.{Content, MetaData, ImageContainer, ImageAsset}
+import model._
 import conf.Switches.ImageServerSwitch
 import java.net.URI
 import org.apache.commons.math3.fraction.Fraction
@@ -13,20 +13,20 @@ abstract class ElementProfile {
   def height: Option[Int]
   def compression: Int
 
-  def elementFor(image: ImageContainer): Option[ImageAsset] = {
+  def elementFor(image: ImageContainerTypeclass.ImageContainer): Option[ImageAsset] = {
     val sortedCorps = image.imageCrops.sortBy(_.width)
     width.flatMap{ desiredWidth =>
       sortedCorps.find(_.width >= desiredWidth)
     }.orElse(image.largestImage)
   }
 
-  def bestFor(image: ImageContainer): Option[String] =
+  def bestFor(image: ImageContainerTypeclass.ImageContainer): Option[String] =
     elementFor(image).flatMap(_.url).map{ url => ImgSrc(url, this) }
 
-  def captionFor(image: ImageContainer): Option[String] =
+  def captionFor(image: ImageElement): Option[String] =
     elementFor(image).flatMap(_.caption)
 
-  def altTextFor(image: ImageContainer): Option[String] =
+  def altTextFor(image: ImageContainerTypeclass.ImageContainer): Option[String] =
     elementFor(image).flatMap(_.altText)
 
   def resizeString = s"/w-${toResizeString(width)}/h-${toResizeString(height)}/q-$compression"
@@ -125,17 +125,17 @@ object ImgSrc {
   }
 
   // always, and I mean ALWAYS think carefully about the size image you use
-  def imager(imageContainer: ImageContainer, profile: Profile): Option[String] = {
-    profile.elementFor(imageContainer).flatMap(_.url).map{ largestImage =>
+  def imager(ImageElement: model.ImageContainerTypeclass.ImageContainer, profile: Profile): Option[String] = {
+    profile.elementFor(ImageElement).flatMap(_.url).map{ largestImage =>
       ImgSrc(largestImage, Imager)
     }
   }
 
-  def imager(imageContainer: ImageContainer, maxWidth: Int): Option[String] = {
+  def imager(ImageElement: model.ImageContainerTypeclass.ImageContainer, maxWidth: Int): Option[String] = {
     // get largest profile closest to the width
     val sortedProfiles: Seq[Profile] = Profile.all.filter(_.height == None).sortBy(_.width)
     sortedProfiles.find(_.width.getOrElse(0) >= maxWidth).orElse(sortedProfiles.reverse.headOption).flatMap{ profile =>
-      imager(imageContainer, profile)
+      imager(ImageElement, profile)
     }
   }
 
@@ -143,7 +143,7 @@ object ImgSrc {
 
 object SeoThumbnail {
   def apply(metadata: MetaData): Option[String] = metadata match {
-    case content: Content => content.thumbnail.flatMap(Item620.bestFor)
+    case content: Content => content.thumbnail.flatMap(Item620.bestFor(_))
     case _ => None
   }
 }

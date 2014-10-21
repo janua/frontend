@@ -109,19 +109,19 @@ trait Elements {
   private val trailPicMinDesiredSize = 460
 
   // Find a main picture crop which matches this aspect ratio.
-  def trailPicture(aspectWidth: Int, aspectHeight: Int): Option[ImageContainer] =
+  def trailPicture(aspectWidth: Int, aspectHeight: Int): Option[ImageElement] =
     (thumbnail.find(_.imageCrops.exists(_.width >= trailPicMinDesiredSize)) ++ mainPicture ++ thumbnail)
       .map{ image =>
         image.imageCrops.filter{ crop => crop.aspectRatioWidth == aspectWidth && crop.aspectRatioHeight == aspectHeight } match {
           case Nil   => None
-          case crops => Option(ImageContainer(crops, image.delegate, image.index))
+          case crops => Option(ImageElement(crops, image.delegate, image.index))
         }
       }
       .flatten
       .headOption
 
   // trail picture is used on index pages (i.e. Fronts and tag pages)
-  def trailPicture: Option[ImageContainer] = thumbnail.find(_.imageCrops.exists(_.width >= trailPicMinDesiredSize))
+  def trailPicture: Option[Element] = thumbnail.find(_.imageCrops.exists(_.width >= trailPicMinDesiredSize))
     .orElse(mainPicture)
     .orElse(thumbnail)
 
@@ -139,7 +139,7 @@ trait Elements {
   // main picture is used on the content page (i.e. the article page or the video page)
 
   // if you change these rules make sure you update IMAGES.md (in this project)
-  def mainPicture: Option[ImageContainer] = images.find(_.isMain)
+  def mainPicture: Option[ImageElement] = images.find(_.isMain)
 
   lazy val hasMainPicture = mainPicture.flatMap(_.imageCrops.headOption).isDefined
   lazy val hasShowcaseMainPicture = {

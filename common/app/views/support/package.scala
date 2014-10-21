@@ -203,7 +203,7 @@ case class VideoEmbedCleaner(contentVideos: Seq[VideoElement]) extends HtmlClean
       element.append(sourceHTML)
 
       // add the poster url
-      asset.flatMap(_.image).flatMap(Item640.bestFor).map(_.toString()).foreach{ url =>
+      asset.flatMap(_.image).flatMap(Item640.bestFor(_)).map(_.toString()).foreach{ url =>
         element.attr("poster", url)
       }
 
@@ -297,10 +297,10 @@ case class PictureCleaner(contentImages: Seq[ImageElement]) extends HtmlCleaner 
   }
 
   def findImageFromId(id:String): Option[ImageAsset] = {
-    findContainerFromId(id).flatMap(Item620.elementFor)
+    findContainerFromId(id).flatMap(Item620.elementFor(_))
   }
 
-  def findContainerFromId(id:String): Option[ImageContainer] = {
+  def findContainerFromId(id:String): Option[ImageElement] = {
     contentImages.find(_.id == id)
   }
 }

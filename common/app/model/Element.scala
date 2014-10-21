@@ -17,10 +17,10 @@ trait Element {
 object Element {
   def apply(theDelegate: ApiElement, elementIndex: Int): Element = {
     theDelegate.elementType match {
-      case "image" => new ImageElement(theDelegate, elementIndex)
-      case "video" => new VideoElement(theDelegate, elementIndex)
-      case "audio" => new AudioElement(theDelegate, elementIndex)
-      case "embed" => new EmbedElement(theDelegate, elementIndex)
+      case "image" => ImageElement(theDelegate, elementIndex)
+      case "video" => VideoElement(theDelegate, elementIndex)
+      case "audio" => AudioElement(theDelegate, elementIndex)
+      case "embed" => EmbedElement(theDelegate, elementIndex)
       case _ => new Element{
         lazy val delegate = theDelegate
         lazy val index = elementIndex
@@ -29,10 +29,33 @@ object Element {
   }
 }
 
-trait ImageContainer extends Element {
+object ImageContainerTypeclass {
+  trait ImageContainer {
+    val imageCrops: Seq[ImageAsset]
+    val largestImage: Option[ImageAsset]
+    val largestEditorialCrop: Option[ImageAsset]
+  }
+  object ImageContainer {
+    implicit class implicitForElement(element: Element) extends ImageContainer {
+      lazy val imageCrops: Seq[ImageAsset] =
+        element.delegate.assets.filter(_.assetType == "image").map(ImageAsset(_,element.index)).sortBy(-_.width)
+      lazy val largestImage: Option[ImageAsset] = imageCrops.headOption
+      lazy val largestEditorialCrop: Option[ImageAsset] = imageCrops.find(img => img.width < img.height || (img.width != 2048 && img.width != 1024))
+    }
+    implicit class implicitForImageElement(imageElement: ImageElement) extends ImageContainer {
+      lazy val imageCrops: Seq[ImageAsset] =
+        imageElement.crops.getOrElse(imageElement.delegate.assets.filter(_.assetType == "image").map(ImageAsset(_,imageElement.index)).sortBy(-_.width))
+      lazy val largestImage: Option[ImageAsset] = imageCrops.headOption
+      lazy val largestEditorialCrop: Option[ImageAsset] = imageCrops.find(img => img.width < img.height || (img.width != 2048 && img.width != 1024))
+    }
+  }
+}
 
-  lazy val imageCrops: Seq[ImageAsset] = delegate.assets.filter(_.assetType == "image").map(ImageAsset(_,index)).
-                                           sortBy(-_.width)
+case class ImageElement(delegate: ApiElement, index: Int, crops: Option[Seq[ImageAsset]] = None) extends Element {
+
+  lazy val imageCrops: Seq[ImageAsset] =
+    crops.getOrElse(delegate.assets.filter(_.assetType == "image").map(ImageAsset(_,index)).sortBy(-_.width))
+
 
   // The image crop with the largest width.
   lazy val largestImage: Option[ImageAsset] = imageCrops.headOption
@@ -43,15 +66,12 @@ trait ImageContainer extends Element {
   lazy val largestEditorialCrop: Option[ImageAsset] = imageCrops.find(img => img.width < img.height || (img.width != 2048 && img.width != 1024))
 }
 
-object ImageContainer {
-  def apply(crops: Seq[ImageAsset], theDelegate: ApiElement, imageIndex: Int) = new ImageContainer {
-    override def delegate: ApiElement = theDelegate
-    override def index: Int = imageIndex
-    override lazy val imageCrops = crops
-  }
+object ImageElement {
+  def apply(crops: Seq[ImageAsset], theDelegate: ApiElement, imageIndex: Int): ImageElement =
+    ImageElement(theDelegate, imageIndex, Option(crops))
 }
 
-trait VideoContainer extends Element {
+case class VideoElement(delegate: ApiElement, index: Int) extends Element {
 
   protected implicit val ordering = EncodingOrdering
 
@@ -60,7 +80,7 @@ trait VideoContainer extends Element {
       ImageAsset(asset, index)
     }
 
-    val container = images.headOption.map(img => ImageContainer(images, delegate, img.index))
+    val container = images.headOption.map(img => ImageElement(images, delegate, img.index))
 
     delegate.assets.filter(_.assetType == "video").map( v => VideoAsset(v, container)).sortBy(-_.width)
   }
@@ -83,7 +103,7 @@ trait VideoContainer extends Element {
   lazy val caption: Option[String] = largestVideo.flatMap(_.caption)
 }
 
-trait AudioContainer extends Element {
+case class AudioElement(delegate: ApiElement, index: Int) extends Element {
   protected implicit val ordering = EncodingOrdering
   lazy val audioAssets: List[AudioAsset] = delegate.assets.filter(_.assetType == "audio").map( v => AudioAsset(v))
   lazy val duration: Int = audioAssets.headOption.map(_.duration).getOrElse(0)
@@ -94,12 +114,6 @@ trait AudioContainer extends Element {
   }
 }
 
-trait EmbedContainer extends Element {
-
+case class EmbedElement(delegate: ApiElement, index: Int) extends Element {
    lazy val embedAssets: Seq[EmbedAsset] = delegate.assets.filter(_.assetType == "embed").map(EmbedAsset(_))
 }
-
-class ImageElement(val delegate: ApiElement, val index: Int) extends Element with ImageContainer
-class VideoElement(val delegate: ApiElement, val index: Int) extends Element with ImageContainer with VideoContainer
-class AudioElement(val delegate: ApiElement, val index: Int) extends Element with ImageContainer with AudioContainer
-class EmbedElement(val delegate: ApiElement, val index: Int) extends Element with EmbedContainer

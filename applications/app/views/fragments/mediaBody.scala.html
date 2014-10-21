@@ -3,6 +3,8 @@
 @import model.{Audio, AudioPlayer, Video, VideoPlayer}
 @import views.support.{Video640, SeoOptimisedContentImage, StripHtmlTags}
 @import views.support.TrailCssClasses.articleToneClass
+@import model.ImageContainerTypeclass.ImageContainer._
+
 
 @defining(page.media, page.media match { case _: Audio => "audio" case _ => "video" }){ case (media, mediaType) =>
 <div class="l-side-margins l-side-margins--layout-content">

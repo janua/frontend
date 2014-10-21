@@ -2,7 +2,7 @@ package views.support
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import model.{ImageContainer, ImageAsset}
+import model.{ImageElement, ImageAsset}
 import com.gu.openplatform.contentapi.model.Asset
 import conf.Switches.ImageServerSwitch
 import conf.Configuration
@@ -21,7 +21,7 @@ class ImgSrcTest extends FlatSpec with Matchers  {
 
   val imageAsset = ImageAsset(asset, 1)
 
-  val image = ImageContainer(Seq(imageAsset), null, imageAsset.index) // yep null, sorry but the tests don't need it
+  val image = ImageElement(Seq(imageAsset), null, imageAsset.index) // yep null, sorry but the tests don't need it
 
   val mediaImageAsset = ImageAsset(Asset(
     "image",
@@ -30,7 +30,7 @@ class ImgSrcTest extends FlatSpec with Matchers  {
     Map.empty[String, String]
   ), 1)
 
-  val mediaImage = ImageContainer(Seq(mediaImageAsset), null, mediaImageAsset.index)
+  val mediaImage = ImageElement(Seq(mediaImageAsset), null, mediaImageAsset.index)
 
 
   "ImgSrc" should "convert the URL of a static image to the resizing endpoint with a /static prefix" in {
@@ -50,13 +50,13 @@ class ImgSrcTest extends FlatSpec with Matchers  {
 
   it should "not convert the URL of the image if it is a GIF (we do not support animated GIF)" in {
     ImageServerSwitch.switchOn()
-    val gifImage = ImageContainer(Seq(ImageAsset(asset.copy(file = Some("http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif")),0)), null, 0)
+    val gifImage = ImageElement(Seq(ImageAsset(asset.copy(file = Some("http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif")),0)), null, 0)
     GalleryLargeTrail.bestFor(gifImage) should be (Some("http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif"))
   }
 
   it should "not convert the URL of the image if it is not one of ours" in {
     ImageServerSwitch.switchOn()
-    val someoneElsesImage = ImageContainer(Seq(ImageAsset(asset.copy(file = Some("http://foo.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif")),0)), null, 0)
+    val someoneElsesImage = ImageElement(Seq(ImageAsset(asset.copy(file = Some("http://foo.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif")),0)), null, 0)
     GalleryLargeTrail.bestFor(someoneElsesImage) should be (Some("http://foo.co.uk/sys-images/Guardian/Pix/pictures/2013/7/5/1373023097878/b6a5a492-cc18-4f30-9809-88467e07ebfa-460x276.gif"))
   }
 }

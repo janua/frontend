@@ -4,7 +4,7 @@ import com.gu.openplatform.contentapi.model.Tag
 import common.Edition.defaultEdition
 import common.{ExecutionContexts, Logging}
 import conf.LiveContentApi
-import model.{Content, ImageContainer}
+import model.{ImageElement, Content}
 
 import scala.concurrent.Future
 
@@ -31,7 +31,7 @@ object Lookup extends ExecutionContexts with Logging {
     }
   }
 
-  def mainPicture(contentId: String): Future[Option[ImageContainer]] = {
+  def mainPicture(contentId: String): Future[Option[ImageElement]] = {
     content(contentId) map (_ flatMap (_.mainPicture))
   }
 

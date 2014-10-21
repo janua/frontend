@@ -60,11 +60,14 @@ class Content protected (val apiContent: ApiContentWithMeta) extends Trail with 
   // https://developers.facebook.com/docs/opengraph/howtos/maximizing-distribution-media-content#images
   lazy val openGraphImage: String = {
 
-    def largest(i: ImageContainer) = i.largestImage.flatMap(_.url)
+    def largest(i: ImageContainerTypeclass.ImageContainer) = i.largestImage.flatMap(_.url)
 
-    mainPicture.flatMap(largest)
-      .orElse(trailPicture.flatMap(largest))
-      .getOrElse(facebook.imageFallback)
+    mainPicture.flatMap(largest(_))
+      .orElse(trailPicture.flatMap{
+      case i: ImageElement => largest(i)
+      case v: VideoElement => largest(v)
+      case _ => None
+    }).getOrElse(facebook.imageFallback)
   }
 
   lazy val shouldHideAdverts: Boolean = fields.get("shouldHideAdverts").exists(_.toBoolean)
@@ -193,6 +196,12 @@ class Content protected (val apiContent: ApiContentWithMeta) extends Trail with 
       .map(imageElement ++: _)
       .map(_.zipWithIndex.map { case (element, index) => Element(element, index) })
       .getOrElse(Nil)
+
+//  def elementsForPressing: Seq[Element] = elements.map { element =>
+//    element match {
+//      case imageElement: O
+//    }
+//  }
 
   private lazy val metaDataDefaults = MetadataDefaults(this)
   private def metaDataDefault(key: String) = metaDataDefaults.getOrElse(key, false)
@@ -418,7 +427,7 @@ class Article(content: ApiContentWithMeta) extends Content(content) {
   override def schemaType = Some(ArticleSchemas(this))
 
   // if you change these rules make sure you update IMAGES.md (in this project)
-  override def trailPicture: Option[ImageContainer] = thumbnail.find(_.imageCrops.exists(_.width >= 620))
+  override def trailPicture: Option[Element] = thumbnail.find(_.imageCrops.exists(_.width >= 620))
     .orElse(mainPicture).orElse(videos.headOption)
 
   override def hasInlineMerchandise = {
@@ -576,7 +585,7 @@ class Gallery(content: ApiContentWithMeta) extends Content(content) {
   override def schemaType = Some("http://schema.org/ImageGallery")
 
   // if you change these rules make sure you update IMAGES.md (in this project)
-  override def trailPicture: Option[ImageContainer] = thumbnail
+  override def trailPicture: Option[ImageElement] = thumbnail
 
   override def openGraph: Map[String, String] = super.openGraph ++ Map(
     "og:type" -> "article",

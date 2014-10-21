@@ -52,7 +52,15 @@ module.exports = function(grunt, options) {
         },
 
         updateCanIUse: {
-          command: 'npm update caniuse-db'
+            command: 'npm update caniuse-db'
+
+        },
+        cljs_once: {
+            command: "lein cljsbuild once"
+        },
+
+        cljs_auto: {
+            command: "lein cljsbuild auto"
         }
     };
 };

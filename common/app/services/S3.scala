@@ -231,6 +231,16 @@ object S3FrontsApi extends S3 {
 
   def getPressedLastModified(path: String): Option[String] =
     getLastModified(getLivePressedKeyForPath(path)).map(_.toString)
+
+  def getHistoryForPath(path: String): List[PressedHistoryVersion] =
+    getHistory(getLivePressedKeyForPath(path))
+
+  def getPressedHistoryVersion(path: String, versionId: String) =
+    get(getLivePressedKeyForPath(path), Option(versionId))
+
+  def restorePressedVerion(path: String, versionId: String) =
+    restoreVersion(getLivePressedKeyForPath(path), versionId)
+
 }
 
 trait SecureS3Request extends implicits.Dates with Logging {

@@ -1,39 +1,41 @@
 package services
 
-import com.gu.googleauth.UserIdentity
-import conf.Configuration
-import common.Logging
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model._
-import com.amazonaws.services.s3.model.CannedAccessControlList.{Private, PublicRead}
-import com.amazonaws.util.StringInputStream
-import scala.io.{Codec, Source}
-import org.joda.time.DateTime
-import play.Play
-import play.api.libs.ws.{WSRequestHolder, WS}
+import java.io._
+import java.util.zip.GZIPOutputStream
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import sun.misc.BASE64Encoder
+
 import com.amazonaws.auth.AWSSessionCredentials
-import common.S3Metrics.S3ClientExceptionsMetric
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.CannedAccessControlList.{Private, PublicRead}
+import com.amazonaws.services.s3.model._
+import com.amazonaws.util.StringInputStream
 import com.gu.googleauth.UserIdentity
-import java.util.zip.GZIPOutputStream
-import java.io._
+import common.Logging
+import common.S3Metrics.S3ClientExceptionsMetric
+import conf.Configuration
+import org.joda.time.DateTime
+import play.Play
+import play.api.libs.json.Json
+import play.api.libs.ws.{WS, WSRequestHolder}
+import sun.misc.BASE64Encoder
+
+import scala.io.{Codec, Source}
 
 trait S3 extends Logging {
 
   lazy val bucket = Configuration.aws.bucket
 
-  lazy val client: Option[AmazonS3Client] = Configuration.aws.credentials.map{ credentials =>
+  lazy val client: Option[AmazonS3Client] = Configuration.aws.credentials.map { credentials =>
     val client = new AmazonS3Client(credentials)
     client.setEndpoint(AwsEndpoints.s3)
     client
   }
 
-  private def withS3Result[T](key: String)(action: S3Object => T): Option[T] = client.flatMap { client =>
+  private def withS3Result[T](key: String, versionId: Option[String])(action: S3Object => T): Option[T] = client.flatMap { client =>
     try {
 
-      val request = new GetObjectRequest(bucket, key)
+      val request = versionId.fold(new GetObjectRequest(bucket, key))(new GetObjectRequest(bucket, key, _))
       val result = client.getObject(request)
 
       // http://stackoverflow.com/questions/17782937/connectionpooltimeoutexception-when-iterating-objects-in-s3
@@ -60,21 +62,23 @@ trait S3 extends Logging {
     }
   }
 
-  def get(key: String)(implicit codec: Codec): Option[String] = withS3Result(key) {
-    result => Source.fromInputStream(result.getObjectContent).mkString
-  }
+  def get(key: String, versionId: Option[String] = None)(implicit codec: Codec): Option[String] =
+    withS3Result(key, versionId) {
+      result => Source.fromInputStream(result.getObjectContent).mkString
+    }
 
+  def getWithLastModified(key: String): Option[(String, DateTime)] =
+    withS3Result(key, None) {
+      result =>
+        val content = Source.fromInputStream(result.getObjectContent).mkString
+        val lastModified = new DateTime(result.getObjectMetadata.getLastModified)
+        (content, lastModified)
+    }
 
-  def getWithLastModified(key: String): Option[(String, DateTime)] = withS3Result(key) {
-    result =>
-      val content = Source.fromInputStream(result.getObjectContent).mkString
-      val lastModified = new DateTime(result.getObjectMetadata.getLastModified)
-      (content, lastModified)
-  }
-
-  def getLastModified(key: String): Option[DateTime] = withS3Result(key) {
-    result => new DateTime(result.getObjectMetadata.getLastModified)
-  }
+  def getLastModified(key: String): Option[DateTime] =
+    withS3Result(key, None) {
+      result => new DateTime(result.getObjectMetadata.getLastModified)
+    }
 
   def putPublic(key: String, value: String, contentType: String) {
     put(key: String, value: String, contentType: String, PublicRead)
@@ -133,6 +137,7 @@ trait S3 extends Logging {
         throw e
     }
   }
+}
 
 case class PressedHistoryVersion(key: String, dateTime: DateTime, humanDateTime: String, bytes: Long, versionId: String)
 

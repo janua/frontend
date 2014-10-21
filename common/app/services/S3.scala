@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.model.CannedAccessControlList.{Private, PublicRead}
 import com.amazonaws.util.StringInputStream
+import play.api.libs.json.Json
 import scala.io.{Codec, Source}
 import org.joda.time.DateTime
 import play.Play
@@ -17,6 +18,7 @@ import sun.misc.BASE64Encoder
 import com.amazonaws.auth.AWSSessionCredentials
 import common.S3Metrics.S3ClientExceptionsMetric
 import com.gu.googleauth.UserIdentity
+import scala.collection.JavaConversions._
 
 trait S3 extends Logging {
 
@@ -28,10 +30,10 @@ trait S3 extends Logging {
     client
   }
 
-  private def withS3Result[T](key: String)(action: S3Object => T): Option[T] = client.flatMap { client =>
+  private def withS3Result[T](key: String, versionId: Option[String])(action: S3Object => T): Option[T] = client.flatMap { client =>
     try {
 
-      val request = new GetObjectRequest(bucket, key)
+      val request = versionId.fold(new GetObjectRequest(bucket, key))(new GetObjectRequest(bucket, key, _))
       val result = client.getObject(request)
 
       // http://stackoverflow.com/questions/17782937/connectionpooltimeoutexception-when-iterating-objects-in-s3
@@ -58,14 +60,14 @@ trait S3 extends Logging {
     }
   }
 
-  def get(key: String)(implicit codec: Codec): Option[String] = try {
-    withS3Result(key) {
+  def get(key: String, versionId: Option[String] = None)(implicit codec: Codec): Option[String] = try {
+    withS3Result(key, versionId) {
       result => Source.fromInputStream(result.getObjectContent).mkString
     }
   }
 
   def getWithLastModified(key: String): Option[(String, DateTime)] = try {
-    withS3Result(key) {
+    withS3Result(key, None) {
       result =>
         val content = Source.fromInputStream(result.getObjectContent).mkString
         val lastModified = new DateTime(result.getObjectMetadata.getLastModified)
@@ -74,7 +76,7 @@ trait S3 extends Logging {
   }
 
   def getLastModified(key: String): Option[DateTime] = try {
-    withS3Result(key) {
+    withS3Result(key, None) {
       result => new DateTime(result.getObjectMetadata.getLastModified)
     }
   }

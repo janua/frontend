@@ -139,6 +139,26 @@ trait S3 extends Logging {
   }
 }
 
+  def getHistory(key: String): List[PressedHistoryVersion] = {
+    val historyRequest = new ListVersionsRequest()
+      .withBucketName(bucket)
+      .withMaxResults(10)
+      .withPrefix(key)
+
+    val historyResult = client.map(_.listVersions(historyRequest)).get
+
+    historyResult.getVersionSummaries.map(PressedHistoryVersion.fromVersionSummary).toList
+  }
+
+  def restoreVersion(key: String, versionId: String): CopyObjectResult = {
+    val copyObjectRequest = new CopyObjectRequest(bucket, key, versionId, bucket, key)
+
+    val copyObjectResult = client.map(_.copyObject(copyObjectRequest)).get
+
+    copyObjectResult
+  }
+}
+
 case class PressedHistoryVersion(key: String, dateTime: DateTime, humanDateTime: String, bytes: Long, versionId: String)
 
 object PressedHistoryVersion {

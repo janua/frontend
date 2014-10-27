@@ -4,6 +4,7 @@ import dfp.{DfpAgentLifecycle, DfpDataCacheLifecycle}
 import model.AdminLifecycle
 import ophan.SurgingContentAgentLifecycle
 import play.api.mvc.{WithFilters, Results, RequestHeader}
+import services.ConfigAgentLifecycle
 import scala.concurrent.Future
 
 object Global extends WithFilters(Gzipper)
@@ -12,7 +13,8 @@ object Global extends WithFilters(Gzipper)
   with Results
   with SurgingContentAgentLifecycle
   with DfpAgentLifecycle
-  with DfpDataCacheLifecycle {
+  with DfpDataCacheLifecycle
+  with ConfigAgentLifecycle {
 
   override lazy val applicationName = "frontend-admin"
 

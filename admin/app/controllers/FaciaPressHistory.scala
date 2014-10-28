@@ -7,7 +7,7 @@ import services.S3FrontsApi
 object FaciaPressHistory extends Controller {
 
   def getHistoryFor(key: String) = Action {
-    Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getHistoryForPath(key))))
+    Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getHistoryForPath(key)))).as("application/json")
   }
 
   def getPressedHistoryFile(key: String, versionId: String) = Action {

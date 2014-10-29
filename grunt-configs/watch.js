@@ -67,7 +67,7 @@ module.exports = function(grunt, options) {
                 '**/*.cljs'
             ],
             tasks: [
-                'cljs'
+                'shell:cljs_once'
             ],
             options: {
                 spawn: false

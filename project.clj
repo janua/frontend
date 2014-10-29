@@ -10,5 +10,5 @@
   :plugins [[lein-cljsbuild "1.0.3"]]
   :cljsbuild {
                  :builds [
-                           {:source-paths ["admin/public/clojurescript"]
+                           {:source-paths ["admin/clojurescript"]
                             :compiler {:output-to "admin/public/clojurescript/main.js"}}]})

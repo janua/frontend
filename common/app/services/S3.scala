@@ -126,7 +126,7 @@ trait S3 extends Logging {
   }
 }
 
-case class PressedHistoryVersion(key: String, dateTime: DateTime, humanDateTime: String, bytes: Long, versionId: String)
+case class PressedHistoryVersion(key: String, dateTime: DateTime, humanDateTime: String, bytes: Long, isLatest: Boolean, etag: String, versionId: String)
 
 object PressedHistoryVersion {
   implicit val formats = Json.format[PressedHistoryVersion]
@@ -137,6 +137,8 @@ object PressedHistoryVersion {
       new DateTime(version.getLastModified),
       new DateTime(version.getLastModified).toString,
       version.getSize,
+      version.isLatest,
+      version.getETag,
       version.getVersionId)
 }
 

@@ -26,6 +26,9 @@ module.exports = function(grunt, options) {
         cljs_once: {
             command: "lein cljsbuild once"
         },
+        cljs_clean: {
+            command: "lein cljsbuild clean"
+        },
         cljs_auto: {
             command: "lein cljsbuild auto"
         }

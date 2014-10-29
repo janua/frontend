@@ -88,6 +88,11 @@ module.exports = function (grunt) {
         }
 
     });
+    grunt.registerTask('compile:cljs', function() {
+      var tasks = ['shell:cljs_clean', 'shell:cljs_once'];
+      grunt.option('force', true);
+      grunt.task.run(tasks);
+    });
     grunt.registerTask('compile:fonts', ['mkdir:fontsTarget', 'webfontjson']);
     grunt.registerTask('compile:flash', ['copy:flash']);
     grunt.registerTask('compile:inlineSvgs', ['copy:inlineSVGs', 'svgmin:inlineSVGs']);
@@ -97,7 +102,8 @@ module.exports = function (grunt) {
         'compile:fonts',
         'compile:flash',
         'asset_hash',
-        'compile:conf'
+        'compile:conf',
+        'compile:cljs'
     ]);
 
     /**

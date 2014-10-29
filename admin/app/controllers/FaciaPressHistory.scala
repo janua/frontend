@@ -22,4 +22,8 @@ object FaciaPressHistory extends Controller {
     S3FrontsApi.restorePressedVersion(key, versionId)
     Ok(Json.toJson(s"Restored $key to $versionId"))
   }
+
+  def index = Action {
+    Ok(views.html.pressedhistory())
+  }
 }

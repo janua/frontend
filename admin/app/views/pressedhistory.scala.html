@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pressed History</title>
+    <link href="@routes.Assets.at("javascripts/components/bootstrap/dist/css/bootstrap.css")" rel="stylesheet" />
+    <link href="@routes.Assets.at("css/admin.css")" rel="stylesheet">
+    <style type="text/css">
+        html {
+            font-family: sans-serif;
+        }
+        .paths-list {
+            min-width: 5em;
+            margin: 0 1em 0 0;
+        }
+        .highlight {
+            color: red;
+        }
+        .flex-wrap {
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .versions, .paths-list {
+            display: flex;
+            flex-flow: column;
+        }
+        .title {
+            flex: 0 0 100%;
+        }
+        .version {
+            margin-bottom: 1em;
+        }
+        .versions, .paths-list{
+            border: solid thin silver;
+            border-radius: 5px;
+            padding: 1em;
+            background-color: aliceblue;
+        }
+        .paths-list {
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+<div id="mainapp"></div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.2/react.min.js"></script>
+<script src="@routes.Assets.at("clojurescript/main.js")"></script>
+<script type="text/javascript">goog.require("guardian_frontend.pressedhistory");</script>
+</body>
+</html>

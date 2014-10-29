@@ -135,3 +135,4 @@ GET         /history/restore/*key/:versionId controllers.admin.FaciaPressHistory
 GET         /history/object/*key/:versionId controllers.admin.FaciaPressHistory.getPressedHistoryFile(key, versionId)
 GET         /history/list/*key controllers.admin.FaciaPressHistory.getHistoryFor(key)
 GET         /config controllers.admin.FaciaPressHistory.listPaths()
+GET         /history controllers.admin.FaciaPressHistory.index()

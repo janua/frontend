@@ -6,7 +6,7 @@ import services.{ConfigAgent, S3FrontsApi}
 
 object FaciaPressHistory extends Controller {
 
-  def config = Action {
+  def listPaths = Action {
     Ok(Json.toJson(ConfigAgent.getPathIds.sorted)).as("application/json")
   }
 

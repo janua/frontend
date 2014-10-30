@@ -6,24 +6,24 @@ import services.{ConfigAgent, S3FrontsApi}
 
 object FaciaPressHistory extends Controller {
 
-  def listPaths = Action {
+  def listPaths = AuthActions.AuthActionTest {
     Ok(Json.toJson(ConfigAgent.getPathIds.sorted)).as("application/json")
   }
 
-  def getHistoryFor(key: String) = Action {
+  def getHistoryFor(key: String) = AuthActions.AuthActionTest {
     Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getHistoryForPath(key)))).as("application/json")
   }
 
-  def getPressedHistoryFile(key: String, versionId: String) = Action {
+  def getPressedHistoryFile(key: String, versionId: String) = AuthActions.AuthActionTest {
     Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getPressedHistoryVersion(key, versionId))))
   }
 
-  def restoreVersion(key: String, versionId: String) = Action {
+  def restoreVersion(key: String, versionId: String) = AuthActions.AuthActionTest {
     S3FrontsApi.restorePressedVersion(key, versionId)
     Ok(Json.toJson(s"Restored $key to $versionId"))
   }
 
-  def index = Action {
+  def index = AuthActions.AuthActionTest {
     Ok(views.html.pressedhistory())
   }
 }

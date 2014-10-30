@@ -11,7 +11,8 @@
       (let [{:keys [currentPath]} data]
         (dom/div #js {:className "paths-list"}
           (dom/h3 nil "Paths List")
-        (apply dom/div nil
-          (map
-            (fn [path]
-              (dom/div #js {:onClick #(updateVersionsForPath path currentPath)} path)) (:paths data))))))))
+          (apply dom/div nil
+            (map
+              (fn [path]
+                (dom/div #js {:onClick #(updateVersionsForPath path currentPath)} path))
+              (:paths data))))))))

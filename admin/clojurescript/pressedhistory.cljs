@@ -1,10 +1,9 @@
 (ns guardian-frontend.pressedhistory
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [ajax.core :refer [GET POST]]
             [guardian-frontend.components.paths :refer [pathsList]]
             [guardian-frontend.components.versions :refer [versionsList]]
-            [guardian-frontend.components.utils :refer [updateVersionsForPath restorePath getPaths]]))
+            [guardian-frontend.components.utils :refer [getPaths]]))
 
 (def app-state (atom {:paths []
                       :currentPath {:path "No Selected Path" :versions []}}))

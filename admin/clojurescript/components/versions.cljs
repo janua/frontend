@@ -26,11 +26,12 @@
     (render [this]
       (let [{:keys [currentPath isLatest key versionId bytes dateTime humanDateTime etag etagOccursMoreThanOnce]} version]
         (dom/div #js {:className (str "version" (if isLatest " latest"))}
-          (dom/div nil key)
-          (dom/div nil versionId (if isLatest " (Latest)"))
-          (dom/div nil bytes " bytes")
-          (dom/div nil dateTime)
-          (dom/div nil humanDateTime)
-          (dom/div (if etagOccursMoreThanOnce #js {:className "highlight"}) etag)
+          (dom/div nil "Key: " key)
+          (dom/div nil "Version ID: " versionId (if isLatest " (Latest)"))
+          (dom/div nil "Size: " bytes " bytes")
+          (dom/div nil "Date (Long): " dateTime)
+          (dom/div nil "Date (Human): " humanDateTime)
+          (dom/div nil "ETag: "
+            (dom/span (if etagOccursMoreThanOnce #js {:className "highlight"}) etag))
           (if-not isLatest
             (dom/button #js {:className "btn btn-sm btn-primary":onClick #(restorePath versionId currentPath)} "Restore")))))))

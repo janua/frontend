@@ -114,8 +114,7 @@ module.exports = function (grunt) {
         'compile:fonts',
         'compile:flash',
         'asset_hash',
-        'compile:conf',
-        'compile:cljs'
+        'compile:conf'
     ]);
 
     grunt.registerTask('prepare', ['jspmInstall']);

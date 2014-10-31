@@ -28,3 +28,6 @@
        :error-handler #(.error js/console (pr-str %))
        :response-format :json
        :keywords? true})))
+
+(defn updateVersion [currentPathCursor currentVersion]
+  (om/transact! currentPathCursor (fn [m] (assoc m :selectedVersion currentVersion))))

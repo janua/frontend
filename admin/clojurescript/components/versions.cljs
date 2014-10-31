@@ -1,10 +1,7 @@
 (ns guardian-frontend.components.versions
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [guardian-frontend.components.utils :refer [restorePath]]))
-
-(defn updateVersion [currentPathCursor currentVersion]
-  (om/transact! currentPathCursor (fn [m] (assoc m :selectedVersion currentVersion))))
+            [guardian-frontend.components.utils :refer [restorePath updateVersion]]))
 
 (defn versionsList [currentPath owner]
   (reify

@@ -3,6 +3,9 @@
             [om.dom :as dom :include-macros true]
             [guardian-frontend.components.utils :refer [restorePath]]))
 
+(defn updateVersion [currentPathCursor currentVersion]
+  (om/transact! currentPathCursor (fn [m] (assoc m :selectedVersion currentVersion))))
+
 (defn versionsList [currentPath owner]
   (reify
     om/IRender
@@ -34,4 +37,6 @@
           (dom/div nil "ETag: "
             (dom/span (if etagOccursMoreThanOnce #js {:className "highlight"}) etag))
           (if-not isLatest
-            (dom/button #js {:className "btn btn-sm btn-primary":onClick #(restorePath versionId currentPath)} "Restore")))))))
+            (dom/div nil
+              (dom/button #js {:className "btn btn-sm btn-primary":onClick #(restorePath versionId currentPath)} "Restore")
+              (dom/button #js {:className "btn btn-sm btn-primary" :onClick #(updateVersion currentPath versionId)} "View"))))))))

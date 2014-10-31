@@ -6,6 +6,9 @@
 GET        /assets/internal/*file                                                              controllers.Assets.at(path="/public", file)
 GET        /assets/*path                                                                       dev.DevAssetsController.at(path)
 
+#Version Viewer
+GET        /version/:stage/*path                                                               controllers.FaciaVersionController.renderFrontPressResult(stage, path)
+
 #Login
 # authentication endpoints
 GET           /login                                                                           controllers.OAuthLoginController.login

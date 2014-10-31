@@ -1,3 +1,5 @@
+@()
+@import conf.Configuration
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
@@ -49,6 +51,11 @@
 </head>
 <body>
 <div id="mainapp"></div>
+<script type="text/javascript">
+    var config = {
+        stage: '@Configuration.facia.stage'
+    };
+</script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.2/react.min.js"></script>
 <script src="@routes.Assets.at("clojurescript/main.js")"></script>
 <script type="text/javascript">goog.require("guardian_frontend.pressedhistory");</script>

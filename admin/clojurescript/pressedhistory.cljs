@@ -17,7 +17,12 @@
       (apply dom/div #js {:className "flex-wrap"}
       [(dom/h5 #js {:className "title"} "Restore History")
        (om/build pathsList data)
-       (om/build versionsList (:currentPath data))]))))
+       (om/build versionsList (:currentPath data))
+       (if-let [path (:path (:currentPath data))]
+         (dom/iframe #js {:className "viewer" :frameBorder "0"
+                        :src (str "http://localhost:9001/version/" stage "/" path
+                              (if-let [selectedVersion (:selectedVersion (:currentPath data))]
+                                (str "?versionId=" selectedVersion)))}))]))))
 
 (om/root rootApp app-state {:target (. js/document (getElementById "mainapp"))})
 

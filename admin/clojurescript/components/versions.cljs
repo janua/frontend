@@ -8,7 +8,7 @@
     om/IRender
     (render [this]
       (apply dom/div #js {:className "versions"}
-        (dom/h3 nil (:path currentPath))
+        (dom/h3 nil (or (:path currentPath) "No Selected Path"))
         (let [etagsList (map #(:etag %) (:versions currentPath))]
           (map
             (fn [version]

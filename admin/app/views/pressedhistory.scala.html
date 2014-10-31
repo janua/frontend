@@ -9,9 +9,11 @@
         html {
             font-family: sans-serif;
         }
+        #mainapp {
+            margin: 1em;
+        }
         .paths-list {
             min-width: 5em;
-            margin: 0 1em 0 0;
         }
         .highlight {
             color: red;
@@ -20,7 +22,7 @@
             display: flex;
             flex-flow: row wrap;
         }
-        .versions, .paths-list {
+        .versions, .paths-list, .viewer {
             display: flex;
             flex-flow: column;
         }
@@ -35,9 +37,13 @@
             border-radius: 5px;
             padding: 1em;
             background-color: aliceblue;
+            margin: 0 1em 0 0;
         }
         .paths-list {
             cursor: default;
+        }
+        .viewer {
+            flex-grow: 1;
         }
     </style>
 </head>

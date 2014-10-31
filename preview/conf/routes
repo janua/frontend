@@ -10,6 +10,9 @@ GET        /_healthcheck                                                        
 
 GET        /responsive-viewer/*path                                                            controllers.ResponsiveViewerController.preview(path)
 
+#Version Viewer
+GET        /version/:stage/*path                                                               controllers.FaciaVersionController.renderFrontPressResult(stage, path)
+
 #Login
 # authentication endpoints
 GET           /login                                                                           controllers.OAuthLoginController.login

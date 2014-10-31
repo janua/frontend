@@ -20,7 +20,7 @@
        (om/build versionsList (:currentPath data))
        (if-let [path (:path (:currentPath data))]
          (dom/iframe #js {:className "viewer" :frameBorder "0"
-                        :src (str "http://localhost:9001/version/" stage "/" path
+                        :src (str "http://preview.gutools.co.uk/version/" stage "/" path
                               (if-let [selectedVersion (:selectedVersion (:currentPath data))]
                                 (str "?versionId=" selectedVersion)))}))]))))
 

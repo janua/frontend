@@ -19,7 +19,7 @@
 (defn updateVersionsForPath [path currentPathCursor]
   "Used for updating currentPath after an update"
   (getVersions path
-    #(om/transact! currentPathCursor (fn [v] (assoc v :path path :versions %)))))
+    #(om/transact! currentPathCursor (fn [v] (assoc v :path path :versions % :selectedVersion nil)))))
 
 (defn restorePath [versionId currentPathCursor]
   (let [{:keys [path]} @currentPathCursor]

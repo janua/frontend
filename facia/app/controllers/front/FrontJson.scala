@@ -142,7 +142,7 @@ trait FrontJson extends ExecutionContexts with Logging {
       showLatestUpdate = (json \ "showLatestUpdate").asOpt[Boolean]
     )
 
-  private def parsePressedJson(j: String): Option[FaciaPage] = {
+  def parsePressedJson(j: String): Option[FaciaPage] = {
     val json = Json.parse(j)
     val id: String = (json \ "id").as[String]
     Option(

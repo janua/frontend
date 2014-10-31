@@ -190,6 +190,9 @@ object S3FrontsApi extends S3 {
   def getDraftPressedKeyForPath(path: String): String =
     s"$location/pressed/draft/$path/pressed.json"
 
+  def getPressedKeyForStageAndPath(stage: String, path: String): String =
+    s"${stage.toUpperCase}/$namespace/pressed/live/$path/pressed.json"
+
   def getSchema = get(s"$location/schema.json")
   def getMasterConfig: Option[String] = get(s"$location/config/config.json")
   def getBlock(id: String) = get(s"$location/collection/$id/collection.json")
@@ -239,6 +242,9 @@ object S3FrontsApi extends S3 {
 
   def getPressedHistoryVersion(path: String, versionId: String) =
     get(getLivePressedKeyForPath(path), Option(versionId))
+
+  def getObjectHistoryVersion(stage: String, path: String, versionId: Option[String]) =
+    get(getPressedKeyForStageAndPath(stage, path), versionId)
 
   def restorePressedVersion(path: String, versionId: String) =
     restoreVersion(getLivePressedKeyForPath(path), versionId)

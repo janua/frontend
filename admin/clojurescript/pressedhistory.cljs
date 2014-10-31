@@ -5,6 +5,8 @@
             [guardian-frontend.components.versions :refer [versionsList]]
             [guardian-frontend.components.utils :refer [getPaths]]))
 
+(def stage (.-stage js/config))
+
 (def app-state (atom {:paths []
                       :currentPath {:path "No Selected Path" :versions []}}))
 

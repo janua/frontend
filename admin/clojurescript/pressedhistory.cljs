@@ -8,7 +8,7 @@
 (def stage (.-stage js/config))
 
 (def app-state (atom {:paths []
-                      :currentPath {:path "No Selected Path" :versions []}}))
+                      :currentPath {:path nil :versions [] :selectedVersion nil}}))
 
 (defn rootApp [data owner]
   (reify

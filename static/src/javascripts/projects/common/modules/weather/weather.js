@@ -30,11 +30,11 @@ define([
             try {
                 ajax({
                     url: url,
-                    type: 'json',
+                    type: 'jsonp',
                     method: 'get',
-                    crossOrigin: true
+                    cache: true
                 }).then(function (resp) {
-                    self.views.addToDOM(resp);
+                    self.views.addToDOM(resp[0]);
                 });
             } catch (e) {
                 raven.captureException(new Error('Error retrieving weather data (' + e.message + ')'), {
@@ -53,7 +53,7 @@ define([
                     tempNow: data['Temperature']['Metric']['Value']
                 }));
 
-
+                $holder.html($weather);
             }
         }
     };

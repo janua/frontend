@@ -50,6 +50,7 @@ define([
     'common/modules/ui/smartAppBanner',
     'common/modules/ui/tabs',
     'common/modules/ui/toggles',
+    'common/modules/weather/weather',
     'common/modules/userPrefs',
 
     'bootstraps/identity',
@@ -105,6 +106,7 @@ define([
     smartAppBanner,
     Tabs,
     Toggles,
+    weather,
     userPrefs,
 
     identity,
@@ -436,6 +438,10 @@ define([
 
             initShareCounts: function () {
                 shareCount.init();
+            },
+
+            initWeatherComponent: function () {
+                weather.init();
             }
 
         },
@@ -476,6 +482,7 @@ define([
             modules.transcludeOnwardContent();
             modules.initReleaseMessage();
             modules.initOpenOverlayOnClick();
+            modules.initWeatherComponent();
             crosswordThumbnails.init();
 
             mediator.emit('page:common:ready');

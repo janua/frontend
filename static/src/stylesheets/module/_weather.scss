@@ -1,0 +1,41 @@
+.weather {
+    position: absolute;
+    left: $gs-gutter;
+    bottom: $gs-row-height * 2;
+    color: colour(neutral-2);
+
+    @include fs-headline(1);
+
+    @include mq(leftCol) {
+        width: $left-column;
+    }
+
+    @include mq(wide) {
+        width: $left-column-wide;
+
+        .has-page-skin & {
+            width: auto;
+            float: none;
+        }
+    }
+
+    @include mq($to: wide) {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: gs-span(2);
+
+        .i {
+            height: 30px;
+            vertical-align: middle;
+        }
+    }
+}
+
+.weather__city {
+    border-bottom: 1px solid colour(neutral-3);
+}
+
+.weather__temp {
+    @include fs-headline(5);
+}

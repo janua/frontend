@@ -252,9 +252,12 @@ $header-image-size-desktop: 100px;
 
 .fc-container__updated {
     display: block;
-    position: absolute;
-    right: 0;
-    bottom: 0;
+    @include mq($from: tablet) {
+        position:absolute;
+        right: 0;
+        bottom: 0;
+    }
+
     padding-bottom: $gs-baseline / 2;
     color: colour(neutral-2);
     @include fs-headline(1);

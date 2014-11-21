@@ -4,15 +4,10 @@
 
     @include fs-headline(1);
 
-    @include mq(leftCol) {
-        width: $left-column;
-    }
-
-    @include mq($to: leftCol) {
-        top: 0;
-        right: 0;
-
-        width: gs-span(2);
+    @include mq($from: mobile) {
+        width: auto;
+        top: $gs-gutter - 5;
+        right:  $gs-gutter / 2;
 
         .i {
             height: 30px;
@@ -20,26 +15,49 @@
         }
     }
 
+    @include mq($from: tablet, $to: leftCol) {
+        top: $gs-gutter / 5;
+    }
+
     @include mq($from: leftCol) {
+        width: $left-column;
         left: $gs-gutter;
+        top: auto;
         bottom: $gs-row-height * 2;
+
+        .i {
+            height: 44px;
+        }
     }
 }
 
 .weather__city {
-    border-bottom: 1px solid colour(neutral-5);
-
     @include mq($to: leftCol) {
-        display: inline;
-        border: 0;
+        display: inline-block;
+        padding-top: 7px;
+        padding-right: $gs-gutter / 2;
+    }
+
+    @include mq($from: leftCol) {
+        border-bottom: 1px solid colour(neutral-5);
     }
 }
 
 .weather__temp {
     @include fs-headline(7);
+
+    @include mq($to: leftCol) {
+        @include fs-headline(3);
+        padding-right: $gs-gutter / 4;
+    }
 }
 
 .weather__icon {
     float: right;
     margin-top: $gs-gutter / 2;
+    background-position: center;
+
+    @include mq($to: leftCol) {
+        margin: 0;
+    }
 }

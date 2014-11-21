@@ -50,7 +50,7 @@ define([
                 $weather = $.create(template(weatherTemplate, {
                     location: 'London',
                     icon: data['WeatherIcon'],
-                    tempNow: data['Temperature']['Metric']['Value']
+                    tempNow: Math.round(data['Temperature']['Metric']['Value'])
                 }));
 
                 $holder.html($weather);

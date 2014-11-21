@@ -1,7 +1,5 @@
 .weather {
     position: absolute;
-    left: $gs-gutter;
-    bottom: $gs-row-height * 2;
     color: colour(neutral-2);
 
     @include fs-headline(1);
@@ -10,19 +8,10 @@
         width: $left-column;
     }
 
-    @include mq(wide) {
-        width: $left-column-wide;
-
-        .has-page-skin & {
-            width: auto;
-            float: none;
-        }
-    }
-
-    @include mq($to: wide) {
-        position: absolute;
+    @include mq($to: leftCol) {
         top: 0;
         right: 0;
+
         width: gs-span(2);
 
         .i {
@@ -30,12 +19,27 @@
             vertical-align: middle;
         }
     }
+
+    @include mq($from: leftCol) {
+        left: $gs-gutter;
+        bottom: $gs-row-height * 2;
+    }
 }
 
 .weather__city {
-    border-bottom: 1px solid colour(neutral-3);
+    border-bottom: 1px solid colour(neutral-5);
+
+    @include mq($to: leftCol) {
+        display: inline;
+        border: 0;
+    }
 }
 
 .weather__temp {
-    @include fs-headline(5);
+    @include fs-headline(7);
+}
+
+.weather__icon {
+    float: right;
+    margin-top: $gs-gutter / 2;
 }

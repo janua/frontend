@@ -441,7 +441,9 @@ define([
             },
 
             initWeatherComponent: function () {
-                weather.init();
+                if (detect.hasGeoLocation()) {
+                    weather.init();
+                }
             }
 
         },

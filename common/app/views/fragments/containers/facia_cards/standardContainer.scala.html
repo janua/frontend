@@ -5,11 +5,6 @@
 
 @containerHeader(containerDefinition, frontProperties)
 
-
-@if(containerDefinition.showDateHeader) {
-    <div class="weather js-weather"></div>
-}
-
 @for(containerLayout <- containerDefinition.containerLayout) {
     <div class="fc-container__body fc-container--rolled-up-hide fc-show-more--hidden js-container--fc-show-more"
          data-title="@Html(Localisation(containerDefinition.displayName getOrElse ""))"

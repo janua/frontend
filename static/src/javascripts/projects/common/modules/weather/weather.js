@@ -14,7 +14,8 @@ define([
 
     var self     = null,
         $weather = null,
-        $holder  = null;
+        $holder  = null,
+        apiKey   = '3e74092c580e46319d36f04e68734365';
 
     return {
         init: function () {
@@ -22,19 +23,33 @@ define([
 
             $holder = $('.js-weather');
 
-            this.fetchData();
+            this.getGeoLocation();
         },
 
-        fetchData: function () {
-            var url = 'http://apidev.accuweather.com/currentconditions/v1/328328.json?apikey=3e74092c580e46319d36f04e68734365';
+        getGeoLocation: function() {
+            navigator.geolocation.getCurrentPosition(this.fetchData);
+        },
+
+        fetchData: function (position) {
+            var urlLocation = 'http://api.accuweather.com/locations/v1/cities/geoposition/search.json?q='
+                    + position.coords.latitude + ', ' + position.coords.longitude + '&apikey=' + apiKey,
+                urlWeather = 'http://apidev.accuweather.com/currentconditions/v1/';
+
             try {
                 ajax({
-                    url: url,
+                    url: urlLocation,
                     type: 'jsonp',
                     method: 'get',
                     cache: true
-                }).then(function (resp) {
-                    self.views.addToDOM(resp[0]);
+                }).then(function (locationResp) {
+                    ajax({
+                        url: urlWeather + locationResp['Key'] + '.json?apikey=' + apiKey,
+                        type: 'jsonp',
+                        method: 'get',
+                        cache: true
+                    }).then(function (weatherResp) {
+                        self.views.addToDOM(weatherResp[0], locationResp['AdministrativeArea']['EnglishName']);
+                    });
                 });
             } catch (e) {
                 raven.captureException(new Error('Error retrieving weather data (' + e.message + ')'), {
@@ -46,14 +61,14 @@ define([
         },
 
         views: {
-            addToDOM: function (data) {
+            addToDOM: function (weatherData, city) {
                 $weather = $.create(template(weatherTemplate, {
-                    location: 'London',
-                    icon: data['WeatherIcon'],
-                    tempNow: Math.round(data['Temperature']['Metric']['Value'])
+                    location: city,
+                    icon: weatherData['WeatherIcon'],
+                    tempNow: Math.round(weatherData['Temperature']['Metric']['Value'])
                 }));
 
-                $holder.html($weather);
+                $weather.insertAfter($holder);
             }
         }
     };

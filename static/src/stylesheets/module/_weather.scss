@@ -9,7 +9,7 @@
         top: $gs-gutter - 5;
         right:  $gs-gutter / 2;
 
-        .i {
+        .weather__icon {
             height: 30px;
             vertical-align: middle;
         }
@@ -25,7 +25,7 @@
         top: auto;
         bottom: $gs-row-height * 2;
 
-        .i {
+        .weather__icon {
             height: 44px;
         }
     }

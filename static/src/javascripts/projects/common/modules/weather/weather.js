@@ -42,14 +42,15 @@ define([
                     method: 'get',
                     cache: true
                 }).then(function (locationResp) {
-                    ajax({
+                    console.log('test');
+                    /*ajax({
                         url: urlWeather + locationResp['Key'] + '.json?apikey=' + apiKey,
                         type: 'jsonp',
                         method: 'get',
                         cache: true
                     }).then(function (weatherResp) {
                         self.views.addToDOM(weatherResp[0], locationResp['AdministrativeArea']['EnglishName']);
-                    });
+                    });*/
                 });
             } catch (e) {
                 raven.captureException(new Error('Error retrieving weather data (' + e.message + ')'), {

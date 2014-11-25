@@ -29,16 +29,57 @@ define([
         });
 
         it("should initalize", function() {
-            spyOn(sut, 'getGeoLocation');
+            spyOn(sut, 'fetchData');
+            spyOn(sut, 'getDefaultLocation').and.callThrough();
 
             expect(sut).toEqual(jasmine.any(Object));
 
             sut.init();
 
-            expect(sut.getGeoLocation).toHaveBeenCalled();
+            expect(sut.getDefaultLocation).toHaveBeenCalled();
+            expect(sut.fetchData).toHaveBeenCalledWith(jasmine.any(Object));
         });
 
-        it("should call fetch data", function() {
+        it("should get default location based on edition", function() {
+            var geo      = {
+                'London': {
+                    coords: {
+                        latitude: 51.51,
+                        longitude: -0.11
+                    }
+                },
+                'New York': {
+                    coords: {
+                        latitude: 40.71,
+                        longitude: -74.01
+                    }
+                },
+                'Sydney': {
+                    coords: {
+                        latitude: -33.86,
+                        longitude: 151.21
+                    }
+                }
+            };
+
+            guardian.config.page.edition = 'UK';
+
+            expect(sut.getDefaultLocation()).toEqual(geo['London']);
+
+            guardian.config.page.edition = 'US';
+
+            expect(sut.getDefaultLocation()).toEqual(geo['New York']);
+
+            guardian.config.page.edition = 'AU';
+
+            expect(sut.getDefaultLocation()).toEqual(geo['Sydney']);
+
+            guardian.config.page.edition = '';
+
+            expect(sut.getDefaultLocation()).toEqual(geo['London']);
+        });
+
+        xit("should call fetch data", function() {
             window.navigator.geolocation = {
                 "getCurrentPosition": function(success) {}
             };

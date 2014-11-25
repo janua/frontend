@@ -2,12 +2,14 @@ define([
     'raven',
     'common/utils/$',
     'common/utils/ajax',
+    'common/utils/config',
     'common/utils/template',
     'text!common/views/components/weather.html'
 ], function (
     raven,
     $,
     ajax,
+    config,
     template,
     weatherTemplate
     ) {
@@ -15,13 +17,43 @@ define([
     var self     = null,
         $weather = null,
         $holder  = null,
-        apiKey   = '3e74092c580e46319d36f04e68734365';
+        apiKey   = '3e74092c580e46319d36f04e68734365',
+        geo      = {
+            'London': {
+                coords: {
+                    latitude: 51.51,
+                    longitude: -0.11
+                }
+            },
+            'New York': {
+                coords: {
+                    latitude: 40.71,
+                    longitude: -74.01
+                }
+            },
+            'Sydney': {
+                coords: {
+                    latitude: -33.86,
+                    longitude: 151.21
+                }
+            }
+        };
 
     return {
         init: function () {
             self = this;
 
+            //this.fetchData(this.getDefaultLocation());
+
             this.getGeoLocation();
+        },
+
+        getDefaultLocation: function() {
+            switch (config.page.edition) {
+                case "US": return geo['New York']; break;
+                case "AU": return geo['Sydney']; break;
+                default: return geo['London'];
+            }
         },
 
         getGeoLocation: function() {

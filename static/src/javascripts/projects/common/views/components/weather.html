@@ -1,12 +1,13 @@
 <div class="weather">
-    <p class="weather__city">{{location}}
-        <a class="popup__toggle js-search-toggle" href="#get-location" data-toggle="weather-change-location">
+    <div>
+        <p class="weather__city">{{location}}</p>
+        <a class="js-get-location" href="#get-location" data-toggle="weather-change-location">
             <i class="i i-plus-blue"><span class="u-h">Get your current location</span></i>
         </a>
-    </p>
+    </div>
     <span class="weather__temp">{{tempNow}}°</span>
     <i class="i i-weather-3 weather__icon"></i>
-    <div class="popup is-off weather-change-location" id="guardian-weather">
+    <div class="popup is-off weather-change-location" id="get-location">
         <ul class="popup__group">
             <li class="popup__item">
                 <a class="brand-bar__item--action" data-link-name="uk : topNav : membership"

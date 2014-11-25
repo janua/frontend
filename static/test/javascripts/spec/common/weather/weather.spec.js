@@ -1,10 +1,12 @@
 define([
+    'bean',
     'bonzo',
     'common/utils/$',
     'common/utils/ajax',
     'common/utils/template',
     'common/modules/weather/weather'
 ], function (
+    bean,
     bonzo,
     $,
     ajax,
@@ -26,6 +28,7 @@ define([
 
         afterEach(function() {
             $('body').html();
+            container = null;
         });
 
         it("should initalize", function() {
@@ -110,6 +113,16 @@ define([
             expect($(".weather__city", $weather).text()).toEqual('London');
             expect($(".weather__temp", $weather).text()).toEqual('9°');
             expect($(".weather__icon", $weather).hasClass('i-weather-' + mockWeatherData["WeatherIcon"])).toBeTruthy();
+        });
+
+        it("should bind click event", function() {
+            spyOn(sut, "togglePositionPopup");
+
+            sut.bindEvents();
+
+            bean.fire($('.js-get-location')[0], 'click');
+
+            expect(sut.togglePositionPopup).toHaveBeenCalled();
         });
     });
 });

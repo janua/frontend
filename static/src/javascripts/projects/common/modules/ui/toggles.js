@@ -1,9 +1,11 @@
 define([
     'bean',
-    'bonzo'
+    'bonzo',
+    'qwery'
 ], function (
     bean,
-    bonzo
+    bonzo,
+    qwery
 ) {
 
     var Toggles = function () {
@@ -12,8 +14,9 @@ define([
             controls,
             readyClass = 'js-toggle-ready';
 
-        this.init = function () {
-            controls = document.body.querySelectorAll('[data-toggle]');
+        this.init = function (container) {
+            controls = qwery('[data-toggle]', container);
+            console.log(container, controls);
             Array.prototype.forEach.call(controls, function (control) {
                 if (!bonzo(control).hasClass(readyClass)) {
                     var target = self.getTarget(control);

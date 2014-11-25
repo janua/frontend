@@ -1,24 +1,30 @@
 define([
+    'bean',
     'raven',
     'common/utils/$',
     'common/utils/ajax',
     'common/utils/config',
     'common/utils/template',
+    'common/modules/ui/toggles',
     'text!common/views/components/weather.html'
 ], function (
+    bean,
     raven,
     $,
     ajax,
     config,
     template,
+    Toggles,
     weatherTemplate
     ) {
 
-    var self     = null,
-        $weather = null,
-        $holder  = null,
-        apiKey   = '3e74092c580e46319d36f04e68734365',
-        geo      = {
+    var self       = null,
+        $weather   = null,
+        $holder    = null,
+        toggles    = null,
+        apiKey     = '3e74092c580e46319d36f04e68734365',
+        buttonName = 'js-get-location',
+        geo        = {
             'London': {
                 coords: {
                     latitude: 51.51,
@@ -43,9 +49,7 @@ define([
         init: function () {
             self = this;
 
-            //this.fetchData(this.getDefaultLocation());
-
-            this.getGeoLocation();
+            this.fetchData(this.getDefaultLocation());
         },
 
         getDefaultLocation: function() {
@@ -109,6 +113,9 @@ define([
                 $holder = $('.js-weather');
 
                 $weather.insertAfter($holder);
+
+                toggles = new Toggles();
+                toggles.init($weather);
             }
         }
     };

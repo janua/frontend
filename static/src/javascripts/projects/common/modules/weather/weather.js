@@ -5,6 +5,7 @@ define([
     'common/utils/ajax',
     'common/utils/config',
     'common/utils/template',
+    'common/modules/userPrefs',
     'common/modules/ui/toggles',
     'text!common/views/components/weather.html'
 ], function (
@@ -14,6 +15,7 @@ define([
     ajax,
     config,
     template,
+    userPrefs,
     Toggles,
     weatherTemplate
     ) {
@@ -23,7 +25,7 @@ define([
         $holder    = null,
         toggles    = null,
         apiKey     = '3e74092c580e46319d36f04e68734365',
-        buttonName = 'js-get-location',
+        prefName   = 'weather-location',
         geo        = {
             'London': {
                 coords: {
@@ -49,7 +51,7 @@ define([
         init: function () {
             self = this;
 
-            this.fetchData(this.getDefaultLocation());
+            this.fetchData(this.getUserPrefs());
         },
 
         getDefaultLocation: function() {
@@ -61,7 +63,11 @@ define([
         },
 
         getGeoLocation: function() {
-            navigator.geolocation.getCurrentPosition(this.fetchData);
+            navigator.geolocation.getCurrentPosition(this.fetchData, this.geoLocationDisabled);
+        },
+
+        geoLocationDisabled: function() {
+            // TODO: no geo :(
         },
 
         getLocationData: function(urlLocation) {
@@ -82,10 +88,26 @@ define([
             });
         },
 
+        storeUserLocation: function(position) {
+
+        },
+
+        getUserPrefs: function () {
+            var prefs = userPrefs.get(prefName);
+
+            if (prefs && prefs["coords"]) {
+                return prefs;
+            }
+
+            return this.getDefaultLocation();
+        },
+
         fetchData: function (position) {
             var urlLocation = 'http://api.accuweather.com/locations/v1/cities/geoposition/search.json?q='
                     + position.coords.latitude + ', ' + position.coords.longitude + '&apikey=' + apiKey,
                 urlWeather = 'http://apidev.accuweather.com/currentconditions/v1/';
+
+            self.storeUserLocation(position);
 
             try {
                 self.getLocationData(urlLocation).then(function (locationResp) {
@@ -119,7 +141,7 @@ define([
         views: {
             addToDOM: function (weatherData, city) {
                 $weather = $('.weather');
-                
+
                 if ($weather.length > 0) {
                     self.unbindEvents();
                     $weather.remove();

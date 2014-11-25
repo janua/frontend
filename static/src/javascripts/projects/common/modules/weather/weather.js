@@ -102,8 +102,29 @@ define([
             }
         },
 
+        bindEvents: function() {
+            bean.on($('.js-detect-location')[0], 'click', self.detectPosition);
+        },
+
+        unbindEvents: function() {
+            bean.off($('.js-detect-location')[0], 'click', self.detectPosition);
+        },
+
+        detectPosition: function(e) {
+            e.preventDefault();
+            $('.js-detect-location').text('Getting location...');
+            self.getGeoLocation();
+        },
+
         views: {
             addToDOM: function (weatherData, city) {
+                $weather = $('.weather');
+                
+                if ($weather.length > 0) {
+                    self.unbindEvents();
+                    $weather.remove();
+                }
+
                 $weather = $.create(template(weatherTemplate, {
                     location: city,
                     icon: weatherData['WeatherIcon'],
@@ -116,6 +137,8 @@ define([
 
                 toggles = new Toggles();
                 toggles.init($weather);
+
+                self.bindEvents();
             }
         }
     };

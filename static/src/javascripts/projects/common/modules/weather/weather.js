@@ -21,13 +21,29 @@ define([
         init: function () {
             self = this;
 
-            $holder = $('.js-weather');
-
             this.getGeoLocation();
         },
 
         getGeoLocation: function() {
             navigator.geolocation.getCurrentPosition(this.fetchData);
+        },
+
+        getLocationData: function(urlLocation) {
+            return ajax({
+                url: urlLocation,
+                type: 'jsonp',
+                method: 'get',
+                cache: true
+            });
+        },
+
+        getWeatherData: function(urlWeather, locationData) {
+            return ajax({
+                url: urlWeather + locationData['Key'] + '.json?apikey=' + apiKey,
+                type: 'jsonp',
+                method: 'get',
+                cache: true
+            });
         },
 
         fetchData: function (position) {
@@ -36,21 +52,10 @@ define([
                 urlWeather = 'http://apidev.accuweather.com/currentconditions/v1/';
 
             try {
-                ajax({
-                    url: urlLocation,
-                    type: 'jsonp',
-                    method: 'get',
-                    cache: true
-                }).then(function (locationResp) {
-                    console.log('test');
-                    /*ajax({
-                        url: urlWeather + locationResp['Key'] + '.json?apikey=' + apiKey,
-                        type: 'jsonp',
-                        method: 'get',
-                        cache: true
-                    }).then(function (weatherResp) {
+                self.getLocationData(urlLocation).then(function (locationResp) {
+                    self.getWeatherData(urlWeather, locationResp).then(function (weatherResp) {
                         self.views.addToDOM(weatherResp[0], locationResp['AdministrativeArea']['EnglishName']);
-                    });*/
+                    });
                 });
             } catch (e) {
                 raven.captureException(new Error('Error retrieving weather data (' + e.message + ')'), {
@@ -68,6 +73,8 @@ define([
                     icon: weatherData['WeatherIcon'],
                     tempNow: Math.round(weatherData['Temperature']['Metric']['Value'])
                 }));
+
+                $holder = $('.js-weather');
 
                 $weather.insertAfter($holder);
             }

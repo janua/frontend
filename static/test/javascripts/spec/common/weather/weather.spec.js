@@ -3,30 +3,29 @@ define([
     'common/utils/$',
     'common/utils/ajax',
     'common/utils/template',
-    'common/modules/weather/weather',
-    'text!common/views/components/weather.html'
+    'common/modules/weather/weather'
 ], function (
     bonzo,
     $,
     ajax,
     template,
-    sut,
-    weatherTemplate
+    sut
     ) {
 
     ddescribe('Weather component', function() {
-        var server;
+        var container,
+            $weather;
 
         beforeEach(function () {
             container = bonzo.create(
-                    '<div class="js-weather"></div>'
+                    '<div><div class="js-weather"></div></div>'
             )[0];
 
-            server = sinon.fakeServer.create();
+            $('body').append(container);
         });
 
         afterEach(function() {
-            server.restore();
+            $('body').html();
         });
 
         it("should initalize", function() {
@@ -51,24 +50,25 @@ define([
             expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledWith(sut.fetchData);
         });
 
-        it("should get location and weather data", function() {
-            spyOn(sut.views, 'addToDOM');
-
-            var mock = {
-                coords: {
-                    latitude: 50,
-                    longitude: 45
+        it("should add weather component to the DOM", function() {
+            var mockWeatherData = {
+                WeatherIcon: 3,
+                Temperature: {
+                    Metric: {
+                        Value: 9.1
+                    }
                 }
             };
 
-            server.respondWith("GET", "/something",
-                [200, { "Content-Type": "application/json" },
-                    '{ "stuff": "is", "awesome": "in here" }']);
+            var mockCity = 'London';
 
-            sut.fetchData(mock);
-            server.respond();
+            sut.views.addToDOM(mockWeatherData, mockCity);
 
-            //expect(sut.views.addToDOM).toHaveBeenCalled();
+            $weather = $('.weather');
+
+            expect($(".weather__city", $weather).text()).toEqual('London');
+            expect($(".weather__temp", $weather).text()).toEqual('9°');
+            expect($(".weather__icon", $weather).hasClass('i-weather-' + mockWeatherData["WeatherIcon"])).toBeTruthy();
         });
     });
 });

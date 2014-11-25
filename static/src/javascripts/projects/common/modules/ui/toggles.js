@@ -16,7 +16,6 @@ define([
 
         this.init = function (container) {
             controls = qwery('[data-toggle]', container);
-            console.log(container, controls);
             Array.prototype.forEach.call(controls, function (control) {
                 if (!bonzo(control).hasClass(readyClass)) {
                     var target = self.getTarget(control);

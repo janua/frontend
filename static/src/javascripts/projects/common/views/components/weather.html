@@ -1,24 +1,17 @@
 <div class="weather">
     <div>
         <p class="weather__city">{{location}}</p>
-        <a class="js-get-location" href="#get-location" data-toggle="weather-change-location">
+        <a class="js-get-location" href="#weather-get-location" data-toggle="weather-change-location">
             <i class="i i-plus-blue"><span class="u-h">Get your current location</span></i>
         </a>
     </div>
     <span class="weather__temp">{{tempNow}}°</span>
     <i class="i i-weather-3 weather__icon"></i>
-    <div class="popup is-off weather-change-location" id="get-location">
+    <div class="popup is-off weather-change-location" id="weather-get-location">
         <ul class="popup__group">
             <li class="popup__item">
-                <a class="brand-bar__item--action" data-link-name="uk : topNav : membership"
-                   href="https://membership.theguardian.com/?INTCMP=NGW_TOPNAV_UK_GU_MEMBERSHIP">
-                    membership
-                </a>
-            </li>
-            <li class="popup__item">
-                <a class="brand-bar__item--action" data-link-name="uk : topNav : subscribe"
-                   href="http://subscribe.theguardian.com/?INTCMP=NGW_TOPNAV_UK_GU_SUBSCRIBE">
-                    subscribe
+                <a class="brand-bar__item--action weather__get-location js-detect-location" data-link-name="weather-detect-location"
+                   href="#detect-location">Detect my location
                 </a>
             </li>
         </ul>

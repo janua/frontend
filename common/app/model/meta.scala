@@ -232,6 +232,7 @@ trait Tags {
   lazy val blogs: Seq[Tag] = tagsOfType("blog")
   lazy val tones: Seq[Tag] = tagsOfType("tone")
   lazy val types: Seq[Tag] = tagsOfType("type")
+  lazy val blogsAndSeries: Seq[Tag] = tags.filter{ tag => tag.tagType == "series" || tag.tagType == "blog"}
 
   def isSponsored: Boolean
   def hasMultipleSponsors: Boolean = DfpAgent.hasMultipleSponsors(tags)
@@ -242,11 +243,11 @@ trait Tags {
   def sponsor: Option[String] = DfpAgent.getSponsor(tags)
   def sponsorshipType: Option[String] = {
     if (isSponsored) {
-      Option("sponsored")
+      Option("sponsoredfeatures")
     } else if (isAdvertisementFeature) {
-      Option("advertisement-feature")
+      Option("advertisement-features")
     } else if (isFoundationSupported) {
-      Option("foundation-supported")
+      Option("foundation-features")
     } else {
       None
     }

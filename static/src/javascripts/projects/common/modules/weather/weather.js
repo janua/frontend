@@ -45,6 +45,11 @@ define([
                     longitude: 151.21
                 }
             }
+        },
+        getGeoStates = {
+            process: "Getting location...",
+            error: "Unable to get location...",
+            default: "Detect my location"
         };
 
     return {
@@ -67,7 +72,7 @@ define([
         },
 
         geoLocationDisabled: function() {
-            $('.js-detect-location').text('Unable to get location...');
+            self.changeLocationOptionText("error");
         },
 
         getLocationData: function(urlLocation) {
@@ -147,8 +152,13 @@ define([
 
         detectPosition: function(e) {
             e.preventDefault();
-            $('.js-detect-location').text('Getting location...');
+
+            self.changeLocationOptionText("process");
             self.getGeoLocation();
+        },
+
+        changeLocationOptionText: function(state) {
+            $('.js-detect-location').text(getGeoStates[state]);
         },
 
         views: {

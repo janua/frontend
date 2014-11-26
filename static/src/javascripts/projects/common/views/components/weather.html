@@ -1,13 +1,13 @@
 <div class="weather">
     <div>
         <p class="weather__city"><span>{{location}}</span>
-            <a class="js-get-location" href="#weather-get-location" data-toggle="weather-change-location">
+            <a class="js-get-location" href="#weather-get-location" data-toggle="weather-change-location" data-link-name="weather-get-location">
             <i class="i i-location-pin weather__pin"><span class="u-h">Get your current location</span></i>
             </a>
         </p>
     </div>
     <span class="weather__temp">{{tempNow}}°</span>
-    <i class="i i-weather-3 weather__icon"></i>
+    <i class="i i-weather-{{icon}} weather__icon"></i>
     <div class="popup is-off weather-change-location" id="weather-get-location">
         <ul class="popup__group">
             <li class="popup__item">

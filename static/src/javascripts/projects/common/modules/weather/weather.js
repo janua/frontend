@@ -67,7 +67,7 @@ define([
         },
 
         geoLocationDisabled: function() {
-            // TODO: no geo :(
+            $('.js-detect-location').text('Unable to get location...');
         },
 
         getLocationData: function(urlLocation) {
@@ -88,10 +88,23 @@ define([
             });
         },
 
-        storeUserLocation: function(position) {
+        saveUserLocation: function(position) {
+            var toStore = {
+                coords: {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                }
+            };
 
+            userPrefs.set(prefName, toStore);
         },
 
+        /**
+         * Check if user has data in local storage.
+         * If yes return data from local storage else return default location data.
+         *
+         * @returns {object} geolocation - lat and long
+         */
         getUserPrefs: function () {
             var prefs = userPrefs.get(prefName);
 
@@ -105,9 +118,9 @@ define([
         fetchData: function (position) {
             var urlLocation = 'http://api.accuweather.com/locations/v1/cities/geoposition/search.json?q='
                     + position.coords.latitude + ', ' + position.coords.longitude + '&apikey=' + apiKey,
-                urlWeather = 'http://apidev.accuweather.com/currentconditions/v1/';
+                urlWeather = 'http://api.accuweather.com/currentconditions/v1/';
 
-            self.storeUserLocation(position);
+            self.saveUserLocation(position);
 
             try {
                 self.getLocationData(urlLocation).then(function (locationResp) {

@@ -29,6 +29,10 @@
             height: 44px;
         }
     }
+
+    .popup {
+        z-index: 10;
+    }
 }
 
 .weather__city {
@@ -39,6 +43,7 @@
     }
 
     @include mq($from: leftCol) {
+        position: relative;
         border-bottom: 1px solid colour(neutral-5);
     }
 }
@@ -64,5 +69,25 @@
 
 .weather__pin {
     background-size: 50% !important;
-    background-position: left bottom !important;
+    background-position: right top !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    @include mq($to: leftCol) {
+        right: 101%;
+        top: -2px;
+        background-position: right center !important;
+    }
+}
+
+.weather__gps {
+    background-size: 40% !important;
+    background-position: center bottom !important;
+}
+
+.weather__wrap {
+    @include mq($to: leftCol) {
+        display: inline-block;
+    }
 }

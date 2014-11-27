@@ -144,10 +144,29 @@ define([
 
         bindEvents: function() {
             bean.on($('.js-detect-location')[0], 'click', self.detectPosition);
+            bean.on($('.js-list-location')[0], 'keyup', self.getListOfPositions);
         },
 
         unbindEvents: function() {
             bean.off($('.js-detect-location')[0], 'click', self.detectPosition);
+        },
+
+        getListOfPositions: function(e) {
+            if (typeof e.target.value !== 'string') {
+                return;
+            }
+
+            var listUrl = 'http://api.accuweather.com/locations/v1/cities/autocomplete?q=' + e.target.value + '&apikey=' + apiKey + '&language=en';
+
+            ajax({
+                url: listUrl,
+                type: 'jsonp',
+                method: 'get',
+                cache: true
+            }).then(function(resp) {
+                console.log(resp, $.inital);
+            });
+
         },
 
         detectPosition: function(e) {

@@ -33,6 +33,10 @@
     .popup {
         z-index: 10;
     }
+
+    .popup__item {
+        width: gs-span(2) + $gs-gutter * 2;
+    }
 }
 
 .weather__city {
@@ -90,4 +94,18 @@
     @include mq($to: leftCol) {
         display: inline-block;
     }
+}
+
+.weather__btn-search {
+    display: inline-block;
+    vertical-align: middle;
+    background-color: colour(guardian-brand);
+    border: 0;
+    width: 28px;
+    height: 28px;
+}
+
+.weather__input {
+    width: gs-span(2);
+    height: 22px;
 }

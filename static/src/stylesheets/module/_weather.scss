@@ -109,3 +109,12 @@
     width: gs-span(2);
     height: 22px;
 }
+
+.weather__results-item {
+    width: 100%;
+    display: block;
+
+    &:hover {
+        background-color: colour(neutral-4);
+    }
+}

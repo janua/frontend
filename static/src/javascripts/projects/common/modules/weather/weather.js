@@ -1,6 +1,7 @@
 define([
     'bean',
     'raven',
+    'common/utils/_',
     'common/utils/$',
     'common/utils/ajax',
     'common/utils/config',
@@ -11,6 +12,7 @@ define([
 ], function (
     bean,
     raven,
+    _,
     $,
     ajax,
     config,
@@ -152,7 +154,9 @@ define([
         },
 
         getListOfPositions: function(e) {
-            if (typeof e.target.value !== 'string') {
+            console.log(e.target.value.match(/\S/));
+            if (typeof e.target.value !== 'string' || !e.target.value.match(/\S/)) {
+                $('.js-location-list').html('');
                 return;
             }
 
@@ -163,10 +167,20 @@ define([
                 type: 'jsonp',
                 method: 'get',
                 cache: true
-            }).then(function(resp) {
-                console.log(resp, $.inital);
+            }).then(self.showListOfPositions);
+        },
+
+        showListOfPositions: function(results) {
+            var docFragment = document.createDocumentFragment();
+
+            _(results).initial(7).each(function(item) {
+                var li = document.createElement("li");
+
+                li.innerHTML = '<a role="button" class="weather__results-item">' + item['LocalizedName'] + '</a>';
+                docFragment.appendChild(li);
             });
 
+            $('.js-location-list').html('').append(docFragment);
         },
 
         detectPosition: function(e) {

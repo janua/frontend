@@ -96,25 +96,33 @@
     }
 }
 
-.weather__btn-search {
-    display: inline-block;
-    vertical-align: middle;
+.weather__results-item {
+    @include box-sizing(border-box);
+    width: 100%;
+    padding-left: $gs-baseline / 2;
+    display: block;
+
+
+    &:hover {
+        background-color: colour(neutral-4);
+    }
+}
+
+.search-tool {
+    margin: $gs-baseline / 3 0;
+}
+
+.search-tool__btn {
+    float: right;
     background-color: colour(guardian-brand);
     border: 0;
     width: 28px;
     height: 28px;
 }
 
-.weather__input {
+.search-tool__input {
+    float: left;
     width: gs-span(2);
     height: 22px;
 }
 
-.weather__results-item {
-    width: 100%;
-    display: block;
-
-    &:hover {
-        background-color: colour(neutral-4);
-    }
-}

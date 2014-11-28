@@ -154,8 +154,7 @@ define([
         },
 
         getListOfPositions: function(e) {
-            console.log(e.target.value.match(/\S/));
-            if (typeof e.target.value !== 'string' || !e.target.value.match(/\S/)) {
+            if (!e.target.value.match(/\S/)) {
                 $('.js-location-list').html('');
                 return;
             }

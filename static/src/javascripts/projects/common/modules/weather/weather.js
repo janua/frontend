@@ -6,6 +6,7 @@ define([
     'common/utils/ajax',
     'common/utils/config',
     'common/utils/template',
+    'common/modules/search-tool',
     'common/modules/userPrefs',
     'common/modules/ui/toggles',
     'text!common/views/components/weather.html'
@@ -17,6 +18,7 @@ define([
     ajax,
     config,
     template,
+    SearchTool,
     userPrefs,
     Toggles,
     weatherTemplate
@@ -26,6 +28,7 @@ define([
         $weather   = null,
         $holder    = null,
         toggles    = null,
+        searchTool = null,
         apiKey     = '3e74092c580e46319d36f04e68734365',
         prefName   = 'weather-location',
         geo        = {
@@ -146,40 +149,10 @@ define([
 
         bindEvents: function() {
             bean.on($('.js-detect-location')[0], 'click', self.detectPosition);
-            bean.on($('.js-list-location')[0], 'keyup', self.getListOfPositions);
         },
 
         unbindEvents: function() {
             bean.off($('.js-detect-location')[0], 'click', self.detectPosition);
-        },
-
-        getListOfPositions: function(e) {
-            if (!e.target.value.match(/\S/)) {
-                $('.js-location-list').html('');
-                return;
-            }
-
-            var listUrl = 'http://api.accuweather.com/locations/v1/cities/autocomplete?q=' + e.target.value + '&apikey=' + apiKey + '&language=en';
-
-            ajax({
-                url: listUrl,
-                type: 'jsonp',
-                method: 'get',
-                cache: true
-            }).then(self.showListOfPositions);
-        },
-
-        showListOfPositions: function(results) {
-            var docFragment = document.createDocumentFragment();
-
-            _(results).initial(7).each(function(item) {
-                var li = document.createElement("li");
-
-                li.innerHTML = '<a role="button" class="weather__results-item">' + item['LocalizedName'] + '</a>';
-                docFragment.appendChild(li);
-            });
-
-            $('.js-location-list').html('').append(docFragment);
         },
 
         detectPosition: function(e) {
@@ -216,6 +189,8 @@ define([
                 toggles.init($weather);
 
                 self.bindEvents();
+                searchTool = new SearchTool($('.js-search-tool'));
+                searchTool.init();
             }
         }
     };

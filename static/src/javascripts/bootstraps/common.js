@@ -1,4 +1,3 @@
-/* global guardian:true */
 /* jshint nonew: false */
 /* TODO - fix module constructors so we can remove the above jshint override */
 define([
@@ -101,7 +100,7 @@ define([
     shareCount,
     Dropdowns,
     fauxBlockLink,
-    Fonts,
+    fonts,
     Message,
     RelativeDates,
     smartAppBanner,
@@ -119,13 +118,8 @@ define([
 
     var modules = {
 
-            loadFonts: function (ua) {
-                if (config.switches.webFonts && !guardian.shouldLoadFontsAsynchronously) {
-                    var fileFormat     = detect.getFontFormatSupport(ua),
-                        fontStyleNodes = document.querySelectorAll('[data-cache-name].initial');
-
-                    new Fonts(fontStyleNodes, fileFormat).loadFromServerAndApply();
-                }
+            loadFonts: function () {
+                fonts.load();
             },
 
             initId: function () {
@@ -246,7 +240,7 @@ define([
             },
 
             cleanupCookies: function () {
-                cookies.cleanUp(['mmcore.pd', 'mmcore.srv', 'mmid', 'GU_ABFACIA', 'GU_FACIA', 'GU_ALPHA']);
+                cookies.cleanUp(['mmcore.pd', 'mmcore.srv', 'mmid', 'GU_ABFACIA', 'GU_FACIA', 'GU_ALPHA', 'GU_ME']);
                 cookies.cleanUpDuplicates(['GU_VIEW']);
             },
 
@@ -321,13 +315,7 @@ define([
             logReadingHistory: function () {
                 mediator.on('page:common:ready', function () {
                     if (config.page.contentType !== 'Network Front') {
-                        history.log({
-                            id: '/' + config.page.pageId,
-                            meta: {
-                                section: config.page.section,
-                                keywords: config.page.keywordIds && (config.page.keywordIds + '').split(',').slice(0, 5)
-                            }
-                        });
+                        history.log(config.page);
                     }
                 });
             },
@@ -467,7 +455,7 @@ define([
 
         },
         ready = function () {
-            modules.loadFonts(navigator.userAgent);
+            modules.loadFonts();
             modules.initId();
             modules.initUserAdTargeting();
             modules.initDiscussion();

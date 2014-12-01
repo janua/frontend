@@ -15,7 +15,12 @@ define([
 
         var $list    = null,
             $input   = null,
-            oldQuery = '';
+            oldQuery = '',
+            keyCodeMap = {
+                13: "enter",
+                38: "up",
+                40: "down"
+            };
 
         return {
             init: function () {
@@ -61,28 +66,43 @@ define([
             },
 
             handleKeyEvents: function(e) {
+                var key = keyCodeMap[e.which || e.keyCode];
+
                 if ($('.active', $list).length > 0) {
-                    if (e.keyCode === 40) { // down
-                        this.move('next');
-                    } else if (e.keyCode === 38) { // up
-                        this.move('previous');
+                    if (key === 'down') { // down
+                        this.move(1);
+                    } else if (key === 'up') { // up
+                        this.move(-1);
                     }
                 } else {
                     $('a', $list).first().toggleClass('active');
                 }
             },
 
-            move: function (route) {
+            move: function (increment) {
                 var $active = $('.active', $list);
                     id      = parseInt($active.attr('id'), 10);
+                    newId   = id + increment;
 
-                if (route === 'next') {
+                console.log("Step 1: ", newId, id);
+
+                newId = newdId % $list.length - 1;
+
+                console.log(newId);
+
+                if (newId < 0) {
+                    newId = $list.length - 1;
+                }
+
+                $('#' + newId + 'sti', $list).addClass('active');
+
+                /*if (route === 'next') {
                     $active.removeClass('active')
                     $('#' + (id + 1) + 'sti', $list).addClass('active');
                 } else {
                     $active.removeClass('active');
                     $('#' + (id - 1) + 'sti', $list).addClass('active');
-                }
+                }*/
             },
 
             setInputValue: function() {

@@ -189,7 +189,10 @@ define([
                 toggles.init($weather);
 
                 self.bindEvents();
-                searchTool = new SearchTool($('.js-search-tool'));
+                searchTool = new SearchTool({
+                    container: $('.js-search-tool'),
+                    apiUrl: 'http://api.accuweather.com/locations/v1/cities/autocomplete?language=en&apikey=' + apiKey
+                });
                 searchTool.init();
             }
         }

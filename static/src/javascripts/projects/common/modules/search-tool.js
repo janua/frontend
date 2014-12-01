@@ -11,7 +11,7 @@ define([
     ajax,
     _
     ) {
-    function SearchTool($container) {
+    function SearchTool(options) {
 
         var $list    = null,
             $input   = null,
@@ -20,7 +20,9 @@ define([
                 13: "enter",
                 38: "up",
                 40: "down"
-            };
+            },
+            $contianer = options.container,
+            apiUrl     = options.apiUrl;
 
         return {
             init: function () {
@@ -52,11 +54,8 @@ define([
 
                 oldQuery = e.target.value;
 
-                var apiKey = '3e74092c580e46319d36f04e68734365';
-                var listUrl = 'http://api.accuweather.com/locations/v1/cities/autocomplete?q=' + e.target.value + '&apikey=' + apiKey + '&language=en';
-
                 ajax({
-                    url: listUrl,
+                    url: apiUrl + '&q=' + e.target.value,
                     type: 'jsonp',
                     method: 'get',
                     cache: true

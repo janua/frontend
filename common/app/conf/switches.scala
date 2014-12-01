@@ -171,6 +171,11 @@ object Switches extends Collections {
     safeState = On, sellByDate = never
   )
 
+  val VpaidAdvertsSwitch = Switch("Commercial", "vpaid-adverts",
+    "Turns on support for vpaid-format adverts on videos.",
+    safeState = Off, sellByDate = never
+  )
+
   val SponsoredSwitch = Switch("Commercial", "sponsored",
     "Show sponsored badges, logos, etc.",
     safeState = On, sellByDate = never
@@ -248,7 +253,7 @@ object Switches extends Collections {
 
   val GlobalDevelopmentQualtrics = Switch("Commercial", "global-development-qualtrics",
     "If this switch is on, the Qualtrics tracking tag for global development will be enabled.",
-    safeState = Off, sellByDate = new LocalDate(2014, 11, 30)
+    safeState = Off, sellByDate = new LocalDate(2014, 12, 3)
   )
 
   // Monitoring
@@ -414,10 +419,6 @@ object Switches extends Collections {
     safeState = Off, sellByDate = never
   )
 
-  val ContainerUpdatesSwitch = Switch("Facia", "container-updates",
-    "Enables js detection that containers have updated since page load",
-    safeState = Off, sellByDate = new LocalDate(2014, 11, 30)
-  )
 
   val all: List[Switch] = List(
     TagPageSizeSwitch,
@@ -431,6 +432,7 @@ object Switches extends Collections {
     StandardAdvertsSwitch,
     CommercialComponentsSwitch,
     VideoAdvertsSwitch,
+    VpaidAdvertsSwitch,
     LiveblogAdvertsSwitch,
     SponsoredSwitch,
     AudienceScienceSwitch,
@@ -492,8 +494,7 @@ object Switches extends Collections {
     PollPreviewForFreshContentSwitch,
     PngResizingSwitch,
     GlobalDevelopmentQualtrics,
-    CrosswordSvgThumbnailsSwitch,
-    ContainerUpdatesSwitch
+    CrosswordSvgThumbnailsSwitch
   )
 
   val httpSwitches: List[Switch] = List(

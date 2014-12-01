@@ -13,17 +13,25 @@ define([
     ) {
     function SearchTool($container) {
 
-        var $list = null;
+        var $list    = null,
+            $input   = null,
+            oldQuery = '';
 
         return {
             init: function () {
-                $list = $('.js-search-tool-list', $container);
+                $list  = $('.js-search-tool-list', $container);
+                $input = $('.js-search-tool-input', $container);
 
                 this.bindEvents();
             },
 
             bindEvents: function () {
-                bean.on(document.body, 'keyup', $('.js-search-tool-input'), this.getListOfPositions.bind(this));
+                bean.on(document.body, 'keyup', $input, this.getListOfPositions.bind(this));
+                bean.on(document.body, 'keydown', this.handleKeyEvents.bind(this));
+            },
+
+            hasInputValueChanged: function (inputValue) {
+                return (oldQuery.length !== inputValue.length);
             },
 
             getListOfPositions: function (e) {
@@ -32,6 +40,12 @@ define([
 
                     return;
                 }
+
+                if (!this.hasInputValueChanged(e.target.value)) {
+                    return;
+                }
+
+                oldQuery = e.target.value;
 
                 var apiKey = '3e74092c580e46319d36f04e68734365';
                 var listUrl = 'http://api.accuweather.com/locations/v1/cities/autocomplete?q=' + e.target.value + '&apikey=' + apiKey + '&language=en';
@@ -46,15 +60,48 @@ define([
                 }.bind(this));
             },
 
+            handleKeyEvents: function(e) {
+                if ($('.active', $list).length > 0) {
+                    if (e.keyCode === 40) { // down
+                        this.move('next');
+                    } else if (e.keyCode === 38) { // up
+                        this.move('previous');
+                    }
+                } else {
+                    $('a', $list).first().toggleClass('active');
+                }
+            },
+
+            move: function (route) {
+                var $active = $('.active', $list);
+                    id      = parseInt($active.attr('id'), 10);
+
+                if (route === 'next') {
+                    $active.removeClass('active')
+                    $('#' + (id + 1) + 'sti', $list).addClass('active');
+                } else {
+                    $active.removeClass('active');
+                    $('#' + (id - 1) + 'sti', $list).addClass('active');
+                }
+            },
+
+            setInputValue: function() {
+                var $active = $('.active', $list);
+
+                $input.val($active.text());
+            },
+
             renderList: function (results, numOfResults) {
                 var docFragment = document.createDocumentFragment(),
                     len = results.length,
                     toShow = len - numOfResults;
 
-                _(results).initial(toShow).each(function (item) {
+                _(results).initial(toShow).each(function (item, index) {
                     var li = document.createElement("li");
 
-                    li.innerHTML = '<a role="button" class="weather__results-item">' + item['LocalizedName'] + '</a>';
+                    console.log(item);
+
+                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item">' + item['LocalizedName'] + ' (' + item['Country']['LocalizedName'] + ')</a>';
                     docFragment.appendChild(li);
                 });
 
@@ -63,7 +110,6 @@ define([
             },
 
             clear: function () {
-                console.log($list);
                 return $list.html('');
             }
         };

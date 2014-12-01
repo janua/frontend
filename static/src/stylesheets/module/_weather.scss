@@ -96,18 +96,6 @@
     }
 }
 
-.weather__results-item {
-    @include box-sizing(border-box);
-    width: 100%;
-    padding-left: $gs-baseline / 2;
-    display: block;
-
-
-    &:hover {
-        background-color: colour(neutral-4);
-    }
-}
-
 .search-tool {
     margin: $gs-baseline / 3 0;
 }
@@ -126,3 +114,15 @@
     height: 22px;
 }
 
+.search-tool__item {
+    @include box-sizing(border-box);
+    width: 100%;
+    padding-left: $gs-baseline / 2;
+    display: block;
+
+
+    &:hover,
+    &.active {
+        background-color: colour(neutral-4);
+    }
+}

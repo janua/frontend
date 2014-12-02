@@ -81,7 +81,6 @@ define([
                 method: 'get',
                 cache: true
             }).then(function (response) {
-                console.log(response);
                 var position = {
                         coords: {
                             latitude: response[0].GeoPosition.Latitude,
@@ -224,7 +223,7 @@ define([
                     $('.js-weather-temp', $weather).text(Math.round(weatherData.Temperature.Metric.Value));
 
                     bean.fire($('.js-toggle-ready', $weather)[0], 'click');
-                }
+                };
             }
         }
     };

@@ -5,6 +5,7 @@ define([
     'common/utils/$',
     'common/utils/ajax',
     'common/utils/config',
+    'common/utils/mediator',
     'common/utils/template',
     'common/modules/search-tool',
     'common/modules/userPrefs',
@@ -17,6 +18,7 @@ define([
     $,
     ajax,
     config,
+    mediator,
     template,
     SearchTool,
     userPrefs,
@@ -62,6 +64,16 @@ define([
             self = this;
 
             this.fetchData(this.getUserPrefs());
+            this.bindEvents();
+        },
+
+        bindEvents: function () {
+            console.log('test start');
+            mediator.on('weather:fetch', this.testResponse);
+        },
+
+        testResponse: function(e) {
+            console.log('Test: ', e);
         },
 
         getDefaultLocation: function() {
@@ -191,7 +203,11 @@ define([
                 self.bindEvents();
                 searchTool = new SearchTool({
                     container: $('.js-search-tool'),
-                    apiUrl: 'http://api.accuweather.com/locations/v1/cities/autocomplete?language=en&apikey=' + apiKey
+                    apiUrl: {
+                        main: 'http://api.accuweather.com/locations/v1/',
+                        autocomplete: 'cities/autocomplete?language=en&apikey=' + apiKey,
+                        citysearch: 'search/?apikey=' + apiKey
+                    }
                 });
                 searchTool.init();
             }

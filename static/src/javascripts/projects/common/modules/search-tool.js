@@ -2,14 +2,16 @@ define([
     'bean',
     'raven',
     'common/utils/$',
+    'common/utils/_',
     'common/utils/ajax',
-    'common/utils/_'
+    'common/utils/mediator'
 ], function (
     bean,
     raven,
     $,
+    _,
     ajax,
-    _
+    mediator
     ) {
     function SearchTool(options) {
 
@@ -53,21 +55,40 @@ define([
                     return;
                 }
 
+                newQuery = e.target.value;
+
                 if (!this.hasInputValueChanged() ||
                     !this.shouldRequest()) {
 
                     return;
                 }
 
-                oldQuery = newQuery;
-
                 ajax({
-                    url: apiUrl + '&q=' + e.target.value,
+                    url: apiUrl.main + apiUrl.autocomplete + '&q=' + newQuery,
                     type: 'jsonp',
                     method: 'get',
                     cache: true
                 }).then(function (positions) {
                     this.renderList(positions, 3);
+
+                    oldQuery = newQuery;
+                }.bind(this));
+            },
+
+            getCityCoordinates: function(city) {
+                console.log(apiUrl.main + apiUrl.citysearch + '&q=' + city);
+                ajax({
+                    url: apiUrl.main + apiUrl.citysearch + '&q=' + city,
+                    type: 'jsonp',
+                    method: 'get',
+                    cache: true
+                }).then(function (response) {
+                    var coords = {
+                        latitude: response[0]['GeoPosition']['Latitude'],
+                        longitude: response[0]['GeoPosition']['Longitude']
+                    };
+
+                    mediator.trigger('weather:fetch', coords);
                 }.bind(this));
             },
 
@@ -80,15 +101,14 @@ define([
                 } else if (key === 'up') { // up
                     e.preventDefault();
                     this.move(-1);
-                } else {
-                    newQuery = $input.val();
+                } else if (key === 'enter') { // enter
+                    this.getCityCoordinates('New York');
                 }
             },
 
             move: function (increment) {
                 var $active = $('.active', $list),
-                    id      = parseInt($active.attr('id'), 10),
-                    newdId  = -1;
+                    id      = parseInt($active.attr('id'), 10);
 
                 if (isNaN(id)) {
                     id = -1;
@@ -96,21 +116,28 @@ define([
 
                 $active.removeClass('active');
 
+                // When outside of the list show latest query
                 if (this.getNewId(id + increment) < 0) {
-                    $input.val(newQuery);
+                    $input.val(oldQuery);
+
+                // When looping inside of the list show list item
                 } else {
                     $('#' + this.getNewId(id + increment) + 'sti', $list).addClass('active');
                     this.setInputValue();
                 }
             },
 
-            getNewId: function(newId) {
-                var len = $('li', $list).length;
+            getNewId: function(id) {
+                var len   = $('li', $list).length,
+                    newId = 0;
 
-                newId = newId % len;
+                newId = id % len;
 
+                // Make sure that we can hit saved input option
                 if (newId < -1) {
                     newId = len - 1;
+                } else if (id === len) {
+                    newId = -1;
                 }
 
                 return newId;

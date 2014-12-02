@@ -66,16 +66,31 @@ define([
             this.fetchData(this.getUserPrefs());
         },
 
-        testResponse: function () {
-
-        },
-
         getDefaultLocation: function () {
             switch (config.page.edition) {
                 case 'US': return geo['New York'];
                 case 'AU': return geo.Sydney;
                 default: return geo.London;
             }
+        },
+
+        getCityCoordinates: function (city) {
+            ajax({
+                url: 'http://api.accuweather.com/locations/v1/search/?apikey=' + apiKey + '&q=' + city[0],
+                type: 'jsonp',
+                method: 'get',
+                cache: true
+            }).then(function (response) {
+                console.log(response);
+                var position = {
+                        coords: {
+                            latitude: response[0].GeoPosition.Latitude,
+                            longitude: response[0].GeoPosition.Longitude
+                        }
+                    };
+
+                self.fetchData(position);
+            });
         },
 
         getGeoLocation: function () {
@@ -141,7 +156,7 @@ define([
             try {
                 self.getLocationData(urlLocation).then(function (locationResp) {
                     self.getWeatherData(urlWeather, locationResp).then(function (weatherResp) {
-                        self.views.addToDOM(weatherResp[0], locationResp.AdministrativeArea.EnglishName);
+                        self.views.render(weatherResp[0], locationResp.AdministrativeArea.EnglishName);
                     });
                 });
             } catch (e) {
@@ -155,7 +170,7 @@ define([
 
         bindEvents: function () {
             bean.on($('.js-detect-location')[0], 'click', self.detectPosition);
-            mediator.on('weather:fetch', this.testResponse);
+            mediator.on('autocomplete:fetch', this.getCityCoordinates);
         },
 
         unbindEvents: function () {
@@ -174,7 +189,7 @@ define([
         },
 
         views: {
-            addToDOM: function (weatherData, city) {
+            render: function (weatherData, city) {
                 $weather = $('.weather');
 
                 if ($weather.length > 0) {
@@ -198,13 +213,18 @@ define([
                 self.bindEvents();
                 searchTool = new SearchTool({
                     container: $('.js-search-tool'),
-                    apiUrl: {
-                        main: 'http://api.accuweather.com/locations/v1/',
-                        autocomplete: 'cities/autocomplete?language=en&apikey=' + apiKey,
-                        citysearch: 'search/?apikey=' + apiKey
-                    }
+                    apiUrl: 'http://api.accuweather.com/locations/v1/cities/autocomplete?language=en&apikey=' + apiKey
                 });
                 searchTool.init();
+
+                // After first run override funtion to just update data
+                self.views.render = function(weatherData, city) {
+                    $('.js-weather-city', $weather).text(city);
+                    $('.js-weather-icon', $weather).attr('class', 'i i-weather-' + weatherData.WeatherIcon + ' weather__icon');
+                    $('.js-weather-temp', $weather).text(Math.round(weatherData.Temperature.Metric.Value));
+
+                    bean.fire($('.js-toggle-ready', $weather)[0], 'click');
+                }
             }
         }
     };

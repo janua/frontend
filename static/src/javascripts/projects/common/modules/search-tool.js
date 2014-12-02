@@ -20,7 +20,7 @@ define([
             oldQuery   = '',
             newQuery   = '',
             keyCodeMap = {
-                13: 'nter',
+                13: 'enter',
                 38: 'up',
                 40: 'down'
             },
@@ -64,7 +64,7 @@ define([
                 }
 
                 ajax({
-                    url: apiUrl.main + apiUrl.autocomplete + '&q=' + newQuery,
+                    url: apiUrl + '&q=' + newQuery,
                     type: 'jsonp',
                     method: 'get',
                     cache: true
@@ -72,22 +72,6 @@ define([
                     this.renderList(positions, 3);
 
                     oldQuery = newQuery;
-                }.bind(this));
-            },
-
-            getCityCoordinates: function (city) {
-                ajax({
-                    url: apiUrl.main + apiUrl.citysearch + '&q=' + city,
-                    type: 'jsonp',
-                    method: 'get',
-                    cache: true
-                }).then(function (response) {
-                    var coords = {
-                        latitude: response[0].GeoPosition.Latitude,
-                        longitude: response[0].GeoPosition.Longitude
-                    };
-
-                    mediator.trigger('weather:fetch', coords);
                 }.bind(this));
             },
 
@@ -101,7 +85,10 @@ define([
                     e.preventDefault();
                     this.move(-1);
                 } else if (key === 'enter') { // enter
-                    this.getCityCoordinates('New York');
+                    mediator.emit('autocomplete:fetch', [$input.val()]);
+
+                    // Clear all
+                    this.destroy();
                 }
             },
 
@@ -165,6 +152,11 @@ define([
 
             clear: function () {
                 return $list.html('');
+            },
+
+            destroy: function() {
+                this.clear();
+                $input.val('');
             }
         };
     }

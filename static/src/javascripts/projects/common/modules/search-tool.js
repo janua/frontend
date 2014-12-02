@@ -154,7 +154,7 @@ define([
                 return $list.html('');
             },
 
-            destroy: function() {
+            destroy: function () {
                 this.clear();
                 $input.val('');
             }

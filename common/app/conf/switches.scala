@@ -251,11 +251,6 @@ object Switches extends Collections {
     "If this switch is on, commercial components will be fed by the Guardian Bookshop feed.",
     safeState = Off, sellByDate = never)
 
-  val GlobalDevelopmentQualtrics = Switch("Commercial", "global-development-qualtrics",
-    "If this switch is on, the Qualtrics tracking tag for global development will be enabled.",
-    safeState = Off, sellByDate = new LocalDate(2014, 12, 3)
-  )
-
   // Monitoring
 
   val OphanSwitch = Switch("Monitoring", "ophan",
@@ -279,7 +274,13 @@ object Switches extends Collections {
   )
 
   // Features
-
+  val ZonesAggregationSwitch = Switch(
+    "Feature",
+    "zones-aggregation",
+    "If activated, all pages for 'zones' (e.g., sport and culture) will aggregate their respective subsections",
+    safeState = Off,
+    sellByDate = new LocalDate(2015, 1, 15)
+  )
 
   val PollPreviewForFreshContentSwitch = Switch("Feature", "poll-preview-for-fresh-content",
     "If switched on then the preview server will poll until the latest content is indexed.",
@@ -493,8 +494,8 @@ object Switches extends Collections {
     CircuitBreakerSwitch,
     PollPreviewForFreshContentSwitch,
     PngResizingSwitch,
-    GlobalDevelopmentQualtrics,
-    CrosswordSvgThumbnailsSwitch
+    CrosswordSvgThumbnailsSwitch,
+    ZonesAggregationSwitch
   )
 
   val httpSwitches: List[Switch] = List(

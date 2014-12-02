@@ -20,9 +20,9 @@ define([
             oldQuery   = '',
             newQuery   = '',
             keyCodeMap = {
-                13: "enter",
-                38: "up",
-                40: "down"
+                13: 'nter',
+                38: 'up',
+                40: 'down'
             },
             $container = options.container,
             apiUrl     = options.apiUrl;
@@ -44,7 +44,7 @@ define([
                 return (oldQuery.length !== newQuery.length);
             },
 
-            shouldRequest: function() {
+            shouldRequest: function () {
                 return $('.active', $list).length === 0;
             },
 
@@ -75,8 +75,7 @@ define([
                 }.bind(this));
             },
 
-            getCityCoordinates: function(city) {
-                console.log(apiUrl.main + apiUrl.citysearch + '&q=' + city);
+            getCityCoordinates: function (city) {
                 ajax({
                     url: apiUrl.main + apiUrl.citysearch + '&q=' + city,
                     type: 'jsonp',
@@ -84,15 +83,15 @@ define([
                     cache: true
                 }).then(function (response) {
                     var coords = {
-                        latitude: response[0]['GeoPosition']['Latitude'],
-                        longitude: response[0]['GeoPosition']['Longitude']
+                        latitude: response[0].GeoPosition.Latitude,
+                        longitude: response[0].GeoPosition.Longitude
                     };
 
                     mediator.trigger('weather:fetch', coords);
                 }.bind(this));
             },
 
-            handleKeyEvents: function(e) {
+            handleKeyEvents: function (e) {
                 var key = keyCodeMap[e.which || e.keyCode];
 
                 if (key === 'down') { // down
@@ -127,7 +126,7 @@ define([
                 }
             },
 
-            getNewId: function(id) {
+            getNewId: function (id) {
                 var len   = $('li', $list).length,
                     newId = 0;
 
@@ -143,7 +142,7 @@ define([
                 return newId;
             },
 
-            setInputValue: function() {
+            setInputValue: function () {
                 var $active = $('.active', $list);
 
                 $input.val($active.text());
@@ -155,12 +154,11 @@ define([
                     toShow = len - numOfResults;
 
                 _(results).initial(toShow).each(function (item, index) {
-                    var li = document.createElement("li");
+                    var li = document.createElement('li');
 
-                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item">' + item['LocalizedName'] + ' (' + item['Country']['LocalizedName'] + ')</a>';
+                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item">' + item.LocalizedName + ' (' + item.Country.LocalizedName + ')</a>';
                     docFragment.appendChild(li);
                 });
-
 
                 this.clear().append(docFragment);
             },

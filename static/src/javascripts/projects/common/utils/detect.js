@@ -312,7 +312,7 @@ define([
     }
 
     function hasGeoLocation() {
-        return ("geolocation" in navigator);
+        return ('geolocation' in navigator);
     }
 
     return {

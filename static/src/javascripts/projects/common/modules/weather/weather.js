@@ -54,9 +54,9 @@ define([
             }
         },
         getGeoStates = {
-            process: "Getting location...",
-            error: "Unable to get location...",
-            default: "Detect my location"
+            process: 'Getting location...',
+            error: 'Unable to get location...',
+            defaultmsg: 'Detect my location'
         };
 
     return {
@@ -64,35 +64,29 @@ define([
             self = this;
 
             this.fetchData(this.getUserPrefs());
-            this.bindEvents();
         },
 
-        bindEvents: function () {
-            console.log('test start');
-            mediator.on('weather:fetch', this.testResponse);
+        testResponse: function () {
+
         },
 
-        testResponse: function(e) {
-            console.log('Test: ', e);
-        },
-
-        getDefaultLocation: function() {
+        getDefaultLocation: function () {
             switch (config.page.edition) {
-                case "US": return geo['New York']; break;
-                case "AU": return geo['Sydney']; break;
-                default: return geo['London'];
+                case 'US': return geo['New York'];
+                case 'AU': return geo.Sydney;
+                default: return geo.London;
             }
         },
 
-        getGeoLocation: function() {
+        getGeoLocation: function () {
             navigator.geolocation.getCurrentPosition(this.fetchData, this.geoLocationDisabled);
         },
 
-        geoLocationDisabled: function() {
-            self.changeLocationOptionText("error");
+        geoLocationDisabled: function () {
+            self.changeLocationOptionText('error');
         },
 
-        getLocationData: function(urlLocation) {
+        getLocationData: function (urlLocation) {
             return ajax({
                 url: urlLocation,
                 type: 'jsonp',
@@ -101,16 +95,16 @@ define([
             });
         },
 
-        getWeatherData: function(urlWeather, locationData) {
+        getWeatherData: function (urlWeather, locationData) {
             return ajax({
-                url: urlWeather + locationData['Key'] + '.json?apikey=' + apiKey,
+                url: urlWeather + locationData.Key + '.json?apikey=' + apiKey,
                 type: 'jsonp',
                 method: 'get',
                 cache: true
             });
         },
 
-        saveUserLocation: function(position) {
+        saveUserLocation: function (position) {
             var toStore = {
                 coords: {
                     latitude: position.coords.latitude,
@@ -130,7 +124,7 @@ define([
         getUserPrefs: function () {
             var prefs = userPrefs.get(prefName);
 
-            if (prefs && prefs["coords"]) {
+            if (prefs && prefs.coords) {
                 return prefs;
             }
 
@@ -147,7 +141,7 @@ define([
             try {
                 self.getLocationData(urlLocation).then(function (locationResp) {
                     self.getWeatherData(urlWeather, locationResp).then(function (weatherResp) {
-                        self.views.addToDOM(weatherResp[0], locationResp['AdministrativeArea']['EnglishName']);
+                        self.views.addToDOM(weatherResp[0], locationResp.AdministrativeArea.EnglishName);
                     });
                 });
             } catch (e) {
@@ -159,22 +153,23 @@ define([
             }
         },
 
-        bindEvents: function() {
+        bindEvents: function () {
             bean.on($('.js-detect-location')[0], 'click', self.detectPosition);
+            mediator.on('weather:fetch', this.testResponse);
         },
 
-        unbindEvents: function() {
+        unbindEvents: function () {
             bean.off($('.js-detect-location')[0], 'click', self.detectPosition);
         },
 
-        detectPosition: function(e) {
+        detectPosition: function (e) {
             e.preventDefault();
 
-            self.changeLocationOptionText("process");
+            self.changeLocationOptionText('process');
             self.getGeoLocation();
         },
 
-        changeLocationOptionText: function(state) {
+        changeLocationOptionText: function (state) {
             $('.js-detect-location').text(getGeoStates[state]);
         },
 
@@ -189,8 +184,8 @@ define([
 
                 $weather = $.create(template(weatherTemplate, {
                     location: city,
-                    icon: weatherData['WeatherIcon'],
-                    tempNow: Math.round(weatherData['Temperature']['Metric']['Value'])
+                    icon: weatherData.WeatherIcon,
+                    tempNow: Math.round(weatherData.Temperature.Metric.Value)
                 }));
 
                 $holder = $('.js-weather');
@@ -214,4 +209,3 @@ define([
         }
     };
 });
-

@@ -13,15 +13,16 @@ define([
     ) {
     function SearchTool(options) {
 
-        var $list    = null,
-            $input   = null,
-            oldQuery = '',
+        var $list      = null,
+            $input     = null,
+            oldQuery   = '',
+            newQuery   = '',
             keyCodeMap = {
                 13: "enter",
                 38: "up",
                 40: "down"
             },
-            $contianer = options.container,
+            $container = options.container,
             apiUrl     = options.apiUrl;
 
         return {
@@ -37,8 +38,12 @@ define([
                 bean.on(document.body, 'keydown', this.handleKeyEvents.bind(this));
             },
 
-            hasInputValueChanged: function (inputValue) {
-                return (oldQuery.length !== inputValue.length);
+            hasInputValueChanged: function () {
+                return (oldQuery.length !== newQuery.length);
+            },
+
+            shouldRequest: function() {
+                return $('.active', $list).length === 0;
             },
 
             getListOfPositions: function (e) {
@@ -48,11 +53,13 @@ define([
                     return;
                 }
 
-                if (!this.hasInputValueChanged(e.target.value)) {
+                if (!this.hasInputValueChanged() ||
+                    !this.shouldRequest()) {
+
                     return;
                 }
 
-                oldQuery = e.target.value;
+                oldQuery = newQuery;
 
                 ajax({
                     url: apiUrl + '&q=' + e.target.value,
@@ -67,41 +74,46 @@ define([
             handleKeyEvents: function(e) {
                 var key = keyCodeMap[e.which || e.keyCode];
 
-                if ($('.active', $list).length > 0) {
-                    if (key === 'down') { // down
-                        this.move(1);
-                    } else if (key === 'up') { // up
-                        this.move(-1);
-                    }
+                if (key === 'down') { // down
+                    e.preventDefault();
+                    this.move(1);
+                } else if (key === 'up') { // up
+                    e.preventDefault();
+                    this.move(-1);
                 } else {
-                    $('a', $list).first().toggleClass('active');
+                    newQuery = $input.val();
                 }
             },
 
             move: function (increment) {
-                var $active = $('.active', $list);
-                    id      = parseInt($active.attr('id'), 10);
-                    newId   = id + increment;
+                var $active = $('.active', $list),
+                    id      = parseInt($active.attr('id'), 10),
+                    newdId  = -1;
 
-                console.log("Step 1: ", newId, id);
-
-                newId = newdId % $list.length - 1;
-
-                console.log(newId);
-
-                if (newId < 0) {
-                    newId = $list.length - 1;
+                if (isNaN(id)) {
+                    id = -1;
                 }
 
-                $('#' + newId + 'sti', $list).addClass('active');
+                $active.removeClass('active');
 
-                /*if (route === 'next') {
-                    $active.removeClass('active')
-                    $('#' + (id + 1) + 'sti', $list).addClass('active');
+                if (this.getNewId(id + increment) < 0) {
+                    $input.val(newQuery);
                 } else {
-                    $active.removeClass('active');
-                    $('#' + (id - 1) + 'sti', $list).addClass('active');
-                }*/
+                    $('#' + this.getNewId(id + increment) + 'sti', $list).addClass('active');
+                    this.setInputValue();
+                }
+            },
+
+            getNewId: function(newId) {
+                var len = $('li', $list).length;
+
+                newId = newId % len;
+
+                if (newId < -1) {
+                    newId = len - 1;
+                }
+
+                return newId;
             },
 
             setInputValue: function() {
@@ -117,8 +129,6 @@ define([
 
                 _(results).initial(toShow).each(function (item, index) {
                     var li = document.createElement("li");
-
-                    console.log(item);
 
                     li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item">' + item['LocalizedName'] + ' (' + item['Country']['LocalizedName'] + ')</a>';
                     docFragment.appendChild(li);

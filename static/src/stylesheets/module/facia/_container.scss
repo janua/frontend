@@ -250,18 +250,16 @@ $header-image-size-desktop: 100px;
 }
 
 .fc-container__updated {
-    display: block;
-    @include mq($from: tablet) {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-    }
-
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: 0;
     padding-bottom: $gs-baseline / 2;
     color: colour(neutral-2);
     @include fs-headline(1);
 
     @include mq(leftCol) {
+        display: block;
         position: static;
         margin-top: ($gs-baseline / 3) * 5;
         border-top: 1px dotted colour(neutral-3);

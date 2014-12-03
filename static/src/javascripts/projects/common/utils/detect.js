@@ -311,6 +311,19 @@ define([
         return 'WebSocket' in window;
     }
 
+    function shouldUseHintedFonts() {
+        var version,
+            windowsNT = /Windows NT (\d\.\d+)/.exec(navigator.userAgent);
+
+        if (windowsNT) {
+            version = parseFloat(windowsNT[1], 10);
+            // windows XP and newer && windows 7 and older
+            return version >= 5.1 && version <= 6.1;
+        } else {
+            return false;
+        }
+    }
+
     function hasGeoLocation() {
         return ('geolocation' in navigator);
     }
@@ -333,7 +346,8 @@ define([
         hasWebSocket: hasWebSocket,
         hasGeoLocation: hasGeoLocation,
         getPageSpeed: getPageSpeed,
-        breakpoints: breakpoints
+        breakpoints: breakpoints,
+        shouldUseHintedFonts: shouldUseHintedFonts()
     };
 
 });

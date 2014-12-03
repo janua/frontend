@@ -252,7 +252,7 @@ $header-image-size-desktop: 100px;
 .fc-container__updated {
     display: block;
     @include mq($from: tablet) {
-        position:absolute;
+        position: absolute;
         right: 0;
         bottom: 0;
     }

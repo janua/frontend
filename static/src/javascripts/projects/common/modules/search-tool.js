@@ -38,6 +38,7 @@ define([
             bindEvents: function () {
                 bean.on(document.body, 'keyup', $input, this.getListOfPositions.bind(this));
                 bean.on(document.body, 'keydown', this.handleKeyEvents.bind(this));
+                bean.on(document.body, 'click', $list, this.handleClick.bind(this));
             },
 
             hasInputValueChanged: function () {
@@ -46,6 +47,21 @@ define([
 
             shouldRequest: function () {
                 return $('.active', $list).length === 0;
+            },
+
+            handleClick: function (e) {
+                e.preventDefault();
+
+                $input.val(e.target.textContent);
+
+                this.pushData();
+            },
+
+            pushData: function () {
+                mediator.emit('autocomplete:fetch', [$input.val()]);
+
+                // Clear all after timeout because of the ophan tracking we can't remove everything straight away
+                setTimeout(this.destroy.bind(this), 50);
             },
 
             getListOfPositions: function (e) {
@@ -85,10 +101,7 @@ define([
                     e.preventDefault();
                     this.move(-1);
                 } else if (key === 'enter') { // enter
-                    mediator.emit('autocomplete:fetch', [$input.val()]);
-
-                    // Clear all
-                    this.destroy();
+                    this.pushData();
                 }
             },
 
@@ -143,7 +156,7 @@ define([
                 _(results).initial(toShow).each(function (item, index) {
                     var li = document.createElement('li');
 
-                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item">' + item.LocalizedName + ' (' + item.Country.LocalizedName + ')</a>';
+                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item" data-link-name="search-tool">' + item.LocalizedName + ' (' + item.Country.LocalizedName + ')</a>';
                     docFragment.appendChild(li);
                 });
 

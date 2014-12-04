@@ -1,11 +1,13 @@
 .weather {
-    text-align: right;
     color: colour(neutral-2);
+    text-align: right;
 
     @include fs-headline(1);
 
     @include mq($from: mobile) {
         width: auto;
+        top: $gs-gutter - 5;
+        right: $gs-gutter / 2;
 
         .weather__icon {
             height: 30px;
@@ -13,8 +15,12 @@
         }
     }
 
-    @include mq($from: tablet, $to: leftCol) {
+    @include mq($from: desktop) {
         position: absolute;
+        text-align: left;
+    }
+
+    @include mq($from: tablet, $to: leftCol) {
         top: $gs-gutter / 5;
     }
 
@@ -39,8 +45,6 @@
 }
 
 .weather__city {
-    position: relative;
-
     @include mq($to: leftCol) {
         display: inline-block;
         padding-top: 7px;
@@ -80,7 +84,7 @@
     right: 0;
 
     @include mq($to: leftCol) {
-        right: 102%;
+        right: 101%;
         top: -2px;
         background-position: right center !important;
     }

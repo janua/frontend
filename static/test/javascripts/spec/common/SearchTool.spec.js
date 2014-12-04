@@ -104,10 +104,35 @@ define([
         });
 
         it("should not call for results if data haven't change", function() {
-            spyOn(sut, "fetchData");
-            spyOn(sut, "hasInputValueChanged").and.returnValue(true);
+            var stubEvent = {
+                keyCode: 38,
+                preventDefault: function() {},
+                target: {
+                    value: "test"
+                }
+            };
 
-            sut.getListOfResults();
+            spyOn(sut, "fetchData");
+            spyOn(sut, "hasInputValueChanged").and.returnValue(false);
+
+            sut.getListOfResults(stubEvent);
+
+            expect(sut.fetchData).not.toHaveBeenCalled();
+        });
+
+        it("should not call for results if data haven't change", function() {
+            var stubEvent = {
+                keyCode: 38,
+                preventDefault: function() {},
+                target: {
+                    value: "test"
+                }
+            };
+
+            spyOn(sut, "fetchData");
+            spyOn(sut, "hasInputValueChanged").and.returnValue(false);
+
+            sut.getListOfResults(stubEvent);
 
             expect(sut.fetchData).not.toHaveBeenCalled();
         });

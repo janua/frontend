@@ -44,10 +44,6 @@ define([
                 return (oldQuery.length !== newQuery.length);
             },
 
-            shouldRequest: function () {
-                return $('.active', $list).length === 0;
-            },
-
             handleClick: function (e) {
                 e.preventDefault();
 
@@ -72,9 +68,7 @@ define([
 
                 newQuery = e.target.value;
 
-                if (!this.hasInputValueChanged() ||
-                    !this.shouldRequest()) {
-
+                if (!this.hasInputValueChanged()) {
                     return;
                 }
 
@@ -169,7 +163,7 @@ define([
             },
 
             clear: function () {
-                $list.html('');
+                return $list.html('');
             },
 
             destroy: function () {

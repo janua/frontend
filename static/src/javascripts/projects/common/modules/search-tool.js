@@ -36,7 +36,6 @@ define([
             },
 
             bindEvents: function () {
-                bean.on(document.body, 'keyup', $input, this.getListOfPositions.bind(this));
                 bean.on(document.body, 'keydown', this.handleKeyEvents.bind(this));
                 bean.on(document.body, 'click', $list, this.handleClick.bind(this));
             },
@@ -64,7 +63,7 @@ define([
                 setTimeout(this.destroy.bind(this), 50);
             },
 
-            getListOfPositions: function (e) {
+            getListOfResults: function (e) {
                 if (!e.target.value.match(/\S/)) {
                     this.clear();
 
@@ -102,6 +101,8 @@ define([
                     this.move(-1);
                 } else if (key === 'enter') { // enter
                     this.pushData();
+                } else {
+                    this.getListOfResults(e);
                 }
             },
 
@@ -132,7 +133,7 @@ define([
 
                 newId = id % len;
 
-                // Make sure that we can hit saved input option
+                // Make sure that we can hit saved input option which has position -1
                 if (newId < -1) {
                     newId = len - 1;
                 } else if (id === len) {
@@ -164,7 +165,7 @@ define([
             },
 
             clear: function () {
-                return $list.html('');
+                $list.html('');
             },
 
             destroy: function () {

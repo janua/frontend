@@ -78,6 +78,10 @@ define([
                     return;
                 }
 
+                this.fetchData();
+            },
+
+            fetchData: function () {
                 ajax({
                     url: apiUrl + '&q=' + newQuery,
                     type: 'jsonp',

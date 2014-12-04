@@ -104,7 +104,12 @@ define([
         });
 
         it("should not call for results if data haven't change", function() {
+            spyOn(sut, "fetchData");
+            spyOn(sut, "hasInputValueChanged").and.returnValue(true);
 
+            sut.getListOfResults();
+
+            expect(sut.fetchData).not.toHaveBeenCalled();
         });
     });
 });

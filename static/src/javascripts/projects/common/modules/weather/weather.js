@@ -187,6 +187,19 @@ define([
             $('.js-detect-location').text(getGeoStates[state]);
         },
 
+        getUnits: function () {
+            if (config.page.edition === 'US') {
+                return 'Imperial';
+            }
+
+            return 'Metric';
+        },
+
+        getTemperature: function (weatherData) {
+            return Math.round(weatherData.Temperature[this.getUnits()].Value) + '°'
+                + weatherData.Temperature[this.getUnits()].Unit;
+        },
+
         views: {
             render: function (weatherData, city) {
                 $weather = $('.weather');
@@ -199,7 +212,7 @@ define([
                 $weather = $.create(template(weatherTemplate, {
                     location: city,
                     icon: weatherData.WeatherIcon,
-                    tempNow: Math.round(weatherData.Temperature.Metric.Value)
+                    tempNow: self.getTemperature(weatherData)
                 }));
 
                 $holder = $('.js-weather');
@@ -220,7 +233,7 @@ define([
                 self.views.render = function (weatherData, city) {
                     $('.js-weather-city', $weather).text(city);
                     $('.js-weather-icon', $weather).attr('class', 'i i-weather-' + weatherData.WeatherIcon + ' weather__icon');
-                    $('.js-weather-temp', $weather).text(Math.round(weatherData.Temperature.Metric.Value));
+                    $('.js-weather-temp', $weather).text(self.getTemperature(weatherData));
 
                     bean.fire($('.js-toggle-ready', $weather)[0], 'click');
                 };

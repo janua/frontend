@@ -26,6 +26,10 @@
         top: $gs-row-height * 6;
     }
 
+    .weather__pin {
+        height: 18px;
+    }
+
     .popup {
         z-index: 10;
     }
@@ -76,17 +80,9 @@
 }
 
 .weather__pin {
+    float: right;
     background-size: 50% !important;
-    background-position: right top !important;
-    position: absolute;
-    top: 0;
-    right: 0;
-
-    @include mq($to: leftCol) {
-        right: 101%;
-        top: -2px;
-        background-position: right center !important;
-    }
+    background-position: right center !important;
 }
 
 .weather__gps {

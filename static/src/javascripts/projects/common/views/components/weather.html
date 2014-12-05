@@ -1,10 +1,9 @@
 <div class="weather">
     <div class="weather__wrap">
-        <p class="weather__city"><span class="js-weather-city">{{location}}</span>
-            <a class="js-get-location" href="#weather-get-location" data-toggle="weather-change-location" data-link-name="weather-get-location">
-            <i class="i i-arrow-up-grey weather__pin"><span class="u-h">Get your current location</span></i>
-            </a>
-        </p>
+        <a class="weather__city  js-get-location" href="#weather-get-location" data-toggle="weather-change-location" data-link-name="weather-get-location">
+            <span class="js-weather-city">{{location}}</span>
+            <i class="i i-arrow-grey-large weather__pin"><span class="u-h">Get your current location</span></i>
+        </a>
     </div>
     <span class="weather__temp js-weather-temp">{{tempNow}}°</span>
     <i class="i i-weather-{{icon}} weather__icon js-weather-icon"></i>

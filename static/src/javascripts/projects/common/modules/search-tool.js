@@ -76,16 +76,12 @@ define([
             },
 
             fetchData: function () {
-                console.log(apiUrl, newQuery);
-                ajax({
+                return ajax({
                     url: apiUrl + '&q=' + newQuery,
-                    type: 'jsonp',
-                    method: 'get',
-                    cache: true
+                    type: 'json',
+                    crossOrigin: true
                 }).then(function (positions) {
-                    console.log(positions);
                     this.renderList(positions, 3);
-
                     oldQuery = newQuery;
                 }.bind(this));
             },

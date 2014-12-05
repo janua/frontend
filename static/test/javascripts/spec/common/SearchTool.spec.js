@@ -156,20 +156,21 @@ define([
             jasmine.clock().uninstall();
         });
 
-        it("should fetch data", function() {
+        it("should fetch data", function(done) {
             var server = sinon.fakeServer.create();
+            server.autoRespond = true;
 
-            server.respondWith("GET", "http://testapiurl&q=",
-                [200, { "Content-Type": "application/json" },
-                    '[{ "id": 12, "comment": "Hey there" }]']);
+            server.respondWith([200, { "Content-Type": "application/json" },
+                    '[{ "localizedName": "London"}]']);
 
             spyOn(sut, "renderList");
 
-            sut.fetchData();
+            sut.fetchData().then(function() {
+                expect(sut.renderList).toHaveBeenCalledWith([{"localizedName": "London"}], 3);
+                done();
+            });
 
-            server.respond();
-
-            expect(sut.renderList).toHaveBeenCalled();
+            server.restore();
         });
     });
 });

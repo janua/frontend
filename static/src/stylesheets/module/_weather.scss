@@ -23,7 +23,7 @@
     @include mq($from: leftCol) {
         width: $left-column;
         left: $gs-gutter;
-        top: $gs-row-height * 5;
+        top: $gs-row-height * 6;
     }
 
     .popup {
@@ -63,9 +63,12 @@
 
 .weather__icon {
     float: right;
+    margin-top: $gs-gutter / 5;
     //Till we will have new icons
+    width: 64px !important;
+    height: 64px !important;
     background-position: left top !important;
-    background-size: 200% !important;
+    background-size: 100% !important;
 
     @include mq($to: leftCol) {
         margin: 0;

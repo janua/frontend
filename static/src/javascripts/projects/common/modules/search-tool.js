@@ -76,12 +76,14 @@ define([
             },
 
             fetchData: function () {
+                console.log(apiUrl, newQuery);
                 ajax({
                     url: apiUrl + '&q=' + newQuery,
                     type: 'jsonp',
                     method: 'get',
                     cache: true
                 }).then(function (positions) {
+                    console.log(positions);
                     this.renderList(positions, 3);
 
                     oldQuery = newQuery;

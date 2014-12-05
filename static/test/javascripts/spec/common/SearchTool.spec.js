@@ -120,21 +120,56 @@ define([
             expect(sut.fetchData).not.toHaveBeenCalled();
         });
 
-        it("should not call for results if data haven't change", function() {
+        it("should close list if input is empty", function() {
             var stubEvent = {
-                keyCode: 38,
+                keyCode: 8, // Backspace
                 preventDefault: function() {},
                 target: {
-                    value: "test"
+                    value: ""
                 }
             };
 
             spyOn(sut, "fetchData");
-            spyOn(sut, "hasInputValueChanged").and.returnValue(false);
+            spyOn(sut, "clear");
 
             sut.getListOfResults(stubEvent);
 
+            expect(sut.clear).toHaveBeenCalled();
             expect(sut.fetchData).not.toHaveBeenCalled();
+        });
+
+        it("should clear after pushing data", function() {
+            spyOn(sut, "destroy");
+
+            sut.init();
+
+            jasmine.clock().install();
+
+            sut.pushData();
+
+            jasmine.clock().tick(1);
+            expect(sut.destroy).not.toHaveBeenCalled();
+
+            jasmine.clock().tick(51);
+            expect(sut.destroy).toHaveBeenCalled();
+
+            jasmine.clock().uninstall();
+        });
+
+        it("should fetch data", function() {
+            var server = sinon.fakeServer.create();
+
+            server.respondWith("GET", "http://testapiurl&q=",
+                [200, { "Content-Type": "application/json" },
+                    '[{ "id": 12, "comment": "Hey there" }]']);
+
+            spyOn(sut, "renderList");
+
+            sut.fetchData();
+
+            server.respond();
+
+            expect(sut.renderList).toHaveBeenCalled();
         });
     });
 });

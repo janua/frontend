@@ -14,7 +14,6 @@ define([
     mediator
     ) {
     function SearchTool(options) {
-
         var $list      = null,
             $input     = null,
             oldQuery   = '',
@@ -24,8 +23,9 @@ define([
                 38: 'up',
                 40: 'down'
             },
-            $container = options.container,
-            apiUrl     = options.apiUrl;
+            opts       = options || {},
+            $container = opts.container,
+            apiUrl     = opts.apiUrl;
 
         return {
             init: function () {
@@ -77,7 +77,7 @@ define([
 
             fetchData: function () {
                 return ajax({
-                    url: apiUrl + '&q=' + newQuery,
+                    url: apiUrl + newQuery,
                     type: 'json',
                     crossOrigin: true
                 }).then(function (positions) {
@@ -125,9 +125,7 @@ define([
 
             getNewId: function (id) {
                 var len   = $('li', $list).length,
-                    newId = 0;
-
-                newId = id % len;
+                    newId = id % len;
 
                 // Make sure that we can hit saved input option which has position -1
                 if (newId < -1) {
@@ -140,20 +138,21 @@ define([
             },
 
             setInputValue: function () {
-                var $active = $('.active', $list);
-
-                $input.val($active.text());
+                $input.val($('.active', $list).text());
             },
 
             renderList: function (results, numOfResults) {
-                var docFragment = document.createDocumentFragment(),
-                    len = results.length,
-                    toShow = len - numOfResults;
+                var docFragment   = document.createDocumentFragment(),
+                    resultsToShow = results.length - numOfResults;
 
-                _(results).initial(toShow).each(function (item, index) {
+                _(results).initial(resultsToShow).each(function (item, index) {
                     var li = document.createElement('li');
 
-                    li.innerHTML = '<a role="button" id="' + index + 'sti" class="search-tool__item" data-link-name="search-tool">' + item.LocalizedName + ' (' + item.Country.LocalizedName + ')</a>';
+                    li.innerHTML = '<a role="button" href="#' + item.LocalizedName + '"' +
+                        ' id="' + index + 'sti" class="search-tool__item"' +
+                        ' data-link-name="search-tool">' + item.LocalizedName +
+                        ' (' + item.Country.LocalizedName + ')</a>';
+
                     docFragment.appendChild(li);
                 });
 

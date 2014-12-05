@@ -212,7 +212,7 @@ define([
                 self.bindEvents();
                 searchTool = new SearchTool({
                     container: $('.js-search-tool'),
-                    apiUrl: 'http://api.accuweather.com/locations/v1/cities/autocomplete?language=en&apikey=' + apiKey
+                    apiUrl: 'http://api.accuweather.com/locations/v1/cities/autocomplete?language=en&apikey=' + apiKey + '&q='
                 });
                 searchTool.init();
 

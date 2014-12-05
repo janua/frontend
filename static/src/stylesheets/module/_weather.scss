@@ -63,8 +63,8 @@
 
 .weather__icon {
     float: right;
-    background-position: center;
     //Till we will have new icons
+    background-position: left top !important;
     background-size: 200% !important;
 
     @include mq($to: leftCol) {

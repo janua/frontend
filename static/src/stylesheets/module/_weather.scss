@@ -1,4 +1,7 @@
 .weather {
+    position: absolute;
+    top: 0;
+    right: 0;
     color: colour(neutral-2);
     text-align: right;
     border-top: 1px solid colour(news-main-2);
@@ -12,7 +15,6 @@
     }
 
     @include mq($from: desktop) {
-        position: absolute;
         text-align: left;
     }
 

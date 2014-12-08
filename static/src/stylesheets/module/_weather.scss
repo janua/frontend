@@ -1,7 +1,7 @@
 .weather {
     position: absolute;
     top: 0;
-    right: $gs-gutter;
+    right: 0;
     color: colour(neutral-2);
     text-align: right;
 
@@ -13,11 +13,8 @@
 
     @include mq($from: tablet) {
         width: 220px;
+        right: $gs-gutter;
         text-align: left;
-    }
-
-    @include mq($from: desktop) {
-        margin: 0 10px;
     }
 
     @include mq($from: tablet, $to: leftCol) {
@@ -80,7 +77,6 @@
     }
 
     @include mq($from: tablet, $to: leftCol) {
-        @include fs-headline(3);
         display: block;
         padding-right: $gs-gutter / 4;
     }

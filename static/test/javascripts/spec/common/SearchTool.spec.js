@@ -10,7 +10,7 @@ define([
     SearchTool
     ) {
 
-    ddescribe('Search tool', function () {
+    describe('Search tool', function () {
         var container,
             sut;
 
@@ -172,6 +172,19 @@ define([
             });
 
             server.restore();
+        });
+
+        it("should set input value", function() {
+            spyOn(sut, "setInputValue").and.callThrough();
+
+            sut.init();
+
+            sut.setInputValue("test1");
+            expect($(".js-search-tool-input").val()).toEqual("test1");
+
+            $(".js-search-tool-list").html('<li><a class="active">test2</a></li>');
+            sut.setInputValue();
+            expect($(".js-search-tool-input").val()).toEqual("test2");
         });
     });
 });

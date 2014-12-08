@@ -47,8 +47,7 @@ define([
             handleClick: function (e) {
                 e.preventDefault();
 
-                $input.val(e.target.textContent);
-
+                this.setInputValue(e.target.textContent);
                 this.pushData();
             },
 
@@ -89,7 +88,7 @@ define([
                 var key = keyCodeMap[e.which || e.keyCode];
                 e.preventDefault();
 
-                // Run this only if we are inside input
+                // Run this function only if we are inside input
                 if (!$(e.target).hasClass('js-search-tool-input')) {
                     return;
                 }
@@ -117,7 +116,7 @@ define([
 
                 // When outside of the list show latest query
                 if (this.getNewId(id + increment) < 0) {
-                    $input.val(oldQuery);
+                    this.setInputValue(oldQuery);
 
                 // When looping inside of the list show list item
                 } else {
@@ -140,8 +139,10 @@ define([
                 return newId;
             },
 
-            setInputValue: function () {
-                $input.val($('.active', $list).text());
+            setInputValue: function (value) {
+                var inputValue = value || $('.active', $list).text();
+
+                $input.val(inputValue);
             },
 
             renderList: function (results, numOfResults) {

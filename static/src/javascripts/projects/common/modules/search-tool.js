@@ -89,6 +89,11 @@ define([
             handleKeyEvents: function (e) {
                 var key = keyCodeMap[e.which || e.keyCode];
 
+                // Run this only if we are inside input
+                if (!$(e.target).hasClass('js-search-tool-input')) {
+                    return;
+                }
+
                 if (key === 'down') { // down
                     e.preventDefault();
                     this.move(1);

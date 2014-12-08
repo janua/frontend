@@ -1,7 +1,6 @@
 package conf
 
 import common._
-import implicits.Collections
 import org.joda.time.{DateTime, Days, LocalDate}
 import play.api.Play.current
 import play.api.libs.ws.WS
@@ -60,6 +59,12 @@ object Switches {
     sellByDate = never
   )
 
+  val RssServerSwitch = Switch("Performance", "rss-server",
+    "If this switch is on then RSS traffic will be redirected to RSS server",
+    safeState = Off,
+    sellByDate = new LocalDate(2015, 2, 1)
+  )
+
   val CircuitBreakerSwitch = Switch("Performance", "circuit-breaker",
     "If this switch is switched on then the Content API circuit breaker will be operational",
     safeState = Off,
@@ -89,6 +94,12 @@ object Switches {
     "If this switch is switched on then the MemcacheFilter will include the build number in the cache key",
     safeState = Off,
     sellByDate = never
+  )
+
+  val EnableOauthOnPreview = Switch("Performance", "enable-oauth-on-preview",
+    "If this switch is switched on then the preview server requires login",
+    safeState = On,
+    sellByDate = new LocalDate(2015, 1, 31)
   )
 
   val AutoRefreshSwitch = Switch("Performance", "auto-refresh",
@@ -152,8 +163,9 @@ object Switches {
   )
 
   val PngResizingSwitch = Switch("Performance", "png-resizing",
-    "If this switch is on png images will be resized via the png-resizing server",
-    safeState = Off, sellByDate = never
+    //"If this switch is on png images will be resized via the png-resizing server",
+    "If on, 10% of client requests for PNGs will also GET a resized one - for load testing (JD)",
+    safeState = Off, sellByDate = new LocalDate(2014, 12, 10)
   )
 
   // Commercial
@@ -161,6 +173,11 @@ object Switches {
   val DfpCachingSwitch = Switch("Commercial", "dfp-caching",
     "Have Admin will poll DFP to precache adserving data.",
     safeState = On, sellByDate = never
+  )
+
+  val DfpMemoryLeakSwitch = Switch("Commercial", "dfp-leak-plug",
+    "If this switch is on, memory leak on Admin server should be plugged.",
+    safeState = Off, sellByDate = new LocalDate(2015, 1, 7)
   )
 
   val CommercialSwitch = Switch("Commercial", "commercial",
@@ -366,6 +383,11 @@ object Switches {
     safeState = Off, sellByDate = new LocalDate(2015, 2, 1)
   )
 
+  val ABBreakingNewsAlertStyleSwitch = Switch("A/B Tests", "ab-breaking-news-alert-style",
+    "If this is switched on then different Breaking News alert styles are A/B tested",
+    safeState = Off, sellByDate = new LocalDate(2015, 2, 1)
+  )
+
   // actually just here to make us remove this in the future
   val GuShiftCookieSwitch = Switch("Feature", "gu-shift-cookie",
     "If switched on, the GU_SHIFT cookie will be updated when users opt into or out of Next Gen",
@@ -435,6 +457,11 @@ object Switches {
   val FrontPressJobSwitch = Switch("Facia", "front-press-job-switch",
     "If this switch is on then the jobs to push and pull from SQS will run",
     safeState = Off, sellByDate = never
+  )
+
+  val IntegratedTestsNoAds = Switch("Facia", "integrated-tests-no-ads",
+    "The tests are running without adverts, we need to decide if it's helping reliability before this expires",
+    safeState = Off, sellByDate = new LocalDate(2014, 12, 11)
   )
 
   def all: Seq[Switch] = Switch.allSwitches

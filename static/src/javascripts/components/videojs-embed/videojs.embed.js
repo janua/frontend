@@ -2,7 +2,7 @@
 
     videojs.plugin('embed', function(options) {
 
-        if (!options.embedable) { return false; }
+        if (!options.embeddable) { return false; }
 
         var player = this;
 
@@ -22,7 +22,7 @@
         };
 
         videojs.EmbedOverlayInput.prototype.setSrc = function() {
-            this.contentEl().value = '<iframe src="' + this.location + '" frameborder="0" allowfullscreen></iframe>';
+            this.contentEl().value = '<iframe src="' + this.location + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
         };
 
         videojs.EmbedOverlay = videojs.Component.extend({

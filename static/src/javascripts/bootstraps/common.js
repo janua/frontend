@@ -32,7 +32,6 @@ define([
     'common/modules/navigation/navigation',
     'common/modules/navigation/profile',
     'common/modules/navigation/search',
-    'common/modules/onward/breaking-news',
     'common/modules/onward/history',
     'common/modules/onward/more-tags',
     'common/modules/onward/onward-content',
@@ -89,7 +88,6 @@ define([
     navigation,
     Profile,
     Search,
-    breakingNews,
     history,
     MoreTags,
     Onward,
@@ -246,8 +244,7 @@ define([
 
             // opt-in to the responsive alpha
             optIn: function () {
-                var countMeIn = /#countmein/.test(window.location.hash);
-                if (countMeIn) {
+                if (window.location.hash.substr(1).split('&').indexOf('countmein') !== -1) {
                     cookies.add('GU_VIEW', 'responsive', 365);
                 }
             },
@@ -297,12 +294,6 @@ define([
                             }
                         ));
                     }
-                }
-            },
-
-            displayBreakingNews: function () {
-                if (config.switches.breakingNews) {
-                    breakingNews();
                 }
             },
 
@@ -472,7 +463,6 @@ define([
             modules.showTabs();
             modules.initialiseTopNavItems();
             modules.initialiseNavigation();
-            modules.displayBreakingNews();
             modules.showToggles();
             modules.showRelativeDates();
             modules.initClickstream();

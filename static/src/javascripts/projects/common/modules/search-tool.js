@@ -62,7 +62,6 @@ define([
             getListOfResults: function (e) {
                 if (!e.target.value.match(/\S/)) {
                     this.clear();
-
                     return;
                 }
 
@@ -88,6 +87,7 @@ define([
 
             handleKeyEvents: function (e) {
                 var key = keyCodeMap[e.which || e.keyCode];
+                e.preventDefault();
 
                 // Run this only if we are inside input
                 if (!$(e.target).hasClass('js-search-tool-input')) {
@@ -95,10 +95,8 @@ define([
                 }
 
                 if (key === 'down') { // down
-                    e.preventDefault();
                     this.move(1);
                 } else if (key === 'up') { // up
-                    e.preventDefault();
                     this.move(-1);
                 } else if (key === 'enter') { // enter
                     this.pushData();

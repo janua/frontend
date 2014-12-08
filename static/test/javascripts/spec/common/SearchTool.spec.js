@@ -53,7 +53,8 @@ define([
         it("should respond to keydown event", function() {
             var stubEvent = {
                 keyCode: 38,
-                preventDefault: function() {}
+                preventDefault: function() {},
+                target: $('.js-search-tool-input')[0]
             };
 
             spyOn(sut, "move");

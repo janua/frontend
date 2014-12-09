@@ -232,8 +232,10 @@ define([
                 // After first run override funtion to just update data
                 self.views.render = function (weatherData, city) {
                     $('.js-weather-city', $weather).text(city);
-                    $('.js-weather-icon', $weather).attr('class', 'i i-weather-' + weatherData.WeatherIcon + ' weather__icon');
                     $('.js-weather-temp', $weather).text(self.getTemperature(weatherData));
+
+                    var newIconClass = $('.js-weather-icon', $weather).attr('class').replace(/(\d+)/g, weatherData.WeatherIcon);
+                    $('.js-weather-icon', $weather).attr('class', newIconClass);
 
                     bean.fire($('.js-toggle-ready', $weather)[0], 'click');
                 };

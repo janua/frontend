@@ -37,22 +37,19 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
     NoCache { Ok(Json.toJson(S3FrontsApi.listCollectionIds)) }
   }
 
-  def getConfig = ExpiringActions.ExpiringAuthAction { request =>
+  def getConfig = ExpiringActions.ExpiringAuthAction.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
-      S3FrontsApi.getMasterConfig map { json =>
-        Ok(json).as("application/json")
-      } getOrElse NotFound
-    }
-  }
+      FaciaJsonApiClient.client.config.map { config =>
+        Ok(Json.toJson(config)).as("application/json")
+      }.recover{ case _ => NotFound }
+      .map(NoCache.apply)}
 
-  def readBlock(id: String) = ExpiringActions.ExpiringAuthAction { request =>
+  def readBlock(id: String) = ExpiringActions.ExpiringAuthAction.async { request =>
     FaciaToolMetrics.ApiUsageCount.increment()
-    NoCache {
-      S3FrontsApi.getBlock(id) map { json =>
-        Ok(json).as("application/json")
-      } getOrElse NotFound
-    }
+    FaciaJsonApiClient.client.collection(id).map(_.map { json =>
+      Ok(Json.toJson(json)).as("application/json")
+    } getOrElse NotFound)
+    .map(NoCache.apply)
   }
 
   def publishCollection(id: String) = ExpiringActions.ExpiringAuthAction { request =>
@@ -77,6 +74,21 @@ object FaciaToolController extends Controller with Logging with ExecutionContext
       FaciaPress.press(PressCommand.forOneId(id).withPressDraft())
     }
     NoCache(Ok)
+  }
+
+  def updateTreats(collectionId: String) = ExpiringActions.ExpiringAuthAction { request =>
+    FaciaToolMetrics.ApiUsageCount.increment()
+    request.body.asJson.flatMap(_.asOpt[FaciaToolUpdate]).map {
+      case update: Update =>
+        val identity = request.user
+
+        val updatedCollectionJson = UpdateActions.updateTreats(collectionId, update)
+
+        Ok
+      case update: Remove => InternalServerError
+      case update: UpdateAndRemove => InternalServerError
+      case _ => NotAcceptable
+    }.getOrElse(NotAcceptable)
   }
 
   def collectionEdits(): Action[AnyContent] = ExpiringActions.ExpiringAuthAction { request =>

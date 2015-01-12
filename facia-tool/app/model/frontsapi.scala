@@ -1,6 +1,7 @@
 package frontsapi.model
 
-import com.gu.facia.client.models.{ConfigJson, Trail, TrailMetaData}
+import com.gu.facia.client.{AmazonSdkS3Client, ApiClient}
+import com.gu.facia.client.models.{CollectionJson, ConfigJson, Trail, TrailMetaData}
 import com.gu.googleauth.UserIdentity
 import common.Logging
 import conf.Configuration
@@ -9,11 +10,23 @@ import org.joda.time.DateTime
 import play.api.libs.json.{JsString, Format, JsValue, Json}
 import services.ConfigAgent
 import tools.{FaciaApi, FaciaApiIO}
-
 import scala.util.{Failure, Success, Try}
 
 object Block {
   implicit val jsonFormat = Json.format[Block]
+
+  def fromCollectionJson(collectionJson: CollectionJson): Block =
+    Block(
+      collectionJson.displayName,
+      collectionJson.live,
+      collectionJson.draft,
+      collectionJson.lastUpdated.toString(),
+      collectionJson.updatedBy,
+      collectionJson.updatedEmail,
+      collectionJson.displayName,
+      collectionJson.href,
+      None,
+      None)
 }
 
 case class Block(
@@ -89,6 +102,11 @@ case class StreamUpdate(update: FaciaToolUpdate, email: String)
 
 object StreamUpdate {
   implicit val streamUpdateFormat: Format[StreamUpdate] = Json.format[StreamUpdate]
+}
+
+object FaciaJsonApiClient {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  val client: ApiClient = ApiClient(Configuration.aws.bucket, Configuration.facia.stage.toUpperCase, AmazonSdkS3Client.default)
 }
 
 trait UpdateActions extends Logging {
@@ -262,4 +280,11 @@ trait UpdateActions extends Logging {
     trail.copy(meta = trail.meta.map(metaData => metaData.copy(json = metaData.json - "group")))
 }
 
-object UpdateActions extends UpdateActions
+object UpdateActions extends UpdateActions {
+  def updateTreats(collectionId: String, update: Update): CollectionJson = {
+    FaciaJsonApiClient.client.collection(collectionId).map( _.map { collectionJson =>
+      val updatedTreats = updateList(update.update, collectionJson.live)
+      collectionJson.tr
+    })
+  }
+}

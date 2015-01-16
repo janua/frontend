@@ -40,6 +40,12 @@
                             @date(org.joda.time.DateTime.now())
                         }
 
+                        <div>
+                        @containerDefinition.collectionEssentials.treats.map { treat =>
+                            <span>@treat.headline</span>
+                        }
+                        </div>
+
                         @if(containerDefinition.showLatestUpdate) {
                             @containerDefinition.latestUpdate.map { updateTime =>
                                 @latestUpdate(updateTime)

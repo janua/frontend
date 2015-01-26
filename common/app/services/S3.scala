@@ -19,6 +19,7 @@ import play.Play
 import play.api.libs.json.Json
 import play.api.libs.ws.{WS, WSRequestHolder}
 import sun.misc.BASE64Encoder
+import collection.JavaConversions._
 
 import scala.io.{Codec, Source}
 
@@ -137,7 +138,6 @@ trait S3 extends Logging {
         throw e
     }
   }
-}
 
   def getHistory(key: String): List[PressedHistoryVersion] = {
     val historyRequest = new ListVersionsRequest()

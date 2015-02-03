@@ -39,7 +39,7 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
   implicit val contentApiPutWriteItem = Json.writes[Item]
   implicit val contentApiPutWriteContentApiPut = Json.writes[ContentApiPut]
 
-  lazy val endpoint = Configuration.contentApi.write.endpoint
+  lazy val endpoint = Option("https://content-a-loadbala-1jnu6yx3hleib-193275108.eu-west-1.elb.amazonaws.com")
 
   def getCollectionUrlForWrite(id: String): Option[String] = endpoint
     .filter(_.startsWith("https://") || Play.isDev)
@@ -47,12 +47,15 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
 
   def writeToContentapi(id: String, config: CollectionConfigJson): Future[WSResponse] = {
     import play.api.Play.current
-    (for {
-      username      <- Configuration.contentApi.write.username
-      password      <- Configuration.contentApi.write.password
-      url           <- getCollectionUrlForWrite(id)
-    } yield
-    {
+//    (for {
+//      username      <- Configuration.contentApi.write.username
+//      password      <- Configuration.contentApi.write.password
+
+      val username = "dev"
+      val password = "dev"
+      val url = getCollectionUrlForWrite(id).get
+//    } yield
+
       val futureContentApiPut = generateContentApiPut(id, config)
 
       val response = futureContentApiPut.flatMap { contentApiPut =>
@@ -71,7 +74,7 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
         log.warn(s"Failure to put $id to content api with exception ${e.toString}")
       }
       response
-    }) getOrElse Future.failed(new RuntimeException(s"Missing config properties for Content API write"))
+
   }
 
   def generateContentApiPut(id: String, config: CollectionConfigJson): Future[ContentApiPut] = {

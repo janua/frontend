@@ -39,7 +39,7 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
   implicit val contentApiPutWriteItem = Json.writes[Item]
   implicit val contentApiPutWriteContentApiPut = Json.writes[ContentApiPut]
 
-  lazy val endpoint = Option("https://content-a-loadbala-1jnu6yx3hleib-193275108.eu-west-1.elb.amazonaws.com")
+  lazy val endpoint = Option("https://content-a-LoadBala-1P8IM7DGERJS4-690303285.eu-west-1.elb.amazonaws.com")
 
   def getCollectionUrlForWrite(id: String): Option[String] = endpoint
     .filter(_.startsWith("https://") || Play.isDev)
@@ -51,8 +51,8 @@ trait ContentApiWrite extends ExecutionContexts with Logging {
 //      username      <- Configuration.contentApi.write.username
 //      password      <- Configuration.contentApi.write.password
 
-      val username = "dev"
-      val password = "dev"
+      val username = "facia-tool"
+      val password = "517TXN81q0456vR"
       val url = getCollectionUrlForWrite(id).get
 //    } yield
 

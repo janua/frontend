@@ -7,6 +7,8 @@
 
 (def stage (.-stage js/config))
 
+(def previewLocation "http://localhost:9000")
+
 (def app-state (atom {:paths []
                       :currentPath {:path nil :versions [] :selectedVersion nil}}))
 
@@ -20,7 +22,7 @@
        (om/build versionsList (:currentPath data))
        (if-let [path (:path (:currentPath data))]
          (dom/iframe #js {:className "viewer" :frameBorder "0"
-                        :src (str "http://preview.gutools.co.uk/version/" stage "/" path
+                        :src (str previewLocation "/version/" stage "/" path
                               (if-let [selectedVersion (:selectedVersion (:currentPath data))]
                                 (str "?versionId=" selectedVersion)))}))]))))
 

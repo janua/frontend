@@ -8,6 +8,6 @@ libraryDependencies += "org.clojure" % "clojure" % "1.5.1"
 
 //libraryDependencies += "io.github.petro-rudenko" % "play-clojurescript" % "0.0.2"
 
-addSbtPlugin("io.github.petro-rudenko" % "play-clojurescript" % "0.0.2")
+//addSbtPlugin("io.github.petro-rudenko" % "play-clojurescript" % "0.0.2")
 
 

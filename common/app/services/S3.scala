@@ -1,7 +1,7 @@
 package services
 
 import java.io._
-import java.util.zip.GZIPOutputStream
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -66,6 +66,11 @@ trait S3 extends Logging {
   def get(key: String, versionId: Option[String] = None)(implicit codec: Codec): Option[String] =
     withS3Result(key, versionId) {
       result => Source.fromInputStream(result.getObjectContent).mkString
+    }
+
+  def getGZipped(key: String, versionId: Option[String] = None)(implicit codec: Codec): Option[String] =
+    withS3Result(key, versionId) {
+      result => Source.fromInputStream(new GZIPInputStream(result.getObjectContent)).mkString
     }
 
   def getWithLastModified(key: String): Option[(String, DateTime)] =
@@ -241,10 +246,10 @@ object S3FrontsApi extends S3 {
     getHistory(getLivePressedKeyForPath(path))
 
   def getPressedHistoryVersion(path: String, versionId: String) =
-    get(getLivePressedKeyForPath(path), Option(versionId))
+    getGZipped(getLivePressedKeyForPath(path), Option(versionId))
 
   def getObjectHistoryVersion(stage: String, path: String, versionId: Option[String]) =
-    get(getPressedKeyForStageAndPath(stage, path), versionId)
+    getGZipped(getPressedKeyForStageAndPath(stage, path), versionId)
 
   def restorePressedVersion(path: String, versionId: String) =
     restoreVersion(getLivePressedKeyForPath(path), versionId)

@@ -2,5 +2,8 @@
 GET     /_healthcheck               controllers.PreviewHealthCheck.healthcheck()
 GET     /responsive-viewer/*path    controllers.ResponsiveViewerController.preview(path)
 
+#Version Viewer
+GET        /version/:stage/*path    controllers.FaciaVersionController.renderFrontPressResult(stage, path)
+
 #import routes from "standalone" project
 ->  / standalone.Routes

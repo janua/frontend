@@ -152,10 +152,10 @@ object FaciaContentImplicits {
     )
 
     def isMedia: Boolean = fold(
-      curatedContent => curatedContent.content.isMedia,
-      supportingCuratedContent => supportingCuratedContent.content.isMedia,
-      linkSnap => false,
-      latestSnap => latestSnap.latestContent.exists(_.isMedia)
+      curatedContent => FaciaContentUtils.isMedia(curatedContent),
+      supportingCuratedContent => FaciaContentUtils.isMedia(supportingCuratedContent),
+      linkSnap => FaciaContentUtils.isMedia(linkSnap),
+      latestSnap => FaciaContentUtils.isMedia(latestSnap)
     )
 
     def isEditorial: Boolean = fold(

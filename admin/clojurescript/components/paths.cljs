@@ -14,5 +14,5 @@
           (apply dom/div nil
             (map
               (fn [path]
-                (dom/div #js {:onClick #(updateVersionsForPath path currentPath)} path))
+                (dom/div #js {:onClick #(updateVersionsForPath path currentPath nil)} path))
               (:paths data))))))))

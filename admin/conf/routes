@@ -133,6 +133,7 @@ GET         /css-reports/:date.json                                             
 # Facia Press History
 GET         /history/restore/*key/:versionId controllers.admin.FaciaPressHistory.restoreVersion(key, versionId)
 GET         /history/object/*key/:versionId controllers.admin.FaciaPressHistory.getPressedHistoryFile(key, versionId)
+GET         /history/list/*key/:versionIdMarker controllers.admin.FaciaPressHistory.getHistoryForWithVersion(key, versionIdMarker)
 GET         /history/list/*key controllers.admin.FaciaPressHistory.getHistoryFor(key)
 GET         /config controllers.admin.FaciaPressHistory.listPaths()
 GET         /history controllers.admin.FaciaPressHistory.index()

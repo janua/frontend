@@ -9,16 +9,16 @@
      :response-format :json
      :keywords? true}))
 
-(defn getVersions [pressedPathId handler]
-  (GET (str "/history/list/" pressedPathId)
+(defn getVersions [pressedPathId versionIdMarker handler]
+  (GET (str "/history/list/" pressedPathId (if versionIdMarker (str "/" versionIdMarker)))
     {:handler handler
      :error-handler #(.error js/console (pr-str %))
      :response-format :json
      :keywords? true}))
 
-(defn updateVersionsForPath [path currentPathCursor]
+(defn updateVersionsForPath [path currentPathCursor versionIdMarker]
   "Used for updating currentPath after an update"
-  (getVersions path
+  (getVersions path versionIdMarker
     #(om/transact! currentPathCursor (fn [v] (assoc v :path path :versions % :selectedVersion nil)))))
 
 (defn restorePath [versionId currentPathCursor]

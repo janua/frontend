@@ -144,13 +144,16 @@ trait S3 extends Logging {
     }
   }
 
-  def getHistory(key: String): List[PressedHistoryVersion] = {
+  def getHistory(key: String, versionIdMarker: Option[String]): List[PressedHistoryVersion] = {
     val historyRequest = new ListVersionsRequest()
       .withBucketName(bucket)
       .withMaxResults(10)
       .withPrefix(key)
 
-    val historyResult = client.map(_.listVersions(historyRequest)).get
+    val maybeWithIdMarker =
+      versionIdMarker.fold(historyRequest)(id => historyRequest.withKeyMarker(key).withVersionIdMarker(id))
+
+    val historyResult = client.map(_.listVersions(maybeWithIdMarker)).get
 
     historyResult.getVersionSummaries.map(PressedHistoryVersion.fromVersionSummary).toList
   }
@@ -242,8 +245,10 @@ object S3FrontsApi extends S3 {
   def getPressedLastModified(path: String): Option[String] =
     getLastModified(getLivePressedKeyForPath(path)).map(_.toString)
 
-  def getHistoryForPath(path: String): List[PressedHistoryVersion] =
-    getHistory(getLivePressedKeyForPath(path))
+  def getHistoryForPathWithVersion(path: String, versionMarkerId: Option[String]): List[PressedHistoryVersion] =
+    getHistory(getLivePressedKeyForPath(path), versionMarkerId)
+
+  def getHistoryForPath(path: String): List[PressedHistoryVersion] = getHistoryForPathWithVersion(path, None)
 
   def getPressedHistoryVersion(path: String, versionId: String) =
     getGZipped(getLivePressedKeyForPath(path), Option(versionId))

@@ -1,24 +1,33 @@
 (ns guardian-frontend.components.versions
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [guardian-frontend.components.utils :refer [restorePath updateVersion]]))
+            [guardian-frontend.components.utils :refer [restorePath updateVersion updateVersionsForPath]]))
 
 (defn versionsList [currentPath owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:currentVersionId nil})
     om/IRender
     (render [this]
-      (apply dom/div #js {:className "versions"}
-        (dom/h3 nil (or (:path currentPath) "No Selected Path"))
-        (let [etagsList (map #(:etag %) (:versions currentPath))]
-          (map
-            (fn [version]
-              (let [{:keys [etag]} version
-                    etagOccursMoreThanOnce (> (count (filter #{etag} etagsList)) 1)]
-                (om/build versionItem
-                  (assoc version
-                    :etagOccursMoreThanOnce etagOccursMoreThanOnce
-                    :currentPath currentPath))))
-            (:versions currentPath)))))))
+      (let [theCurrentPath (:path currentPath)
+            lastVersionId (:versionId (last (:versions currentPath)))]
+        (.log js/console lastVersionId)
+        (apply dom/div #js {:className "versions"}
+          (dom/h3 nil (or (:path currentPath) "No Selected Path"))
+          (dom/span nil "Prev")
+          (dom/span #js {:onClick (fn [_]
+                                    (updateVersionsForPath theCurrentPath currentPath lastVersionId))} "Next")
+          (let [etagsList (map #(:etag %) (:versions currentPath))]
+            (map
+              (fn [version]
+                (let [{:keys [etag]} version
+                      etagOccursMoreThanOnce (> (count (filter #{etag} etagsList)) 1)]
+                  (om/build versionItem
+                    (assoc version
+                      :etagOccursMoreThanOnce etagOccursMoreThanOnce
+                      (:currentPath currentPath)))))
+              (:versions currentPath))))))))
 
 (defn versionItem [version owner]
   (reify

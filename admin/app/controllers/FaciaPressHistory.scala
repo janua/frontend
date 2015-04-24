@@ -14,6 +14,10 @@ object FaciaPressHistory extends Controller {
     Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getHistoryForPath(key)))).as("application/json")
   }
 
+  def getHistoryForWithVersion(key: String, versionIdMarker: String) = AuthActions.AuthActionTest {
+    Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getHistoryForPathWithVersion(key, Option(versionIdMarker))))).as("application/json")
+  }
+
   def getPressedHistoryFile(key: String, versionId: String) = AuthActions.AuthActionTest {
     Ok(Json.prettyPrint(Json.toJson(S3FrontsApi.getPressedHistoryVersion(key, versionId))))
   }

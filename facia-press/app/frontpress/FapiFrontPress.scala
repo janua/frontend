@@ -7,21 +7,22 @@ import com.gu.facia.api.contentapi.ContentApi.{AdjustItemQuery, AdjustSearchQuer
 import com.gu.facia.api.models.{Collection, CuratedContent, _}
 import com.gu.facia.api.{FAPI, Response}
 import com.gu.facia.client.{AmazonSdkS3Client, ApiClient}
-import common.Edition
 import common.FaciaPressMetrics.{ContentApiSeoRequestFailure, ContentApiSeoRequestSuccess}
-import common._
+import common.{Edition, _}
 import conf.{Configuration, LiveContentApi}
 import contentapi.{CircuitBreakingContentApiClient, QueryDefaults}
 import implicits.FaciaContentFrontendHelpers._
 import model.facia.PressedCollection
 import model.{FrontProperties, PressedPage, SeoData}
-import org.jsoup.Jsoup
 import play.api.libs.json._
 import services.{ConfigAgent, S3FrontsApi}
-import views.support.{Item460, Item140, Naked}
+import views.support.{Item140, Item460, Naked}
 
-import scala.collection.JavaConversions._
 import scala.concurrent.Future
+
+object BlockingExceptions {
+  val exceptions: List[String] = List("breaking-news")
+}
 
 private case class ContentApiClientWithTarget(override val apiKey: String, override val targetUrl: String) extends GuardianContentClient(apiKey) with CircuitBreakingContentApiClient {
   lazy val httpTimingMetric = ContentApiMetrics.ElasticHttpTimingMetric

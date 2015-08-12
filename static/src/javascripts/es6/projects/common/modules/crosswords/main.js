@@ -59,7 +59,9 @@ class Crossword extends React.Component {
             ),
             cellInFocus: null,
             directionOfEntry: null,
-            showAnagramHelper: false
+            showAnagramHelper: false,
+            usedCheat: false,
+            usedCheatAll: false
         };
     }
 
@@ -348,6 +350,7 @@ class Crossword extends React.Component {
     }
 
     check (entry) {
+        var result = [];
         const cells = helpers.cellsForEntry(entry);
 
         if (entry.solution) {
@@ -359,6 +362,10 @@ class Crossword extends React.Component {
             }), cellAndSolution => {
                 return cellAndSolution[0];
             });
+
+            console.log('Bad Cells (check): ' + badCells.length)
+
+            result.push(badCells);
 
             this.setState({
                 grid: helpers.mapGrid(this.state.grid, (cell, gridX, gridY) => {
@@ -383,10 +390,30 @@ class Crossword extends React.Component {
                 });
             }, 150);
         }
+
+        return result;
+    }
+
+    onFinish () {
+        const crosswordFinishPingback = {
+            usedCheat: this.state.usedCheat,
+            usedCheatAll: this.state.usedCheatAll,
+            crosswordId: this.props.data.id
+        };
+        console.log('On Finish');
+        console.log(crosswordFinishPingback);
+        fetch(
+            'http://localhost:9000/',
+            {
+                method: 'POST',
+                body: crosswordFinishPingback
+            }
+        );
     }
 
     onCheat () {
         this.cheat(this.clueInFocus());
+        this.setState({usedCheat: true});
         this.save();
     }
 
@@ -396,16 +423,30 @@ class Crossword extends React.Component {
     }
 
     onSolution () {
-        _.forEach(this.props.data.entries, (entry) => {
-            this.cheat(entry);
+        const result = _.isEmpty(_.flatten(_.map(this.props.data.entries, (entry) => {
+            return this.cheat(entry);
+          })
+        ));
+        console.log('Result: ' + result);
+        this.setState({usedCheatAll: true}, () => {
+          if (result) {
+            this.onFinish();
+          }
         });
         this.save();
     }
 
     onCheckAll () {
-        _.forEach(this.props.data.entries, (entry) => {
-            this.check(entry);
-        });
+        const badCells = _.flatten(_.map(this.props.data.entries, (entry) => {
+            return this.check(entry);
+          })
+        );
+        console.log('Bad Cells: ' + badCells.length);
+        const result = _.isEmpty(badCells);
+        console.log(result);
+        if (result) {
+          this.onFinish();
+        }
         this.save();
     }
 
@@ -516,4 +557,3 @@ export default function () {
         bonzo(element).removeClass('js-print-crossword');
     });
 }
-

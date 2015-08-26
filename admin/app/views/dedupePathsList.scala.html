@@ -1,0 +1,11 @@
+@(paths: List[String])
+
+@admin_main("CSS reports", "DEV") {
+
+    <ul>
+    @paths.map { path =>
+        <li>@path</li>
+    }
+    </ul>
+
+}

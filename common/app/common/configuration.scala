@@ -87,7 +87,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   case class Auth(user: String, password: String)
 
   object contentApi {
-    val contentApiLiveHost: String = configuration.getMandatoryStringProperty("content.api.host")
+    val contentApiLiveHost: String = configuration.getMandatoryStringProperty("content_api_host")
 
     def contentApiDraftHost: String =
         configuration.getStringProperty("content.api.draft.host")
@@ -193,7 +193,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   }
 
   object images {
-    lazy val path = configuration.getMandatoryStringProperty("images.path")
+    lazy val path = configuration.getMandatoryStringProperty("images_path")
     object backends {
       lazy val mediaToken: String = configuration.getMandatoryStringProperty("images.media.token")
       lazy val staticToken: String = configuration.getMandatoryStringProperty("images.static.token")
@@ -205,7 +205,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   }
 
   object assets {
-    lazy val path = configuration.getMandatoryStringProperty("assets.path")
+    lazy val path = configuration.getMandatoryStringProperty("assets_path")
   }
 
   object staticSport {
@@ -232,7 +232,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   }
 
   object discussion {
-    lazy val apiRoot = configuration.getMandatoryStringProperty("discussion.apiRoot")
+    lazy val apiRoot = configuration.getMandatoryStringProperty("discussion_apiRoot")
     lazy val secureApiRoot = configuration.getMandatoryStringProperty("discussion.secureApiRoot")
     lazy val apiTimeout = configuration.getMandatoryStringProperty("discussion.apiTimeout")
     lazy val apiClientHeader = configuration.getMandatoryStringProperty("discussion.apiClientHeader")
@@ -387,7 +387,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
   object aws {
 
-    lazy val region = configuration.getMandatoryStringProperty("aws.region")
+    lazy val region = configuration.getMandatoryStringProperty("aws_region")
     lazy val bucket = configuration.getMandatoryStringProperty("aws.bucket")
     lazy val notificationSns: String = configuration.getMandatoryStringProperty("sns.notification.topic.arn")
     lazy val videoEncodingsSns: String = configuration.getMandatoryStringProperty("sns.missing_video_encodings.topic.arn")

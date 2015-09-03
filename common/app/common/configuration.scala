@@ -196,7 +196,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val path = configuration.getMandatoryStringProperty("images_path")
     object backends {
       lazy val mediaToken: String = configuration.getMandatoryStringProperty("images.media.token")
-      lazy val staticToken: String = configuration.getMandatoryStringProperty("images.static.token")
+      lazy val staticToken: String = configuration.getMandatoryStringProperty("images_static_token")
     }
   }
 
@@ -235,7 +235,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     lazy val apiRoot = configuration.getMandatoryStringProperty("discussion_apiRoot")
     lazy val secureApiRoot = configuration.getMandatoryStringProperty("discussion.secureApiRoot")
     lazy val apiTimeout = configuration.getMandatoryStringProperty("discussion.apiTimeout")
-    lazy val apiClientHeader = configuration.getMandatoryStringProperty("discussion.apiClientHeader")
+    lazy val apiClientHeader = configuration.getMandatoryStringProperty("discussion_apiClientHeader")
     lazy val url = configuration.getMandatoryStringProperty("discussion.url")
   }
 

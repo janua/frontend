@@ -4,5 +4,5 @@ jdk:
 language: scala
 sudo: false
 scala:
-   - 2.11.5
+   - 2.11.4
 

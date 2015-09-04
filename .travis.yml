@@ -6,7 +6,7 @@ sudo: false
 scala:
    - 2.11.4
 
-sbt_args: -Xmx4096M -XX:ReservedCodeCacheSize=128m -XX:+UseConcMarkSweepGC -Djava.awt.headless=true -XX:NewRatio=4
+sbt_args: -J-Xmx4096M -J-XX:ReservedCodeCacheSize=128m -J-XX:+UseConcMarkSweepGC -J-Djava.awt.headless=true -J-XX:NewRatio=4
 
 cache:
   directories:

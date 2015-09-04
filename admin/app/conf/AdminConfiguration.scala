@@ -10,10 +10,10 @@ object AdminConfiguration {
   val configuration = ConfigurationFactory.getConfiguration("frontend", "env")
 
   object pa {
-    lazy val footballApiKey = configuration.getStringProperty("pa.api.key")
+    lazy val footballApiKey = configuration.getStringProperty("pa_api_key")
         .getOrElse(throw new RuntimeException("unable to load pa football api key"))
 
-    lazy val cricketApiKey = configuration.getStringProperty("pa.cricket.api.key")
+    lazy val cricketApiKey = configuration.getStringProperty("pa_cricket_api_key")
         .getOrElse(throw new RuntimeException("unable to load pa cricket api key"))
 
     lazy val footballHost = configuration.getStringProperty("football.api.host").getOrElse("http://pads6.pa-sport.com")

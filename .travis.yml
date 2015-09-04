@@ -6,6 +6,8 @@ sudo: false
 scala:
    - 2.11.4
 
+sbt_args: -Xmx4096 -XX:ReservedCodeCacheSize=128m -XX:+UseConcMarkSweepGC -Djava.awt.headless=true -XX:NewRatio=4
+
 cache:
   directories:
     - $HOME/.ivy2/cache

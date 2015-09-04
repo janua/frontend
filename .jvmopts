@@ -1,5 +1,5 @@
 -Xmx4096M
--XX:ReservedCodeCacheSize=128m
+-XX:ReservedCodeCacheSize=256M
 -XX:+UseConcMarkSweepGC 
 -Djava.awt.headless=true 
 -XX:NewRatio=4

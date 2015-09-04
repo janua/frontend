@@ -15,7 +15,7 @@ cache:
 
 script:
   # Your normal script
-  - sbt ++$TRAVIS_SCALA_VERSION -J-XX:ReservedCodeCacheSize=256M test
+  - sbt ++$TRAVIS_SCALA_VERSION -J-XX:ReservedCodeCacheSize=256M -J-Xmx4096M -J-XX:ReservedCodeCacheSize=128m -J-XX:+UseConcMarkSweepGC -J-Djava.awt.headless=true -J-XX:NewRatio=4 test 
   
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm

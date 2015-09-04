@@ -233,10 +233,10 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
 
   object discussion {
     lazy val apiRoot = configuration.getMandatoryStringProperty("discussion_apiRoot")
-    lazy val secureApiRoot = configuration.getMandatoryStringProperty("discussion.secureApiRoot")
-    lazy val apiTimeout = configuration.getMandatoryStringProperty("discussion.apiTimeout")
+    lazy val secureApiRoot = configuration.getMandatoryStringProperty("discussion_secureApiRoot")
+    lazy val apiTimeout = configuration.getMandatoryStringProperty("discussion_apiTimeout")
     lazy val apiClientHeader = configuration.getMandatoryStringProperty("discussion_apiClientHeader")
-    lazy val url = configuration.getMandatoryStringProperty("discussion.url")
+    lazy val url = configuration.getMandatoryStringProperty("discussion_url")
   }
 
   object witness {
@@ -388,7 +388,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   object aws {
 
     lazy val region = configuration.getMandatoryStringProperty("aws_region")
-    lazy val bucket = configuration.getMandatoryStringProperty("aws.bucket")
+    lazy val bucket = configuration.getMandatoryStringProperty("aws_bucket")
     lazy val notificationSns: String = configuration.getMandatoryStringProperty("sns.notification.topic.arn")
     lazy val videoEncodingsSns: String = configuration.getMandatoryStringProperty("sns.missing_video_encodings.topic.arn")
     lazy val frontPressSns: Option[String] = configuration.getStringProperty("frontpress.sns.topic")
@@ -433,8 +433,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   }
 
   object formstack {
-    lazy val url = configuration.getMandatoryStringProperty("formstack.url")
-    lazy val oAuthToken = configuration.getMandatoryStringProperty("formstack.oauthToken")
+    lazy val url = configuration.getMandatoryStringProperty("formstack_url")
+    lazy val oAuthToken = configuration.getMandatoryStringProperty("formstack_oauthToken")
   }
 
   object standalone {

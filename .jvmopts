@@ -1,4 +1,4 @@
--Xm3072Mx
+-Xmx3072M
 -XX:ReservedCodeCacheSize=128m
 -XX:+UseConcMarkSweepGC 
 -Djava.awt.headless=true 

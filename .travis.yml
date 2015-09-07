@@ -10,4 +10,4 @@ env:
   - APPLICATION_NAME=facia
   - APPLICATION_NAME=article
 
-script: ./sbt ++$TRAVIS_SCALA_VERSION 'project $APPLICATION_NAME' test
+script: ./sbt ++$TRAVIS_SCALA_VERSION "project $APPLICATION_NAME" test

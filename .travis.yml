@@ -11,6 +11,6 @@ env:
   - APPLICATION_NAME=article
 
 script: 
-  - echo "$APPLICATION_NAME"
+  - echo $APPLICATION_NAME
 
-  - "./sbt project $APPLICATION_NAME;test"
+  - ./sbt project $APPLICATION_NAME;test

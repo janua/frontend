@@ -4,9 +4,13 @@ jdk:
 language: scala
 sudo: false
 scala:
-   - 2.11.6
+  - 2.11.6
+
+env:
+  - APPLICATION_NAME=facia
+  - APPLICATION_NAME=article
 
 script:
   # Your normal script
-  #- sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'set parallelExecution := false' test
-  - ./sbt test
+  - sbt ++$TRAVIS_SCALA_VERSION 'project $APPLICATION_NAME' test
+  #- ./sbt test

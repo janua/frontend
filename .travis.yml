@@ -13,7 +13,7 @@ cache:
 
 script:
   # Your normal script
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork := false' test
+  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' test
   
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm

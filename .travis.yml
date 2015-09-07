@@ -6,11 +6,6 @@ sudo: false
 scala:
    - 2.11.4
 
-cache:
-  directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
-
 script:
   # Your normal script
   - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' test

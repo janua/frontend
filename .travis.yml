@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk7
 language: scala
 sudo: false
 scala:
@@ -13,15 +13,7 @@ cache:
 
 script:
   # Your normal script
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project facia' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project article' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project applications' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project onward' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project facia-tool' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project facia-press' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project admin' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project identity' test
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'project commercial' test
+  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' test
   
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm

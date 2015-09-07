@@ -8,4 +8,4 @@ scala:
 
 script:
   # Your normal script
-  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' test
+  - sbt ++$TRAVIS_SCALA_VERSION 'set fork in ThisBuild := false' 'set parallelExecution := false' test

@@ -1,4 +1,4 @@
--Xmx4096M
+-Xmx3072M
 -Xms2048M
 -XX:+UseConcMarkSweepGC 
 -XX:+CMSClassUnloadingEnabled

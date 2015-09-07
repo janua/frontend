@@ -13,14 +13,10 @@ import Dependencies._
 
 object Frontend extends Build with Prototypes {
 
-  val buildSettings = Defaults.defaultSettings ++ Seq(
-    javaOptions += "-Xmx3G"
-  )
-
   val common = application("common").settings(
     fork := false,
     parallelExecution := false,
-    buildSettings,
+    javaOptions += "-Xmx3G",
     libraryDependencies ++= Seq(
       akkaAgent,
       apacheCommonsMath3,
@@ -72,14 +68,14 @@ object Frontend extends Build with Prototypes {
   val sanityTest = application("sanity-tests")
 
   val facia = application("facia").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies += scalaCheck
   )
 
   val article = application("article").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
@@ -89,16 +85,16 @@ object Frontend extends Build with Prototypes {
     .settings(
       fork := false,
       parallelExecution := false,
-      buildSettings
+      javaOptions += "-Xmx3G",
     )
 
   val archive = application("archive").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
   val sport = application("sport").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies ++= Seq(
@@ -113,13 +109,13 @@ object Frontend extends Build with Prototypes {
   )
 
   val image = application("image").settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
 
   val discussion = application("discussion").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     TwirlKeys.templateImports ++= Seq("discussion._", "discussion.model._")
@@ -128,7 +124,7 @@ object Frontend extends Build with Prototypes {
   val router = application("router")
 
   val diagnostics = application("diagnostics").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies ++= Seq(
@@ -138,7 +134,7 @@ object Frontend extends Build with Prototypes {
   )
 
   val admin = application("admin").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies ++= Seq(
@@ -158,7 +154,7 @@ object Frontend extends Build with Prototypes {
   )
 
   val faciaTool = application("facia-tool").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies ++= Seq(
@@ -168,13 +164,13 @@ object Frontend extends Build with Prototypes {
   )
 
   val faciaPress = application("facia-press").dependsOn(commonWithTests).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
 
   val identity = application("identity").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false,
     libraryDependencies ++= Seq(
@@ -194,13 +190,13 @@ object Frontend extends Build with Prototypes {
   )
 
   val commercial = application("commercial").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
 
   val onward = application("onward").dependsOn(commonWithTests).aggregate(common).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     fork := false,
     parallelExecution := false
   )
@@ -243,7 +239,7 @@ object Frontend extends Build with Prototypes {
   )
 
   val preview = application("preview").dependsOn(withTests(common), standalone).settings(
-    buildSettings,
+    javaOptions += "-Xmx3G",
     RoutesKeys.routesImport += "scala.language.reflectiveCalls"
   )
 
@@ -280,7 +276,7 @@ object Frontend extends Build with Prototypes {
     trainingPreview,
     rss
   ).settings(
-      buildSettings,
+      javaOptions += "-Xmx3G",
       fork := false,
       parallelExecution := false
     )

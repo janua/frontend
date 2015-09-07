@@ -13,6 +13,10 @@ import Dependencies._
 
 object Frontend extends Build with Prototypes {
 
+  val buildSettings = Defaults.defaultSettings ++ Seq(
+    javaOptions += "-Xmx3G"
+  )
+
   val common = application("common").settings(
     libraryDependencies ++= Seq(
       akkaAgent,

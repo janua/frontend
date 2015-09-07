@@ -12,5 +12,5 @@ env:
 
 script:
   # Your normal script
-  - sbt ++$TRAVIS_SCALA_VERSION 'project $APPLICATION_NAME' test
+  - "sbt ++$TRAVIS_SCALA_VERSION 'project $APPLICATION_NAME' test"
   #- ./sbt test

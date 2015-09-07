@@ -18,6 +18,8 @@ object Frontend extends Build with Prototypes {
   )
 
   val common = application("common").settings(
+    (fork in Test) := false,
+    buildSettings,
     libraryDependencies ++= Seq(
       akkaAgent,
       apacheCommonsMath3,
@@ -69,16 +71,18 @@ object Frontend extends Build with Prototypes {
   val sanityTest = application("sanity-tests")
 
   val facia = application("facia").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies += scalaCheck
   )
 
-  val article = application("article").dependsOn(commonWithTests).aggregate(common)
+  val article = application("article").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
   val applications = application("applications")
     .dependsOn(commonWithTests)
     .aggregate(common)
 
-  val archive = application("archive").dependsOn(commonWithTests).aggregate(common)
+  val archive = application("archive").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
   val sport = application("sport").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies ++= Seq(
       paClient,
       akkaContrib
@@ -90,15 +94,17 @@ object Frontend extends Build with Prototypes {
     )
   )
 
-  val image = application("image")
+  val image = application("image").settings(buildSettings)
 
   val discussion = application("discussion").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     TwirlKeys.templateImports ++= Seq("discussion._", "discussion.model._")
   )
 
   val router = application("router")
 
   val diagnostics = application("diagnostics").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies ++= Seq(
       uaDetectorResources,
       openCsv
@@ -106,6 +112,7 @@ object Frontend extends Build with Prototypes {
   )
 
   val admin = application("admin").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies ++= Seq(
       paClient,
       dfpAxis,
@@ -123,15 +130,17 @@ object Frontend extends Build with Prototypes {
   )
 
   val faciaTool = application("facia-tool").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies ++= Seq(
       playJsonVariants,
       awsKinesis
     )
   )
 
-  val faciaPress = application("facia-press").dependsOn(commonWithTests)
+  val faciaPress = application("facia-press").dependsOn(commonWithTests).settings(buildSettings)
 
   val identity = application("identity").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
     libraryDependencies ++= Seq(
       filters,
       identityModel,
@@ -148,9 +157,9 @@ object Frontend extends Build with Prototypes {
     )
   )
 
-  val commercial = application("commercial").dependsOn(commonWithTests).aggregate(common)
+  val commercial = application("commercial").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
 
-  val onward = application("onward").dependsOn(commonWithTests).aggregate(common)
+  val onward = application("onward").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
 
   val dev = application("dev-build")
     .dependsOn(
@@ -190,6 +199,7 @@ object Frontend extends Build with Prototypes {
   )
 
   val preview = application("preview").dependsOn(withTests(common), standalone).settings(
+    buildSettings,
     RoutesKeys.routesImport += "scala.language.reflectiveCalls"
   )
 
@@ -225,5 +235,5 @@ object Frontend extends Build with Prototypes {
     preview,
     trainingPreview,
     rss
-  )
+  ).settings(buildSettings)
 }

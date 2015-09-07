@@ -11,4 +11,5 @@ env:
   - APPLICATION_NAME=article
 
 script: 
+  - grunt compile
   - ./travis.sh

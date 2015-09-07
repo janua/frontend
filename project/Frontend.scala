@@ -18,7 +18,8 @@ object Frontend extends Build with Prototypes {
   )
 
   val common = application("common").settings(
-    (fork in Test) := false,
+    fork := false,
+    parallelExecution := false,
     buildSettings,
     libraryDependencies ++= Seq(
       akkaAgent,
@@ -72,17 +73,34 @@ object Frontend extends Build with Prototypes {
 
   val facia = application("facia").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies += scalaCheck
   )
 
-  val article = application("article").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
+  val article = application("article").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
   val applications = application("applications")
     .dependsOn(commonWithTests)
     .aggregate(common)
+    .settings(
+      fork := false,
+      parallelExecution := false,
+      buildSettings
+    )
 
-  val archive = application("archive").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
+  val archive = application("archive").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
   val sport = application("sport").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies ++= Seq(
       paClient,
       akkaContrib
@@ -94,10 +112,16 @@ object Frontend extends Build with Prototypes {
     )
   )
 
-  val image = application("image").settings(buildSettings)
+  val image = application("image").settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
 
   val discussion = application("discussion").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     TwirlKeys.templateImports ++= Seq("discussion._", "discussion.model._")
   )
 
@@ -105,6 +129,8 @@ object Frontend extends Build with Prototypes {
 
   val diagnostics = application("diagnostics").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies ++= Seq(
       uaDetectorResources,
       openCsv
@@ -113,6 +139,8 @@ object Frontend extends Build with Prototypes {
 
   val admin = application("admin").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies ++= Seq(
       paClient,
       dfpAxis,
@@ -131,16 +159,24 @@ object Frontend extends Build with Prototypes {
 
   val faciaTool = application("facia-tool").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies ++= Seq(
       playJsonVariants,
       awsKinesis
     )
   )
 
-  val faciaPress = application("facia-press").dependsOn(commonWithTests).settings(buildSettings)
+  val faciaPress = application("facia-press").dependsOn(commonWithTests).settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
 
   val identity = application("identity").dependsOn(commonWithTests).aggregate(common).settings(
     buildSettings,
+    fork := false,
+    parallelExecution := false,
     libraryDependencies ++= Seq(
       filters,
       identityModel,
@@ -157,9 +193,17 @@ object Frontend extends Build with Prototypes {
     )
   )
 
-  val commercial = application("commercial").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
+  val commercial = application("commercial").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
 
-  val onward = application("onward").dependsOn(commonWithTests).aggregate(common).settings(buildSettings)
+  val onward = application("onward").dependsOn(commonWithTests).aggregate(common).settings(
+    buildSettings,
+    fork := false,
+    parallelExecution := false
+  )
 
   val dev = application("dev-build")
     .dependsOn(
@@ -235,5 +279,9 @@ object Frontend extends Build with Prototypes {
     preview,
     trainingPreview,
     rss
-  ).settings(buildSettings)
+  ).settings(
+      buildSettings,
+      fork := false,
+      parallelExecution := false
+    )
 }

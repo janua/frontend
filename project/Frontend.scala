@@ -85,7 +85,7 @@ object Frontend extends Build with Prototypes {
     .settings(
       fork := false,
       parallelExecution := false,
-      javaOptions += "-Xmx3G",
+      javaOptions += "-Xmx3G"
     )
 
   val archive = application("archive").dependsOn(commonWithTests).aggregate(common).settings(

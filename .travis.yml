@@ -11,6 +11,4 @@ env:
   - APPLICATION_NAME=article
 
 script: 
-  - echo $APPLICATION_NAME
-
-  - ./sbt project $APPLICATION_NAME;test
+  - ./travis.sh

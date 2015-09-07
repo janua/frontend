@@ -10,4 +10,7 @@ env:
   - APPLICATION_NAME="facia"
   - APPLICATION_NAME=article
 
-script: "./sbt project $APPLICATION_NAME;TEST"
+script: 
+  - echo "$APPLICATION_NAME"
+
+  - "./sbt project $APPLICATION_NAME;test"

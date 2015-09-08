@@ -7,7 +7,7 @@ scala:
   - 2.11.6
 
 env:
-  - APPLICATION_NAME="facia"
+  - APPLICATION_NAME=facia
   - APPLICATION_NAME=article
 
 before_install:

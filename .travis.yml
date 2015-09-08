@@ -13,6 +13,12 @@ env:
 before_install:
   - export TZ=GB
 
+cache:
+  directories:
+    - node_modules
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+
 script: 
   - npm install -g grunt-cli
   - npm install -g jspm
@@ -22,3 +28,7 @@ script:
   - bundle
   - ./grunt-travis
   - ./travis.sh
+
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm

@@ -11,5 +11,7 @@ env:
   - APPLICATION_NAME=article
 
 script: 
+  - npm install -g grunt-cli
+  - npm install
   - grunt compile
   - ./travis.sh

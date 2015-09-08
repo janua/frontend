@@ -10,6 +10,9 @@ env:
   - APPLICATION_NAME="facia"
   - APPLICATION_NAME=article
 
+before_install:
+  - export TZ=GB
+
 script: 
   - npm install -g grunt-cli
   - npm install -g jspm

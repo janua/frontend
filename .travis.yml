@@ -12,6 +12,8 @@ env:
 
 script: 
   - npm install -g grunt-cli
+  - npm -v
   - npm install
+  - grunt install
   - grunt compile
   - ./travis.sh

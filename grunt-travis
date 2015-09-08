@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -o xtrace
+set -o nounset
+set -o errexit
+
+# Try newer ruby for newer sass
+ruby --version
+
+# Add bundler to the local ruby and rehash paths to pick it up
+gem install bundler
+
+export PATH=dev/gems/bin:$PATH
+
+./node_modules/.bin/jspm registry create bower jspm-bower-endpoint -y
+./node_modules/.bin/jspm config registries.github.auth $JSPM_GITHUB_AUTH
+./node_modules/.bin/jspm registry export github
+
+grunt --stack --no-color "$@"

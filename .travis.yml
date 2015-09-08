@@ -16,5 +16,5 @@ script:
   - npm -v
   - npm install
   - bundle
-  - ./grunt-tc
+  - ./grunt-travis
   - ./travis.sh

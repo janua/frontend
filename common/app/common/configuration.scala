@@ -318,7 +318,7 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
     )
 
     lazy val pageData: Map[String, String] = {
-      val keys = configuration.getPropertyNames.filter(_.startsWith("guardian.page."))
+      val keys = configuration.getPropertyNames.filter(_.startsWith("guardian_page_"))
       keys.foldLeft(Map.empty[String, String]) {
         case (map, key) => map + (key -> configuration.getMandatoryStringProperty(key))
       }

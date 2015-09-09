@@ -8,7 +8,7 @@
 @defining(s"${request.host}${request.path}") { path =>
 
     @defining(
-        s"${AnalyticsHost()}/b/ss/${Configuration.javascript.pageData("guardian.page.omnitureAccount")}/1/H.25.3/?${OmnitureAnalyticsData(page, "No Javascript", path)}"
+        s"${AnalyticsHost()}/b/ss/${Configuration.javascript.pageData("guardian_page_omnitureAccount")}/1/H.25.3/?${OmnitureAnalyticsData(page, "No Javascript", path)}"
     ){ omnitureCall =>
             <noscript id="omnitureNoScript">
                 <div>

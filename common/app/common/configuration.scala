@@ -195,8 +195,8 @@ class GuardianConfiguration(val application: String, val webappConfDirectory: St
   object images {
     lazy val path = configuration.getMandatoryStringProperty("images_path")
     object backends {
-      lazy val mediaToken: String = configuration.getMandatoryStringProperty("images_media_token_key")
-      lazy val staticToken: String = configuration.getMandatoryStringProperty("images_static_token_key")
+      lazy val mediaToken: String = configuration.getMandatoryStringProperty("images_media_key_token")
+      lazy val staticToken: String = configuration.getMandatoryStringProperty("images_static_key_token")
     }
   }
 

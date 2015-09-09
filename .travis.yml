@@ -9,6 +9,12 @@ scala:
 env:
   - APPLICATION_NAME=facia
   - APPLICATION_NAME=article
+  - APPLICATION_NAME=onward
+  - APPLICATION_NAME=applications
+  - APPLICATION_NAME=commercial
+  - APPLICATION_NAME=discussion
+  - APPLICATION_NAME=rss
+  - APPLICATION_NAME=sport
 
 before_install:
   - export TZ=GB

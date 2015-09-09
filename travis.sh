@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./sbt "project $APPLICATION_NAME" test
+./sbt "project $APPLICATION_NAME" test assets dist

@@ -1,3 +1,6 @@
 #!/bin/bash
 
-./sbt "project $APPLICATION_NAME" test assets dist
+if [ @APPLICATION_NAME != "javascript_tests" ]
+  then
+    ./sbt "project $APPLICATION_NAME" test assets dist
+fi

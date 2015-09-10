@@ -7,6 +7,7 @@ scala:
   - 2.11.6
 
 env:
+  - APPLICATION_NAME=javascript_tests
   - APPLICATION_NAME=facia
   - APPLICATION_NAME=article
   - APPLICATION_NAME=onward

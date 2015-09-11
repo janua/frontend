@@ -4,6 +4,11 @@ language: node_js
 node_js:
   - "0.12"
 
+before_install:
+  - export TZ=GB
+  - npm install -g grunt-cli
+  - npm install -g jspm
+
 language: java
 jdk:
   - oraclejdk8
@@ -22,11 +27,6 @@ env:
   - APPLICATION_NAME=discussion
   - APPLICATION_NAME=rss
   - APPLICATION_NAME=sport
-
-before_install:
-  - export TZ=GB
-  - npm install -g grunt-cli
-  - npm install -g jspm
 
 cache:
   directories:

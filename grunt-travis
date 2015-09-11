@@ -18,7 +18,9 @@ export PATH=dev/gems/bin:$PATH
 
 if [ $APPLICATION_NAME == "javascript_tests" ]
   then
+    echo "Running grunt WITH tests"
     grunt --stack --no-color "$@" uglify:conf clean validate compile test analyse
   else
+    echo "Running grunt WITHOUT tests"
     grunt --stack --no-color uglify:conf clean validate compile
 fi

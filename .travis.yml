@@ -1,11 +1,9 @@
 sudo: false
 
-language: node_js
-node_js:
-  - "0.12"
-
 before_install:
   - export TZ=GB
+  - curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+  - apt-get install -y nodejs
   - npm install -g grunt-cli
   - npm install -g jspm
 

@@ -31,13 +31,12 @@ cache:
     - $HOME/.sbt/boot/
     - vendor
 
-script: 
+script:
   - node -v
   - npm -v
   - ./node_modules/.bin/jspm registry create bower jspm-bower-endpoint -y
   - ./node_modules/.bin/jspm config registries.github.auth $JSPM_GITHUB_AUTH
   - ./node_modules/.bin/jspm registry export github
-  - jspm install
   - bundle package
   - ./grunt-travis
   - ./travis.sh

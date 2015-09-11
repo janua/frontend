@@ -1,14 +1,16 @@
-language: java
-jdk:
-  - oraclejdk8
-language: scala
 sudo: false
-scala:
-  - 2.11.6
 
 language: node_js
 node_js:
   - "0.12"
+
+language: java
+jdk:
+  - oraclejdk8
+
+language: scala
+scala:
+  - 2.11.6
 
 env:
   - APPLICATION_NAME=javascript_tests

@@ -23,6 +23,8 @@ env:
 
 before_install:
   - export TZ=GB
+  - npm install -g grunt-cli
+  - npm install -g jspm
 
 cache:
   directories:
@@ -31,8 +33,6 @@ cache:
     - vendor
 
 script: 
-  - npm install -g grunt-cli
-  - npm install -g jspm
   - node -v
   - npm -v
   - npm install

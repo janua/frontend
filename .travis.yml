@@ -27,6 +27,7 @@ env:
 
 cache:
   directories:
+    - node_modules
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
     - vendor

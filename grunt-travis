@@ -18,7 +18,7 @@ export PATH=dev/gems/bin:$PATH
 
 if [ $APPLICATION_NAME == "javascript_tests" ]
   then
-    grunt --stack --no-color "$@" clean validate compile test analyse
+    grunt --stack --no-color "$@" install clean validate compile test analyse
   else
-    grunt --stack --no-color clean validate compile
+    grunt --stack --no-color install clean validate compile
 fi

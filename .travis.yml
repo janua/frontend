@@ -6,6 +6,9 @@ sudo: false
 scala:
   - 2.11.6
 
+node_js:
+  - "0.12"
+
 env:
   - APPLICATION_NAME=javascript_tests
   - APPLICATION_NAME=facia

@@ -37,6 +37,7 @@ cache:
     - node_modules
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - $HOME/.nvm/
     - vendor
 
 script:

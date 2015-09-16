@@ -35,6 +35,7 @@ env:
 cache:
   directories:
     - node_modules
+    - static
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
     - $HOME/.nvm/

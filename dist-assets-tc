@@ -10,7 +10,10 @@ set +x
 echo "##teamcity[progressStart 'asset validation and tests']"
 set -x
 
-./grunt-tc validate:sass validate:js test:unit
+if [ $APPLICATION_NAME == "javascript_tests" ]
+  then
+    ./grunt-tc validate:sass validate:js test:unit
+fi
 
 set +x
 echo "##teamcity[progressFinish 'asset validation and tests']"

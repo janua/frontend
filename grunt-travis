@@ -22,5 +22,5 @@ if [ $APPLICATION_NAME == "javascript_tests" ]
     grunt --stack --no-color "$@" install clean validate compile test
   else
     echo "Running grunt WITHOUT tests"
-    grunt --stack --no-color install clean validate compile
+    ./dist-assets-tc
 fi

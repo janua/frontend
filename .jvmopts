@@ -1,6 +1,0 @@
--Xmx3072M
--Xms2048M
--XX:+UseConcMarkSweepGC 
--XX:+CMSClassUnloadingEnabled
--Djava.awt.headless=true
--XX:ReservedCodeCacheSize=256M
